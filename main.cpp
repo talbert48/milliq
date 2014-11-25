@@ -61,7 +61,7 @@ void setUserVaribles()
     
     displaySubDetetorsInSetup           = true;
     displayAxesInSetup                  = true;
-    calculateWithMagnets                = true;
+    calculateWithMagnets                = false;
     
     //------------------------ USER MAY SET  ABOVE VARIBLES -------------------------//
     //-------------------------------------------------------------------------------//
@@ -202,9 +202,9 @@ int main()
     clock_t tStart = clock();
     
     randomGenerator.SetSeed(0);
-    
+    printf("hi");
     setUserVaribles();
-    
+    printf("hi");
     int cd = 1;
     TFile *particleDataFile = new TFile("particleDataHistogram.root","RECREATE");
     TCanvas *particleDataCanvas = new TCanvas("particleDataCanvas","Particle Data Canvas",0,0,2000,1300);
@@ -214,7 +214,7 @@ int main()
     TH1D *particleDataThetaHistogram = new TH1D("particleDataThetaHistogram", "Theta Distribution", 100, 0, 2*M_PI);
     TH1D *particleDataMomentumHistogram = new TH1D("particleDataMomentumHistogram", "Momentum Distribution", 100, 1, 100);
     
-    
+    printf("hi");
     particleDataPhiHistogram->SetLineColor(1);
     particleDataThetaHistogram->SetLineColor(1);
     particleDataMomentumHistogram->SetLineColor(1);
@@ -226,7 +226,7 @@ int main()
     particleDataPhiHistogram->SetStats(kFALSE);
     particleDataThetaHistogram->SetStats(kFALSE);
     particleDataMomentumHistogram->SetStats(kFALSE);
-    
+    printf("hi");
     vector<TH2D*> subdetectorHistograms(detectors.size());
     
     vector<TGraph*> detectorsParticlePostions(detectors.size());
@@ -242,10 +242,10 @@ int main()
         subdetectorHistograms.at(d)->SetStats(kFALSE);
         detectorsParticlePostions.at(d) = new TGraph();
     }
-    
+    printf("hi");
     for (long long int p=0; p<numberOfTotalParticles; p++)
     {
-        //printf("time of Particle %i: %f seconds\n" ,p, ((double) (clock() - tStart))/CLOCKS_PER_SEC);
+        printf("time of Particle %i: %f seconds\n" ,p, ((double) (clock() - tStart))/CLOCKS_PER_SEC);
         
         particle currentParticle = getParticle();
         

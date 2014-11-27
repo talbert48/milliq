@@ -19,15 +19,15 @@ void setUserVaribles()
     
     deltaTime                           = 1.0/pow(10, 10);//s
     
-    numberOfTotalParticles              = pow(10, 5);
+    numberOfTotalParticles              = pow(10, 1);
     particleMass                        = 1;//GeV
     particleCharge                      = 1.0/pow(10, 3);//e
     
-    detectorAlighnmentAngle             = M_PI/6;//radians
+    detectorAlighnmentAngle             = Pi()/6;//radians
     
-    detectorRoom.lowestYZCorner.x       = 0;//m
-    detectorRoom.lowestYZCorner.y       = 10;//m
-    detectorRoom.lowestYZCorner.z       = 0;//m
+    detectorRoom.lowestYZCorner.SetX(     0);//m
+    detectorRoom.lowestYZCorner.SetY(     10);//m
+    detectorRoom.lowestYZCorner.SetZ(     0);//m
     detectorRoom.width                  = 10;//m
     detectorRoom.depth                  = 10;//m
     detectorRoom.height                 = 2;//m
@@ -61,7 +61,9 @@ void setUserVaribles()
     
     displaySubDetetorsInSetup           = true;
     displayAxesInSetup                  = true;
-    calculateWithMagnets                = false;
+    calculateWithMagnets                = true;
+    drawAllParticlesPaths               = true;
+    drawDetectedParticlesPaths          = true;
     
     //------------------------ USER MAY SET  ABOVE VARIBLES -------------------------//
     //-------------------------------------------------------------------------------//
@@ -76,7 +78,7 @@ void setUserVaribles()
 
 void drawDetectorsSetup()
 {
-    triplet aPoint;
+    TVector3 aPoint;
     TPolyLine3D *aLine;
     
     TFile *detectorSetupFile = new TFile("detectorSetup.root","RECREATE");
@@ -84,16 +86,18 @@ void drawDetectorsSetup()
     
     detectorSetupCanvas->cd();
     
-    for(int i=0; i<particles.size(); i++){
-        //if (particles.at(i).hitDetector.at(0)) {
-        aLine = new TPolyLine3D((int)particles.at(i).positions.size());
-        for (int c=0; c<particles.at(i).positions.size(); c++) {
-            aLine->SetPoint(c, particles.at(i).positions.at(c).x, particles.at(i).positions.at(c).y, particles.at(i).positions.at(c).z);
+    if(drawAllParticlesPaths || drawDetectedParticlesPaths){
+        for(int i=0; i<particles.size(); i++){
+            if (drawAllParticlesPaths || (drawDetectedParticlesPaths && particles.at(i).hitDetector.at(0))) {
+                aLine = new TPolyLine3D((int)particles.at(i).positions.size());
+                for (int c=0; c<particles.at(i).positions.size(); c++) {
+                    aLine->SetPoint(c, particles.at(i).positions.at(c).X(), particles.at(i).positions.at(c).Y(), particles.at(i).positions.at(c).Z());
+                }
+                aLine->SetLineWidth(2);
+                aLine->SetLineColor(TColor::GetColor(.5, .5, (float)i/particles.size()));
+                aLine->Draw("same");
+            }
         }
-        aLine->SetLineWidth(2);
-        aLine->SetLineColor(TColor::GetColor(.5, .5, (float)i/particles.size()));
-        aLine->Draw("same");
-        //}
     }
     
     //Particle Collision
@@ -132,7 +136,7 @@ void drawDetectorsSetup()
     //Detector Alighnment Angle
     aLine = new TPolyLine3D(2);
     aLine->SetPoint(0, 0, 0, 0);
-    aLine->SetPoint(1, (detectorRoom.lowestYZCorner.y+detectorRoom.depth)*tan(detectorAlighnmentAngle), detectorRoom.lowestYZCorner.y+detectorRoom.depth, 0);
+    aLine->SetPoint(1, (detectorRoom.lowestYZCorner.Y()+detectorRoom.depth)*tan(detectorAlighnmentAngle), detectorRoom.lowestYZCorner.Y()+detectorRoom.depth, 0);
     aLine->SetLineWidth(1);
     aLine->SetLineColor(2);
     aLine->Draw("same");
@@ -151,9 +155,9 @@ void drawDetectorsSetup()
     }
     
     //Detector Room
-    aPoint.x = detectorRoom.lowestYZCorner.x + detectorRoom.width;
-    aPoint.y = detectorRoom.lowestYZCorner.y;
-    aPoint.z = detectorRoom.lowestYZCorner.z;
+    aPoint.SetX( detectorRoom.lowestYZCorner.X() + detectorRoom.width);
+    aPoint.SetY( detectorRoom.lowestYZCorner.Y());
+    aPoint.SetZ( detectorRoom.lowestYZCorner.Z());
     drawBlockOnCanvasWithDimensions(detectorSetupCanvas, aPoint, detectorRoom.width, detectorRoom.depth, detectorRoom.height, 0, 1);
     
     detectorSetupCanvas->Update();
@@ -164,30 +168,41 @@ void drawDetectorsSetup()
 
 particle adjustmentsFromCMSMagnets(particle aParticle)
 {
+    int count=0;
+
     particle p = aParticle;
     for (int i=0; i<CMSMagnets.size(); i++) {
-        double w = aParticle.charge * CMSMagnets.at(i).strength * (double)CMSMagnets.at(i).direction * pow(speedOfLight, 2) / aParticle.fourMomentum.energy;
+        double w = aParticle.charge * CMSMagnets.at(i).strength * (double)CMSMagnets.at(i).direction * pow(C(), 2) / aParticle.fourMomentum.E();
         do{
-            triplet velocityVector;
-            velocityVector.x =  aParticle.fourMomentum.momentum.x/pow( pow(aParticle.mass,2) + pow(aParticle.fourMomentum.momentum.x/speedOfLight, 2) ,0.5);//v = p / ( m^2 + (p/c)^2 )^(1/2)
-            velocityVector.y =  aParticle.fourMomentum.momentum.y/pow( pow(aParticle.mass,2) + pow(aParticle.fourMomentum.momentum.y/speedOfLight, 2) ,0.5);//v = p / ( m^2 + (p/c)^2 )^(1/2)
-            velocityVector.z =  aParticle.fourMomentum.momentum.z/pow( pow(aParticle.mass,2) + pow(aParticle.fourMomentum.momentum.z/speedOfLight, 2) ,0.5);//v = p / ( m^2 + (p/c)^2 )^(1/2)
+            count++;
+            TVector3 velocityVector = aParticle.fourMomentum.BoostVector();
+            /*velocityVector.SetX( aParticle.fourMomentum.Px()/pow( pow(aParticle.mass,2) + pow(aParticle.fourMomentum.Px()/C(), 2) ,0.5) );//Vx = Px / ( m^2 + (Px/c)^2 )^(1/2)
+            velocityVector.SetY( aParticle.fourMomentum.Py()/pow( pow(aParticle.mass,2) + pow(aParticle.fourMomentum.Py()/C(), 2) ,0.5) );//Vy = Py / ( m^2 + (Py/c)^2 )^(1/2)
+            velocityVector.SetZ( aParticle.fourMomentum.Pz()/pow( pow(aParticle.mass,2) + pow(aParticle.fourMomentum.Pz()/C(), 2) ,0.5) );//Vz = Pz / ( m^2 + (Pz/c)^2 )^(1/2)
+            Printf("x:%f y:%f z:%f",velocityVector.X(),velocityVector.Y(),velocityVector.Z());
             
-            triplet aPosition;
-            aPosition.x = aParticle.positions.back().x + deltaTime*velocityVector.x;
-            aPosition.y = aParticle.positions.back().y + deltaTime*velocityVector.y;
-            aPosition.z = aParticle.positions.back().z + deltaTime*velocityVector.z;
+            Printf("mag:%f bc:%f",velocityVector.Mag(),aParticle.fourMomentum.Beta()*C());
+
+            
+            velocityVector = aParticle.fourMomentum.BoostVector();
+            Printf("x:%f y:%f z:%f",velocityVector.X(),velocityVector.Y(),velocityVector.Z());
+            
+            Printf("mag:%f bc:%f",velocityVector.Mag(),aParticle.fourMomentum.Beta()*C());
+            */
+            
+            
+            TVector3 aPosition;
+            aPosition = aParticle.positions.back() + deltaTime*velocityVector;
             aParticle.positions.push_back(aPosition);
             
-            double oldPhi = atan(aParticle.fourMomentum.momentum.y/aParticle.fourMomentum.momentum.x);
-            double oldTheta = acos(aParticle.fourMomentum.momentum.z/aParticle.fourMomentum.energy);
-            triplet newMomentum;
-            newMomentum.x = aParticle.mass*(cos(oldPhi)*sin(oldTheta));
-            newMomentum.y = aParticle.mass*(sin(oldPhi)*sin(oldTheta)*cos(deltaTime*w) + cos(oldTheta)*sin(deltaTime*w));
-            newMomentum.z = aParticle.fourMomentum.momentum.z;
-            aParticle.fourMomentum.momentum = newMomentum;
-        }while(pow(pow(aParticle.positions.back().y,2)+pow(aParticle.positions.back().z,2),.5)<CMSMagnets.at(i).externalRadius);
+            double oldPhi = aParticle.fourMomentum.Phi();
+            double oldTheta = aParticle.fourMomentum.Theta();
+            aParticle.fourMomentum.SetPx( aParticle.mass*(cos(oldPhi)*sin(oldTheta)) );
+            aParticle.fourMomentum.SetPy( aParticle.mass*(sin(oldPhi)*sin(oldTheta)*cos(deltaTime*w) + cos(oldTheta)*sin(deltaTime*w)) );
+            aParticle.fourMomentum.SetPz( aParticle.fourMomentum.Pz());
+        }while(Hypot(aParticle.positions.back().Y(), aParticle.positions.back().Z())<CMSMagnets.at(i).externalRadius);
     }
+    Printf("%i",count);
     return aParticle;
 }
 
@@ -202,19 +217,18 @@ int main()
     clock_t tStart = clock();
     
     randomGenerator.SetSeed(0);
-    printf("hi");
+
     setUserVaribles();
-    printf("hi");
+
     int cd = 1;
     TFile *particleDataFile = new TFile("particleDataHistogram.root","RECREATE");
     TCanvas *particleDataCanvas = new TCanvas("particleDataCanvas","Particle Data Canvas",0,0,2000,1300);
     particleDataCanvas->Divide(3,(int)(((2*detectors.size())+4)/3)+((((2*detectors.size())+4)%3)>0?1:0));
     
-    TH1D *particleDataPhiHistogram = new TH1D("particleDataPhiHistogram", "Phi Distribution", 100, 0, M_PI);
-    TH1D *particleDataThetaHistogram = new TH1D("particleDataThetaHistogram", "Theta Distribution", 100, 0, 2*M_PI);
+    TH1D *particleDataPhiHistogram = new TH1D("particleDataPhiHistogram", "Phi Distribution", 100, 0, Pi());
+    TH1D *particleDataThetaHistogram = new TH1D("particleDataThetaHistogram", "Theta Distribution", 100, 0, 2*Pi());
     TH1D *particleDataMomentumHistogram = new TH1D("particleDataMomentumHistogram", "Momentum Distribution", 100, 1, 100);
-    
-    printf("hi");
+
     particleDataPhiHistogram->SetLineColor(1);
     particleDataThetaHistogram->SetLineColor(1);
     particleDataMomentumHistogram->SetLineColor(1);
@@ -226,7 +240,7 @@ int main()
     particleDataPhiHistogram->SetStats(kFALSE);
     particleDataThetaHistogram->SetStats(kFALSE);
     particleDataMomentumHistogram->SetStats(kFALSE);
-    printf("hi");
+
     vector<TH2D*> subdetectorHistograms(detectors.size());
     
     vector<TGraph*> detectorsParticlePostions(detectors.size());
@@ -242,23 +256,23 @@ int main()
         subdetectorHistograms.at(d)->SetStats(kFALSE);
         detectorsParticlePostions.at(d) = new TGraph();
     }
-    printf("hi");
+
     for (long long int p=0; p<numberOfTotalParticles; p++)
     {
-        printf("time of Particle %i: %f seconds\n" ,p, ((double) (clock() - tStart))/CLOCKS_PER_SEC);
+        //printf("time of Particle %i: %f seconds\n" ,p, ((double) (clock() - tStart))/CLOCKS_PER_SEC);
         
         particle currentParticle = getParticle();
         
-        particleDataPhiHistogram->Fill(phiFromMomentum(currentParticle.fourMomentum.momentum));
-        particleDataThetaHistogram->Fill(thetaFromMomentum(currentParticle.fourMomentum.momentum));
-        particleDataMomentumHistogram->Fill(unitConversion("kg m/v -> GeV",tripletMagnitude(currentParticle.fourMomentum.momentum)));
+        particleDataPhiHistogram->Fill(currentParticle.fourMomentum.Phi());
+        particleDataThetaHistogram->Fill(currentParticle.fourMomentum.Theta());
+        particleDataMomentumHistogram->Fill(unitConversion("kg m/v -> GeV",currentParticle.fourMomentum.Vect().Mag()));
         
         if (calculateWithMagnets) {
             currentParticle = adjustmentsToParticleTrajetories(currentParticle);
         }
         
         for (int d=0; d<detectors.size(); d++) {
-            triplet pointOfIntersection = getPointOfIntersectionOfParticleWithDetector(currentParticle, detectors.at(d));
+            TVector3 pointOfIntersection = getPointOfIntersectionOfParticleWithDetector(currentParticle, detectors.at(d));
             
             if (pointOfIntersectionIsInDetector(pointOfIntersection, detectors.at(d))) {
                 detectors.at(d).numberOfParticlesEntered++;
@@ -271,15 +285,15 @@ int main()
                             detectors.at(d).subDetectors.at((w*detectors.at(d).numberOfSubDetectorsAlongHeight)+h).numberOfParticlesEntered++;
                         }
                         
-                        triplet bottomLeftOfFacePoint, particlePositionOnDetectorFace;
-                        bottomLeftOfFacePoint.x = detectors.at(d).lowestYZCorner.x + detectors.at(d).depth*sin(detectorAlighnmentAngle) - detectors.at(d).width*cos(detectorAlighnmentAngle);
-                        bottomLeftOfFacePoint.y = detectors.at(d).lowestYZCorner.y + detectors.at(d).depth*cos(detectorAlighnmentAngle) + detectors.at(d).width*sin(detectorAlighnmentAngle);
-                        bottomLeftOfFacePoint.z = detectors.at(d).lowestYZCorner.z;
+                        TVector3 bottomLeftOfFacePoint, particlePositionOnDetectorFace;
+                        bottomLeftOfFacePoint.SetX( detectors.at(d).lowestYZCorner.X() + detectors.at(d).depth*sin(detectorAlighnmentAngle) - detectors.at(d).width*cos(detectorAlighnmentAngle) );
+                        bottomLeftOfFacePoint.SetY( detectors.at(d).lowestYZCorner.Y() + detectors.at(d).depth*cos(detectorAlighnmentAngle) + detectors.at(d).width*sin(detectorAlighnmentAngle) );
+                        bottomLeftOfFacePoint.SetZ( detectors.at(d).lowestYZCorner.Z() );
                         
-                        particlePositionOnDetectorFace.x = pow(pow(pointOfIntersection.x - bottomLeftOfFacePoint.x,2) + pow(bottomLeftOfFacePoint.y - pointOfIntersection.y,2), .5);
-                        particlePositionOnDetectorFace.y = pointOfIntersection.z - bottomLeftOfFacePoint.z;
+                        particlePositionOnDetectorFace.SetX( Hypot(pointOfIntersection.X() - bottomLeftOfFacePoint.X() , bottomLeftOfFacePoint.Y() - pointOfIntersection.Y()) );
+                        particlePositionOnDetectorFace.SetY( pointOfIntersection.Z() - bottomLeftOfFacePoint.Z() );
                         
-                        detectorsParticlePostions.at(d)->SetPoint(detectors.at(d).numberOfParticlesEntered-1, particlePositionOnDetectorFace.x, particlePositionOnDetectorFace.y);
+                        detectorsParticlePostions.at(d)->SetPoint(detectors.at(d).numberOfParticlesEntered-1, particlePositionOnDetectorFace.X(), particlePositionOnDetectorFace.Y());
                     }
                 }
             }

@@ -27,6 +27,8 @@
 #include <TColor.h>
 #include <TMultiGraph.h>
 #include <TText.h>
+#include <TLorentzVector.h>
+#include <TVector3.h>
 
 using namespace TMath;
 using namespace std;
@@ -37,7 +39,6 @@ using namespace std;
 TRandom3 randomGenerator;
 
 enum class direction {negative=-1, neutral=0, positive=1};
-double speedOfLight = 299792458;//m/s
 double deltaTime;
 
 
@@ -45,28 +46,17 @@ double deltaTime;
 //---------------START--------------//
 //--------------Structs-------------//
 
-struct triplet {
-    double x;
-    double y;
-    double z;
-};
-
-struct fourMomentum {
-    double energy;
-    triplet momentum;
-};
-
 struct particle {
-    fourMomentum fourMomentum;
+    TLorentzVector fourMomentum;
     double mass;
     double charge;
-    vector<triplet> positions;
+    vector<TVector3> positions;
     vector<bool> hitDetector;
 };
 
 struct detector {
     double width, depth, height;
-    triplet lowestYZCorner;
+    TVector3 lowestYZCorner;
     int numberOfParticlesEntered;
 };
 
@@ -82,7 +72,7 @@ struct mainDetector:detector {
 
 struct detectorRoom {
     double width, depth, height;
-    triplet lowestYZCorner;
+    TVector3 lowestYZCorner;
 };
 
 struct CMSMagnet {
@@ -95,7 +85,7 @@ struct CMSMagnet {
 //----------------END---------------//
 //----------------------------------//
 
-bool displaySubDetetorsInSetup, displayAxesInSetup, calculateWithMagnets;
+bool displaySubDetetorsInSetup, displayAxesInSetup, calculateWithMagnets, drawAllParticlesPaths, drawDetectedParticlesPaths;
 double detectorAlighnmentAngle;
 detectorRoom detectorRoom;
 
@@ -111,33 +101,30 @@ double unitConversion(string type, double orginalValue)
 {
     double value;
     if (type == "GeV -> kg m/v") {
-        value = orginalValue * ( 1000000000.0/speedOfLight );
-    }else if ("kg m/v -> GeV"){
-        value = orginalValue / ( 1000000000.0/speedOfLight );
-    }else if ("GeV -> kg") {
-        value = orginalValue * ( 1.782661845/pow(10,27) );
-    }else if ("kg -> GeV") {
+        value = orginalValue * ( pow(10,9)/C() );
+    }else if (type == "kg m/v -> GeV"){
+        value = orginalValue / ( pow(10,9)/C() );
+    }else if (type == "GeV -> kg") {
+        value = orginalValue * (double)( 1.782661845/pow(10,27) );
+    }else if (type =="kg -> GeV") {
         value = orginalValue / ( 1.782661845/pow(10,27) );
-    }else if ("e -> C") {
+    }else if (type == "e -> C") {
         value = orginalValue * ( 1.602176565/pow(10, 19) );
-    }else if ("C -> e") {
+    }else if (type == "C -> e") {
         value = orginalValue / ( 1.602176565/pow(10, 19) );
     }
     return value;
 }
 
-double tripletMagnitude(triplet momentumVetor)
+TLorentzVector fourMomentumFromMometumMassThetaPhi(double momentum, double mass, double theta, double phi)
 {
-    return pow( pow(momentumVetor.x,2)+pow(momentumVetor.y,2)+pow(momentumVetor.z,2) , 0.5);
-}
+    TLorentzVector fourMomentum;
+    fourMomentum.SetE(  Hypot(mass*pow(C(),2) , momentum*C()) );
+    
+    TVector3 p;
+    p.SetMagThetaPhi(momentum, theta, phi);
+    fourMomentum.SetVect(p);
 
-fourMomentum fourMomentumFromMometumMassThetaPhi(double momentum, double mass, double theta, double phi)
-{
-    fourMomentum fourMomentum;
-    fourMomentum.energy     = pow( pow(mass,2)*pow(speedOfLight,4) + pow(momentum,2)*pow(speedOfLight,2) , 0.5);
-    fourMomentum.momentum.x = (sin(theta)*cos(phi))*momentum;
-    fourMomentum.momentum.y = (sin(theta)*sin(phi))*momentum;
-    fourMomentum.momentum.z = (cos(theta))*momentum;
     return fourMomentum;
 }
 
@@ -150,12 +137,12 @@ double getMomentum()
 
 double getTheta()
 {
-    return randomGenerator.Gaus(M_PI/2,M_PI/8);//radians
+    return randomGenerator.Gaus(Pi()/2,Pi()/8);//radians
 }
 
 double getPhi()
 {
-    return randomGenerator.Uniform(0,2*M_PI);//radians
+    return randomGenerator.Uniform(0,2*Pi());//radians
 }
 
 
@@ -165,10 +152,8 @@ particle getParticle()
     double theta                        = getTheta();
     double phi                          = getPhi();
     
-    triplet initalPosition;
-    initalPosition.x                    = 0;
-    initalPosition.y                    = 0;
-    initalPosition.z                    = 0;
+    TVector3 initalPosition;
+    initalPosition.SetXYZ(0,0,0);
     
     particle newParticle;
     newParticle.mass                    = particleMass;
@@ -179,30 +164,21 @@ particle getParticle()
     return newParticle;
 }
 
-double phiFromMomentum(triplet aMomentum){
-    double r = pow(pow(aMomentum.x,2) + pow(aMomentum.y,2) + pow(aMomentum.z,2) , .5);
-    return acos(aMomentum.z/r);
-}
-
-double thetaFromMomentum(triplet aMomentum){
-    return acos(aMomentum.y/aMomentum.x);
-}
-
 //----------------------------------//
 //---------------START--------------//
 //-------------Detection------------//
 
-bool pointOfIntersectionIsInDetector(triplet thePointOfIntersection,detector aDetector)
+bool pointOfIntersectionIsInDetector(TVector3 thePointOfIntersection,detector aDetector)
 {
     //X
-    if (thePointOfIntersection.x >= aDetector.lowestYZCorner.x + aDetector.depth*sin(detectorAlighnmentAngle) - aDetector.width*cos(detectorAlighnmentAngle)) {
-        if (thePointOfIntersection.x <= aDetector.lowestYZCorner.x + aDetector.depth*sin(detectorAlighnmentAngle)) {
+    if (thePointOfIntersection.X() >= aDetector.lowestYZCorner.X() + aDetector.depth*sin(detectorAlighnmentAngle) - aDetector.width*cos(detectorAlighnmentAngle)) {
+        if (thePointOfIntersection.X() <= aDetector.lowestYZCorner.X() + aDetector.depth*sin(detectorAlighnmentAngle)) {
             //Y
-            if (thePointOfIntersection.y >= aDetector.lowestYZCorner.y + aDetector.depth*cos(detectorAlighnmentAngle)) {
-                if (thePointOfIntersection.y <= aDetector.lowestYZCorner.y + aDetector.depth*cos(detectorAlighnmentAngle) + aDetector.width*sin(detectorAlighnmentAngle)) {
+            if (thePointOfIntersection.Y() >= aDetector.lowestYZCorner.Y() + aDetector.depth*cos(detectorAlighnmentAngle)) {
+                if (thePointOfIntersection.Y() <= aDetector.lowestYZCorner.Y() + aDetector.depth*cos(detectorAlighnmentAngle) + aDetector.width*sin(detectorAlighnmentAngle)) {
                     //Z
-                    if (thePointOfIntersection.z >= aDetector.lowestYZCorner.z) {
-                        if (thePointOfIntersection.z <= aDetector.lowestYZCorner.z + aDetector.height) {
+                    if (thePointOfIntersection.Z() >= aDetector.lowestYZCorner.Z()) {
+                        if (thePointOfIntersection.Z() <= aDetector.lowestYZCorner.Z() + aDetector.height) {
                             return true;
                         }
                     }
@@ -213,52 +189,42 @@ bool pointOfIntersectionIsInDetector(triplet thePointOfIntersection,detector aDe
     return false;
 }
 
-triplet getPointOfIntersectionOfParticleWithDetector(particle aParticle, detector aDetector)
+TVector3 getPointOfIntersectionOfParticleWithDetector(particle aParticle, detector aDetector)
 {
-    triplet particleTrajectory = aParticle.fourMomentum.momentum;
-    triplet particlePosition   = aParticle.positions.back();
+    TVector3 particleTrajectory = aParticle.fourMomentum.Vect();
+    TVector3 particlePosition   = aParticle.positions.back();
     
-    triplet pointA, pointB , pointC;
+    TVector3 pointA, pointB , pointC;
     
-    pointA.x = aDetector.lowestYZCorner.x + aDetector.depth*sin(detectorAlighnmentAngle);
-    pointA.y = aDetector.lowestYZCorner.y + aDetector.depth*cos(detectorAlighnmentAngle);
-    pointA.z = aDetector.lowestYZCorner.z;
+    pointA.SetX( aDetector.lowestYZCorner.X() + aDetector.depth*sin(detectorAlighnmentAngle) );
+    pointA.SetY( aDetector.lowestYZCorner.Y() + aDetector.depth*cos(detectorAlighnmentAngle) );
+    pointA.SetZ( aDetector.lowestYZCorner.Z() );
     
-    pointB.x = pointA.x;
-    pointB.y = pointA.y;
-    pointB.z = pointA.z + aDetector.height;
+    pointB.SetX( pointA.X() );
+    pointB.SetY( pointA.Y() );
+    pointB.SetZ( pointA.Z() + aDetector.height );
     
-    pointC.x = pointA.x - aDetector.width*cos(detectorAlighnmentAngle);
-    pointC.y = pointA.y + aDetector.width*sin(detectorAlighnmentAngle);
-    pointC.z = pointA.z;
+    pointC.SetX( pointA.X() - aDetector.width*cos(detectorAlighnmentAngle) );
+    pointC.SetY( pointA.Y() + aDetector.width*sin(detectorAlighnmentAngle) );
+    pointC.SetZ( pointA.Z() );
     
-    triplet vectorAB, vectorAC, normal;
+    TVector3 vectorAB, vectorAC, normal;
     
-    vectorAB.x = pointB.x - pointA.x;
-    vectorAB.y = pointB.y - pointA.y;
-    vectorAB.z = pointB.z - pointA.z;
+    vectorAB = pointB - pointA;
     
-    vectorAC.x = pointC.x - pointA.x;
-    vectorAC.y = pointC.y - pointA.y;
-    vectorAC.z = pointC.z - pointA.z;
+    vectorAC = pointC - pointA;
     
-    normal.x =   (vectorAB.y*vectorAC.z) - (vectorAB.z*vectorAC.y);
-    normal.y = -((vectorAB.x*vectorAC.z) - (vectorAB.z*vectorAC.x));
-    normal.z =   (vectorAB.x*vectorAC.y) - (vectorAB.y*vectorAC.x);
+    normal.SetX(   (vectorAB.Y()*vectorAC.Z()) - (vectorAB.Z()*vectorAC.Y()) );
+    normal.SetY( -((vectorAB.X()*vectorAC.Z()) - (vectorAB.Z()*vectorAC.X())) );
+    normal.SetZ(   (vectorAB.X()*vectorAC.Y()) - (vectorAB.Y()*vectorAC.X()) );
     
-    double mutiplyer = (normal.x*(pointA.x-particlePosition.x) + normal.y*(pointA.y-particlePosition.y) + normal.z*(pointA.z-particlePosition.z))/(normal.x*particleTrajectory.x + normal.y*particleTrajectory.y + normal.z*particleTrajectory.z);
+    double mutiplyer = (normal.X()*(pointA.X()-particlePosition.X()) + normal.Y()*(pointA.Y()-particlePosition.Y()) + normal.Z()*(pointA.Z()-particlePosition.Z()))/(normal.X()*particleTrajectory.X() + normal.Y()*particleTrajectory.Y() + normal.Z()*particleTrajectory.Z());
     
-    triplet pointOfIntersection;
+    TVector3 pointOfIntersection;
     
     pointOfIntersection = particleTrajectory;
-    
-    pointOfIntersection.x *= mutiplyer;
-    pointOfIntersection.y *= mutiplyer;
-    pointOfIntersection.z *= mutiplyer;
-    
-    pointOfIntersection.x += particlePosition.x;
-    pointOfIntersection.y += particlePosition.y;
-    pointOfIntersection.z += particlePosition.z;
+    pointOfIntersection *= mutiplyer;
+    pointOfIntersection += particlePosition;
     
     return pointOfIntersection;
 }
@@ -273,9 +239,9 @@ triplet getPointOfIntersectionOfParticleWithDetector(particle aParticle, detecto
 //---------------START--------------//
 //-------------Graphics-------------//
 
-void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontPoint, double width, double depth, double height, double angle, short color)
+void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPoint, double width, double depth, double height, double angle, short color)
 {
-    triplet aPoint;
+    TVector3 aPoint;
     TPolyLine3D *aLine;
     
     aCanvas->cd();
@@ -286,11 +252,11 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.x += depth*sin(angle);
-    aPoint.y += depth*cos(angle);
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     //2
@@ -299,12 +265,12 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.z += height;
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.x += depth*sin(angle);
-    aPoint.y += depth*cos(angle);
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -314,13 +280,13 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.x -= width*cos(angle);
-    aPoint.y += width*sin(angle);
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.x += depth*sin(angle);
-    aPoint.y += depth*cos(angle);
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -330,14 +296,14 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.x -= width*cos(angle);
-    aPoint.y += width*sin(angle);
-    aPoint.z += height;
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.x += depth*sin(angle);
-    aPoint.y += depth*cos(angle);
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -347,13 +313,13 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.x += depth*sin(angle);
-    aPoint.y += depth*cos(angle);
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.x -= width*cos(angle);
-    aPoint.y += width*sin(angle);
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -363,14 +329,14 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.x += depth*sin(angle);
-    aPoint.y += depth*cos(angle);
-    aPoint.z += height;
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.x -= width*cos(angle);
-    aPoint.y += width*sin(angle);
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -380,11 +346,11 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.x -= width*cos(angle);
-    aPoint.y += width*sin(angle);
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -394,12 +360,12 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.z += height;
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.x -= width*cos(angle);
-    aPoint.y += width*sin(angle);
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -409,10 +375,10 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.z += height;
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -422,12 +388,12 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.x += depth*sin(angle);
-    aPoint.y += depth*cos(angle);
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.z += height;
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -437,14 +403,14 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.x += depth*sin(angle);
-    aPoint.y += depth*cos(angle);
-    aPoint.x -= width*cos(angle);
-    aPoint.y += width*sin(angle);
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.z += height;
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -454,12 +420,12 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, triplet bottomRightFrontP
     aLine->SetLineColor(color);
     
     aPoint = bottomRightFrontPoint;
-    aPoint.x -= width*cos(angle);
-    aPoint.y += width*sin(angle);
-    aLine->SetPoint(0, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
     
-    aPoint.z += height;
-    aLine->SetPoint(1, aPoint.x, aPoint.y, aPoint.z);
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
     
@@ -482,18 +448,18 @@ void initializeDetectorsWith(int numberOfDetectors, double width, double depth, 
     double lastDetectorBottomLeftCornerXDisplacement;
     double lastDetectorBottomLeftCornerYDisplacement;
     
-    firstDetectorBottomLeftCornerXDisplacement = detectorRoom.lowestYZCorner.y*tan(detectorAlighnmentAngle) + ((width/2)*(1/cos(detectorAlighnmentAngle)));
-    firstDetectorBottomLeftCornerYDisplacement = detectorRoom.lowestYZCorner.y;
+    firstDetectorBottomLeftCornerXDisplacement = detectorRoom.lowestYZCorner.Y()*tan(detectorAlighnmentAngle) + ((width/2)*(1/cos(detectorAlighnmentAngle)));
+    firstDetectorBottomLeftCornerYDisplacement = detectorRoom.lowestYZCorner.Y();
     
-    if(detectorAlighnmentAngle>=atan((detectorRoom.lowestYZCorner.x + detectorRoom.width)/(detectorRoom.lowestYZCorner.y+detectorRoom.depth)))
+    if(detectorAlighnmentAngle>=atan((detectorRoom.lowestYZCorner.X() + detectorRoom.width)/(detectorRoom.lowestYZCorner.Y()+detectorRoom.depth)))
     {
-        lastDetectorBottomLeftCornerXDisplacement = detectorRoom.lowestYZCorner.x + detectorRoom.width - (depth*sin(detectorAlighnmentAngle));
-        lastDetectorBottomLeftCornerYDisplacement = ((detectorRoom.lowestYZCorner.x+detectorRoom.width)*(1/tan(detectorAlighnmentAngle))) - ((width/2)*(1/sin(detectorAlighnmentAngle))) - (depth*cos(detectorAlighnmentAngle));
+        lastDetectorBottomLeftCornerXDisplacement = detectorRoom.lowestYZCorner.X() + detectorRoom.width - (depth*sin(detectorAlighnmentAngle));
+        lastDetectorBottomLeftCornerYDisplacement = ((detectorRoom.lowestYZCorner.X()+detectorRoom.width)*(1/tan(detectorAlighnmentAngle))) - ((width/2)*(1/sin(detectorAlighnmentAngle))) - (depth*cos(detectorAlighnmentAngle));
     }
     else
     {
-        lastDetectorBottomLeftCornerXDisplacement = (detectorRoom.lowestYZCorner.y+detectorRoom.depth)*tan(detectorAlighnmentAngle) - (width/2)*(1/cos(detectorAlighnmentAngle)) - depth*sin(detectorAlighnmentAngle) + width*cos(detectorAlighnmentAngle);
-        lastDetectorBottomLeftCornerYDisplacement = detectorRoom.lowestYZCorner.y+detectorRoom.depth - depth*cos(detectorAlighnmentAngle) - width*sin(detectorAlighnmentAngle);
+        lastDetectorBottomLeftCornerXDisplacement = (detectorRoom.lowestYZCorner.Y()+detectorRoom.depth)*tan(detectorAlighnmentAngle) - (width/2)*(1/cos(detectorAlighnmentAngle)) - depth*sin(detectorAlighnmentAngle) + width*cos(detectorAlighnmentAngle);
+        lastDetectorBottomLeftCornerYDisplacement = detectorRoom.lowestYZCorner.Y()+detectorRoom.depth - depth*cos(detectorAlighnmentAngle) - width*sin(detectorAlighnmentAngle);
     }
     
     detectorXSeperation = (lastDetectorBottomLeftCornerXDisplacement-firstDetectorBottomLeftCornerXDisplacement)/(numberOfDetectors-1);
@@ -513,9 +479,9 @@ void initializeDetectorsWith(int numberOfDetectors, double width, double depth, 
         newDetector.depth = depth;
         newDetector.height = height;
         
-        newDetector.lowestYZCorner.x = (detectorRoom.lowestYZCorner.y*tan(detectorAlighnmentAngle)) + ((newDetector.width/2)*(1/cos(detectorAlighnmentAngle))) + (detectorXSeperation*i);
-        newDetector.lowestYZCorner.y = detectorRoom.lowestYZCorner.y + (detectorYSeperation*i);
-        newDetector.lowestYZCorner.z = detectorRoom.lowestYZCorner.z + detectorZDisplacement;
+        newDetector.lowestYZCorner.SetX( (detectorRoom.lowestYZCorner.Y()*tan(detectorAlighnmentAngle)) + ((newDetector.width/2)*(1/cos(detectorAlighnmentAngle))) + (detectorXSeperation*i) );
+        newDetector.lowestYZCorner.SetY( detectorRoom.lowestYZCorner.Y() + (detectorYSeperation*i) );
+        newDetector.lowestYZCorner.SetZ( detectorRoom.lowestYZCorner.Z() + detectorZDisplacement );
         
         newDetector.numberOfSubDetectorsAlongWidth = numberOfSubDetectorsAlongWidth;
         newDetector.numberOfSubDetectorsAlongHeight = numberOfSubDetectorsAlongHeight;
@@ -532,9 +498,9 @@ void initializeDetectorsWith(int numberOfDetectors, double width, double depth, 
                 newSubDetector.depth = subDetectorDepth;
                 newSubDetector.height = subDetectorHeigth;
                 
-                newSubDetector.lowestYZCorner.x = newDetector.lowestYZCorner.x - subDetectorWidth*cos(detectorAlighnmentAngle)*w;
-                newSubDetector.lowestYZCorner.y = newDetector.lowestYZCorner.y + subDetectorWidth*sin(detectorAlighnmentAngle)*w;
-                newSubDetector.lowestYZCorner.z = newDetector.lowestYZCorner.z + subDetectorHeigth*h;
+                newSubDetector.lowestYZCorner.SetX( newDetector.lowestYZCorner.X() - subDetectorWidth*cos(detectorAlighnmentAngle)*w );
+                newSubDetector.lowestYZCorner.SetY( newDetector.lowestYZCorner.Y() + subDetectorWidth*sin(detectorAlighnmentAngle)*w );
+                newSubDetector.lowestYZCorner.SetZ( newDetector.lowestYZCorner.Z() + subDetectorHeigth*h );
                 
                 newDetector.subDetectors.at((w*newDetector.numberOfSubDetectorsAlongHeight)+h) = newSubDetector;
             }

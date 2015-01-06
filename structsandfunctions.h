@@ -29,6 +29,10 @@
 #include <TText.h>
 #include <TLorentzVector.h>
 #include <TVector3.h>
+#include <TTree.h>
+#include <TBranch.h>
+#include <TLeaf.h>
+#include <TDirectory.h>
 
 using namespace TMath;
 using namespace std;
@@ -85,7 +89,13 @@ struct CMSMagnet {
 //----------------END---------------//
 //----------------------------------//
 
-bool displaySubDetetorsInSetup, displayAxesInSetup, calculateWithMagnets, drawAllParticlesPaths, drawDetectedParticlesPaths;
+TFile *particleDataFile;
+
+vector<TH2D*> subdetectorHistograms;
+TMultiGraph *combinedDetectorsParticlePostionsGraph;
+vector<TGraph*> detectorsParticlePostions;
+
+bool displayDetectorRoom, displayDetectorAlignmentAngle, displaySubDetetorsInSetup, displayAxesInSetup, calculateWithMagnets, drawAllParticlesPaths, drawDetectedParticlesPaths;
 double detectorAlighnmentAngle;
 detectorRoom detectorRoom;
 
@@ -96,6 +106,10 @@ vector<particle> particles;
 int numberOfTotalParticles;
 double particleMass;
 double particleCharge;
+
+string CMSParticleParametersRootFileName;
+bool useKnownCMSParticleParameters;
+TH1D *particleDataPhiHistogram, *particleDataThetaHistogram, *particleDataMomentumHistogram;
 
 double unitConversion(string type, double orginalValue)
 {
@@ -130,18 +144,29 @@ TLorentzVector fourMomentumFromMometumMassThetaPhi(double momentum, double mass,
 
 double getMomentum()
 {
-    double p  = (randomGenerator.Landau(25,5));//GeV
+    double p;
+    if(useKnownCMSParticleParameters){
+        p = particleDataMomentumHistogram->GetRandom();//GeV
+    }else{
+        p = (randomGenerator.Landau(25,5));//GeV
+    }
     p = unitConversion("GeV -> kg m/v", p);
-    return p;
+    return p;//kg m/v
 }
 
 double getTheta()
 {
+    if(useKnownCMSParticleParameters){
+        return particleDataThetaHistogram->GetRandom();//radians
+    }
     return randomGenerator.Gaus(Pi()/2,Pi()/8);//radians
 }
 
 double getPhi()
 {
+    if(useKnownCMSParticleParameters){
+        return particleDataPhiHistogram->GetRandom();//radians
+    }
     return randomGenerator.Uniform(0,2*Pi());//radians
 }
 
@@ -161,7 +186,159 @@ particle getParticle()
     newParticle.fourMomentum            = fourMomentumFromMometumMassThetaPhi(momentum , newParticle.mass , theta , phi);
     newParticle.positions.push_back(initalPosition);
     newParticle.hitDetector.assign(detectors.size(),false);
+    
     return newParticle;
+}
+
+void generateKnownCMSParticlesParameterDisributions()
+{
+    //attempt to open the .root file the user entered under the varible CMSParticleParametersRootFileName that contains the CMS particle parameters(phi, eta, px, py, pz)
+    //if this fails then use default particle parameters, put up an error message, and exit this function
+    TFile * rootFile = new TFile(CMSParticleParametersRootFileName.c_str());
+    if (!rootFile->IsOpen()) {
+        Printf("\n*****  Opening File \"%s\" failed!  *****\n", CMSParticleParametersRootFileName.c_str());
+        useKnownCMSParticleParameters = false;
+        return;
+    }
+    
+    //get the LHEF analysis tree
+    TTree *tree = (TTree *)rootFile->Get("LHEF");
+    
+    //get the number of particles in tree
+    int numberOfParticles = (int)tree->GetEntries();
+    
+    //set up place holder arrays to recive values from phi, eta, px, py and pz branches
+    double phiValues[numberOfParticles], etaValues[numberOfParticles], pxValues[numberOfParticles], pyValues[numberOfParticles], pzValues[numberOfParticles];
+    
+    //set up phi, eta, px, py and pz branches
+    TBranch *phiBranch, *etaBranch, *pxBranch, *pyBranch, *pzBranch;
+    phiBranch = new TBranch();
+    etaBranch = new TBranch();
+    pxBranch = new TBranch();
+    pyBranch = new TBranch();
+    pzBranch = new TBranch();
+    
+    //connect place holders with branches
+    tree->SetBranchAddress("Particle.Phi", phiValues, &phiBranch);
+    tree->SetBranchAddress("Particle.Eta", etaValues, &etaBranch);
+    tree->SetBranchAddress("Particle.Px", pxValues, &pxBranch);
+    tree->SetBranchAddress("Particle.Py", pyValues, &pyBranch);
+    tree->SetBranchAddress("Particle.Pz", pzValues, &pzBranch);
+    
+    //calculate values from place holder values and enter them into theta, phi and momentum histograms
+    for (int i = 0; i<numberOfParticles; i++) {
+        double value = 2*ATan(Power(E(),etaValues[i]));//eta to theta
+        particleDataThetaHistogram->Fill(value);
+        
+        particleDataPhiHistogram->Fill(phiValues[i]);
+        
+        value = Sqrt(Power(pxValues[i],2) + Power(pyValues[i],2) + Power(pzValues[i],2));//caluclating momentum magnitude
+        particleDataMomentumHistogram->Fill(value);
+    }
+    
+    //close CMS particle parameter file
+    rootFile->Close();
+}
+
+void setupParticleParameterHistograms()
+{
+    particleDataPhiHistogram = new TH1D("particleDataPhiHistogram", "Phi Distribution", 100, 0, Pi());
+    particleDataThetaHistogram = new TH1D("particleDataThetaHistogram", "Theta Distribution", 100, -1100,1100);//-2*Pi(), 2*Pi());
+    particleDataMomentumHistogram = new TH1D("particleDataMomentumHistogram", "Momentum Distribution", 100, -300, 300);//1, 100);
+    
+    particleDataPhiHistogram->SetLineColor(1);
+    particleDataThetaHistogram->SetLineColor(1);
+    particleDataMomentumHistogram->SetLineColor(1);
+    
+    particleDataPhiHistogram->SetMinimum(0);
+    particleDataThetaHistogram->SetMinimum(0);
+    particleDataMomentumHistogram->SetMinimum(0);
+    
+    particleDataPhiHistogram->SetStats(kFALSE);
+    particleDataThetaHistogram->SetStats(kFALSE);
+    particleDataMomentumHistogram->SetStats(kFALSE);
+    
+    if (useKnownCMSParticleParameters) {
+        generateKnownCMSParticlesParameterDisributions();
+    }
+    
+}
+
+void setupDetectorParticlePostionHistogramsAndGraphs()
+{
+    subdetectorHistograms.resize(detectors.size());
+    
+    detectorsParticlePostions.resize(detectors.size());
+    
+    combinedDetectorsParticlePostionsGraph = new TMultiGraph();
+    
+    for (int d=0; d<detectors.size(); d++) {
+        char identifiyer[50];
+        sprintf(identifiyer, "subdetectorHistograms.at(%i)", d+1);
+        char name[50];
+        sprintf(name, "Detector %i Subdetector Detections", d+1);
+        subdetectorHistograms.at(d) = new TH2D(identifiyer, name, detectors.at(d).numberOfSubDetectorsAlongWidth, (double)0, detectors.at(d).width, detectors.at(d).numberOfSubDetectorsAlongHeight, (double)0, detectors.at(d).height);
+        subdetectorHistograms.at(d)->SetStats(kFALSE);
+        detectorsParticlePostions.at(d) = new TGraph();
+    }
+}
+
+void enterAndDisplayDetectorParticlePostionHistogramsAndGraphs()
+{
+    int cd = 1;
+    TCanvas *particleDataCanvas = new TCanvas("particleDataCanvas","Particle Data Canvas",0,0,2000,1300);
+    particleDataCanvas->Divide(3,(int)(((2*detectors.size()))/3)+((((2*detectors.size()))%3)>0?1:0));
+    
+    double combinedDetectorsParticlePostionsGraphMaxX = 0, combinedDetectorsParticlePostionsGraphMaxY = 0;
+    
+    for (int d=0; d<detectors.size(); d++) {
+        detectorsParticlePostions.at(d)->SetMarkerColor(detectors.at(d).color);
+        detectorsParticlePostions.at(d)->SetMarkerStyle(2);
+        detectorsParticlePostions.at(d)->SetMarkerSize(.5);
+        char name[50];
+        sprintf(name, "Detector %i Particle Positions", d+1);
+        detectorsParticlePostions.at(d)->SetTitle(name);
+        particleDataCanvas->cd(cd);
+        detectorsParticlePostions.at(d)->Draw("AP*");
+        detectorsParticlePostions.at(d)->GetXaxis()->SetLimits(0.0 , detectors.at(d).width);
+        detectorsParticlePostions.at(d)->GetYaxis()->SetRangeUser(0.0 , detectors.at(d).height );
+        detectorsParticlePostions.at(d)->Draw("AP*");
+        
+        
+        combinedDetectorsParticlePostionsGraph->Add(detectorsParticlePostions.at(d));
+        
+        if (combinedDetectorsParticlePostionsGraphMaxX < detectors.at(d).width) {
+            combinedDetectorsParticlePostionsGraphMaxX = detectors.at(d).width;
+        }
+        if (combinedDetectorsParticlePostionsGraphMaxY < detectors.at(d).height) {
+            combinedDetectorsParticlePostionsGraphMaxY = detectors.at(d).height;
+        }
+        
+        for (int w=0; w<detectors.at(d).numberOfSubDetectorsAlongWidth; w++) {
+            for (int h=0; h<detectors.at(d).numberOfSubDetectorsAlongHeight; h++) {
+                subdetectorHistograms.at(d)->SetBinContent(detectors.at(d).numberOfSubDetectorsAlongWidth - w, h+1, detectors.at(d).subDetectors.at((w*detectors.at(d).numberOfSubDetectorsAlongHeight)+h).numberOfParticlesEntered);
+            }
+        }
+        particleDataCanvas->cd(cd+(int)detectors.size());
+        cd++;
+        subdetectorHistograms.at(d)->Draw("COLZ");
+    }
+    
+    particleDataCanvas->Update();
+    particleDataCanvas->Modified();
+    particleDataCanvas->Print("particleDataHistograms.png","png");
+    particleDataCanvas->Write();
+    
+    TCanvas *combinedDetectorsParticlePostionsCanvas = new TCanvas("combinedDetectorsParticlePostionsCanvas","Combined Detectors Particle PostionsCanvas",0,0,2000,1300);
+    combinedDetectorsParticlePostionsGraph->SetTitle("Combined Detectors Particle Postions");
+    combinedDetectorsParticlePostionsGraph->Draw("AP*");
+    combinedDetectorsParticlePostionsGraph->GetXaxis()->SetRangeUser(0,combinedDetectorsParticlePostionsGraphMaxX);
+    combinedDetectorsParticlePostionsGraph->GetYaxis()->SetRangeUser(0,combinedDetectorsParticlePostionsGraphMaxY);
+    combinedDetectorsParticlePostionsGraph->GetXaxis()->SetLimits(0, combinedDetectorsParticlePostionsGraphMaxX);
+    combinedDetectorsParticlePostionsCanvas->Update();
+    combinedDetectorsParticlePostionsCanvas->Modified();
+    combinedDetectorsParticlePostionsCanvas->Print("combinedDetectorsParticlePostions.png","png");
+    combinedDetectorsParticlePostionsCanvas->Write();
 }
 
 //----------------------------------//
@@ -259,6 +436,7 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFront
     aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
     
     aLine->Draw("same");
+    
     //2
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
@@ -429,6 +607,225 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFront
     
     aLine->Draw("same");
     
+}
+
+void drawBoxOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPoint, double width, double depth, double height, double angle, short color)
+{
+    TVector3 aPoint;
+    TPolyLine3D *aLine;
+    
+    aCanvas->cd();
+    
+    //5
+    aLine = new TPolyLine3D(2);
+    aLine->SetLineWidth(1);
+    aLine->SetLineColor(color);
+    
+    aPoint = bottomRightFrontPoint;
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
+    
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    
+    aLine->Draw("same");
+    
+    //6
+    aLine = new TPolyLine3D(2);
+    aLine->SetLineWidth(1);
+    aLine->SetLineColor(color);
+    
+    aPoint = bottomRightFrontPoint;
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
+    
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    
+    aLine->Draw("same");
+    
+    //10
+    aLine = new TPolyLine3D(2);
+    aLine->SetLineWidth(1);
+    aLine->SetLineColor(color);
+    
+    aPoint = bottomRightFrontPoint;
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
+    
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    
+    aLine->Draw("same");
+    
+    //11
+    aLine = new TPolyLine3D(2);
+    aLine->SetLineWidth(1);
+    aLine->SetLineColor(color);
+    
+    aPoint = bottomRightFrontPoint;
+    aPoint.SetX(aPoint.X() + depth*sin(angle));
+    aPoint.SetY(aPoint.Y() + depth*cos(angle));
+    aPoint.SetX(aPoint.X() - width*cos(angle));
+    aPoint.SetY(aPoint.Y() + width*sin(angle));
+    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
+    
+    aPoint.SetZ(aPoint.Z() + height);
+    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    
+    aLine->Draw("same");
+}
+
+void drawSubdetectorHitsWithTrajetories()
+{
+    TVector3 aPoint;
+    TPolyLine3D *aLine;
+    
+    TCanvas *combinedSubdetectorWithTrajetoriesCanvas = new TCanvas("combinedSubdetectorWithTrajetoriesCanvas","Combined Subdetectors with Trajectories",0,0,2000,1300);
+    combinedSubdetectorWithTrajetoriesCanvas->cd();
+    
+    //Particles
+    if(drawAllParticlesPaths||drawDetectedParticlesPaths){
+        for(int i=0; i<particles.size(); i++){
+            bool particleHitADetector = false;
+            for(int d=0; d<detectors.size(); d++){
+                if(particles.at(i).hitDetector.at(d))
+                {   particleHitADetector = true; }
+            }
+            if (particleHitADetector||drawAllParticlesPaths) {
+            aLine = new TPolyLine3D((int)particles.at(i).positions.size());
+            for (int c=0; c<particles.at(i).positions.size(); c++) {
+                aLine->SetPoint(c, particles.at(i).positions.at(c).X(), particles.at(i).positions.at(c).Y(), particles.at(i).positions.at(c).Z());
+            }
+            aLine->SetLineWidth(1);
+            aLine->SetLineColor(7);
+            aLine->Draw("same");
+            }
+        }
+    }
+    
+    //X
+    aLine = new TPolyLine3D(2);
+    aLine->SetPoint(0, 0, 0, 0);
+    aLine->SetPoint(1, 5, 0, 0);
+    aLine->SetLineWidth(1);
+    aLine->SetLineColor(2);
+    aLine->Draw("same");
+    //Y
+    aLine = new TPolyLine3D(2);
+    aLine->SetPoint(0, 0, 0, 0);
+    aLine->SetPoint(1, 0, 5, 0);
+    aLine->SetLineWidth(1);
+    aLine->SetLineColor(3);
+    aLine->Draw("same");
+    //Z
+    aLine = new TPolyLine3D(2);
+    aLine->SetPoint(0, 0, 0, 0);
+    aLine->SetPoint(1, 0, 0, 5);
+    aLine->SetLineWidth(1);
+    aLine->SetLineColor(4);
+    aLine->Draw("same");
+    
+    //Detectors
+    for (int i = (int)detectors.size()-1 ; i>=0; i--) {
+        for (int w=0; w<detectors.at(i).numberOfSubDetectorsAlongWidth; w++) {
+            for (int h=0; h<detectors.at(i).numberOfSubDetectorsAlongHeight; h++) {
+                if (detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).numberOfParticlesEntered>0) {
+                    drawBoxOnCanvasWithDimensions(combinedSubdetectorWithTrajetoriesCanvas, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).lowestYZCorner, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).width, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).depth, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).height, detectorAlighnmentAngle, detectors.at(i).color);
+                }
+            }
+        }
+        //Draw Main Detector Volume
+        drawBlockOnCanvasWithDimensions(combinedSubdetectorWithTrajetoriesCanvas, detectors.at(i).lowestYZCorner, detectors.at(i).width, detectors.at(i).depth, detectors.at(i).height, detectorAlighnmentAngle, detectors.at(i).color);
+    }
+    
+    combinedSubdetectorWithTrajetoriesCanvas->Update();
+    combinedSubdetectorWithTrajetoriesCanvas->Modified();
+    combinedSubdetectorWithTrajetoriesCanvas->Print("combinedSubdetectorWithTrajetories.png","png");
+    combinedSubdetectorWithTrajetoriesCanvas->Write();
+}
+
+void drawDetectorsSetup()
+{
+    TVector3 aPoint;
+    TPolyLine3D *aLine;
+    
+    TCanvas *detectorSetupCanvas = new TCanvas("detectorSetupCanvas","Detector Setup Canvas",0,0,1000,700);
+    detectorSetupCanvas->cd();
+    
+    //Particle Collision
+    TPolyMarker3D *point = new TPolyMarker3D(1);
+    point->SetPoint(0, 0, 0, 0);
+    point->SetMarkerSize(0);
+    point->SetMarkerColor(6);
+    point->SetMarkerStyle(8);
+    point->Draw("same");
+    
+    //Axis Indicators
+    if (displayAxesInSetup) {
+        //X
+        aLine = new TPolyLine3D(2);
+        aLine->SetPoint(0, 0, 0, 0);
+        aLine->SetPoint(1, 5, 0, 0);
+        aLine->SetLineWidth(1);
+        aLine->SetLineColor(2);
+        aLine->Draw("same");
+        //Y
+        aLine = new TPolyLine3D(2);
+        aLine->SetPoint(0, 0, 0, 0);
+        aLine->SetPoint(1, 0, 5, 0);
+        aLine->SetLineWidth(1);
+        aLine->SetLineColor(3);
+        aLine->Draw("same");
+        //Z
+        aLine = new TPolyLine3D(2);
+        aLine->SetPoint(0, 0, 0, 0);
+        aLine->SetPoint(1, 0, 0, 5);
+        aLine->SetLineWidth(1);
+        aLine->SetLineColor(4);
+        aLine->Draw("same");
+    }
+    
+    //Detector Alighnment Angle
+    if (displayDetectorAlignmentAngle) {
+        aLine = new TPolyLine3D(2);
+        aLine->SetPoint(0, 0, 0, 0);
+        aLine->SetPoint(1, (detectorRoom.lowestYZCorner.Y()+detectorRoom.depth)*tan(detectorAlighnmentAngle), detectorRoom.lowestYZCorner.Y()+detectorRoom.depth, 0);
+        aLine->SetLineWidth(1);
+        aLine->SetLineColor(2);
+        aLine->Draw("same");
+    }
+    
+    //Detectors
+    for (int i = (int)detectors.size()-1 ; i>=0; i--) {
+        if(displaySubDetetorsInSetup){
+            for (int w=0; w<detectors.at(i).numberOfSubDetectorsAlongWidth; w++) {
+                for (int h=0; h<detectors.at(i).numberOfSubDetectorsAlongHeight; h++) {
+                    drawBlockOnCanvasWithDimensions(detectorSetupCanvas, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).lowestYZCorner, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).width, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).depth, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).height, detectorAlighnmentAngle, detectors.at(i).color);
+                }
+            }
+        }
+        //Draw Main Detector Volume
+        drawBlockOnCanvasWithDimensions(detectorSetupCanvas, detectors.at(i).lowestYZCorner, detectors.at(i).width, detectors.at(i).depth, detectors.at(i).height, detectorAlighnmentAngle, detectors.at(i).color);
+    }
+    
+    //Detector Room
+    if (displayDetectorRoom) {
+        aPoint.SetX( detectorRoom.lowestYZCorner.X() + detectorRoom.width);
+        aPoint.SetY( detectorRoom.lowestYZCorner.Y());
+        aPoint.SetZ( detectorRoom.lowestYZCorner.Z());
+        drawBlockOnCanvasWithDimensions(detectorSetupCanvas, aPoint, detectorRoom.width, detectorRoom.depth, detectorRoom.height, 0, 1);
+    }
+    
+    detectorSetupCanvas->Update();
+    detectorSetupCanvas->Modified();
+    detectorSetupCanvas->Write();
 }
 
 //-------------Graphics-------------//

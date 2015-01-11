@@ -40,14 +40,8 @@ using namespace std;
 #ifndef MilliChargedParticleDetector_structsandfunctions_h
 #define MilliChargedParticleDetector_structsandfunctions_h
 
-TRandom3 randomGenerator;
-
 enum class direction {negative=-1, neutral=0, positive=1};
-double deltaTime;
 
-
-//----------------------------------//
-//---------------START--------------//
 //--------------Structs-------------//
 
 struct particle {
@@ -85,19 +79,22 @@ struct CMSMagnet {
     direction direction;
 };
 
-//--------------Structs-------------//
-//----------------END---------------//
-//----------------------------------//
+//------------Structs END-----------//
+
+//---------Global Varibles----------//
+
+double deltaTime;
+
+TRandom3 randomGenerator;
 
 TFile *particleDataFile;
-
 vector<TH2D*> subdetectorHistograms;
 TMultiGraph *combinedDetectorsParticlePostionsGraph;
 vector<TGraph*> detectorsParticlePostions;
 
-bool displayDetectorRoom, displayDetectorAlignmentAngle, displaySubDetetorsInSetup, displayAxesInSetup, calculateWithMagnets, drawAllParticlesPaths, drawDetectedParticlesPaths;
-double detectorAlighnmentAngle;
 detectorRoom detectorRoom;
+double detectorAlighnmentAngle;
+bool displayDetectorRoom, displayDetectorAlignmentAngle, displaySubDetetorsInSetup, displayAxesInSetup, calculateWithMagnets, drawAllParticlesPaths, drawDetectedParticlesPaths;
 
 vector<mainDetector> detectors;
 vector<CMSMagnet> CMSMagnets;
@@ -111,6 +108,9 @@ string CMSParticleParametersRootFileName;
 bool useKnownCMSParticleParameters;
 TH1D *particleDataPhiHistogram, *particleDataThetaHistogram, *particleDataMomentumHistogram;
 
+//-------Global Varibles END--------//
+
+//Returns a double after converting the second double parameter based on the unit values specified in the first string parameter
 double unitConversion(string type, double orginalValue)
 {
     double value;
@@ -130,10 +130,11 @@ double unitConversion(string type, double orginalValue)
     return value;
 }
 
+//Retruns a TLorentzVector aka a four-vector given the double paramters momentum, mass, theta and phi
 TLorentzVector fourMomentumFromMometumMassThetaPhi(double momentum, double mass, double theta, double phi)
 {
     TLorentzVector fourMomentum;
-    fourMomentum.SetE(  Hypot(mass*pow(C(),2) , momentum*C()) );
+    fourMomentum.SetE(  Hypot(mass*Power(C(),2) , momentum*C()) );
     
     TVector3 p;
     p.SetMagThetaPhi(momentum, theta, phi);

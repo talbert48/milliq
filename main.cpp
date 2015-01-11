@@ -17,11 +17,11 @@ void setUserVaribles()
     //-------------------------------------------------------------------------------//
     //------------------------ USER MAY SET BELLOW VARIBLES -------------------------//
     
-    deltaTime                           = 1.0/pow(10, 9);//s
+    deltaTime                           = Power(10, -9);//s
     
-    numberOfTotalParticles              = pow(10, 3);
+    numberOfTotalParticles              = Power(10, 1);
     particleMass                        = 50;//GeV
-    particleCharge                      = 1.0/pow(10, 3);//e
+    particleCharge                      = Power(10, -3);//e
     
     detectorAlighnmentAngle             = Pi()/6;//radians
     
@@ -63,9 +63,11 @@ void setUserVaribles()
     displayDetectorAlignmentAngle       = false;
     displaySubDetetorsInSetup           = false;
     displayAxesInSetup                  = true;
-    calculateWithMagnets                = true;
-    drawAllParticlesPaths               = false;
+    
+    drawAllParticlesPaths               = true;
     drawDetectedParticlesPaths          = true;
+    
+    calculateWithMagnets                = true;
     
     CMSParticleParametersRootFileName   = "mQ_prod_LHC14_M050GeV_unweighted_events.root";
     useKnownCMSParticleParameters       = false;
@@ -81,27 +83,33 @@ void setUserVaribles()
     initializeDetectorsWith(numberOfDetectors, detectorWidths, detectorDepths, detectorHeights, detectorZDisplacement, numberOfSubDetectorsAlongWidth, numberOfSubDetectorsAlongHeight, subDetectorWidths, subDetectorDepths, subDetectorHeigths);
 }
 
+
 particle adjustmentsFromCMSMagnets(particle aParticle)
 {
-    particle p = aParticle;
+    double velocity = Power(C(), 2)*aParticle.fourMomentum.Vect().Mag()/aParticle.fourMomentum.E();
+    double momentumMagnitude = aParticle.fourMomentum.Vect().Mag();
+    double phi = aParticle.fourMomentum.Phi();
+    double theta = aParticle.fourMomentum.Theta();
+    
+    //loop a array of the CMS magnets from origin to the last magnet ajusting the particle's trajectory and position at increments of deltaTime until the particle is through all the CMS magnet's
     for (int i=0; i<CMSMagnets.size(); i++) {
-        double w = aParticle.charge * CMSMagnets.at(i).strength * (double)CMSMagnets.at(i).direction * pow(C(), 2) / aParticle.fourMomentum.E();
-        double velocity = C()*aParticle.fourMomentum.Vect().Mag()/Sqrt(Power(C()*aParticle.mass,2)+Power(aParticle.fourMomentum.Vect().Mag(),2));
+        double w = aParticle.charge * CMSMagnets.at(i).strength * (double)CMSMagnets.at(i).direction * Power(C(), 2) / aParticle.fourMomentum.E();
         do{
-            //Printf("Phi: %f, Theta: %f",aParticle.fourMomentum.Phi(),aParticle.fourMomentum.Theta());
-
-            TVector3 aPosition;
-            aPosition = aParticle.positions.back() + (deltaTime*velocity/aParticle.fourMomentum.Vect().Mag()) * aParticle.fourMomentum.Vect();
-            aParticle.positions.push_back(aPosition);
-            
-            double oldPhi = aParticle.fourMomentum.Phi();
-            double oldTheta = aParticle.fourMomentum.Theta();
+            //calculate the new trajectory of the particle
             TVector3 trajetory;
-            trajetory.SetX( cos(oldPhi)*sin(oldTheta) );
-            trajetory.SetY( sin(oldPhi)*sin(oldTheta)*cos(deltaTime*w) - cos(oldTheta)*sin(deltaTime*w) );
-            trajetory.SetZ( cos(w*deltaTime)*cos(oldTheta) + sin(w*deltaTime)*sin(oldTheta)*sin(oldPhi) );
-            aParticle.fourMomentum.SetTheta( acos(trajetory.Z()/trajetory.Mag()) );
-            aParticle.fourMomentum.SetPhi( atan( trajetory.Y() / trajetory.X() ) );            
+            trajetory.SetX( Cos(phi)*Sin(theta) );
+            trajetory.SetY( Sin(phi)*Sin(theta)*Cos(deltaTime*w) - Cos(theta)*Sin(deltaTime*w) );
+            trajetory.SetZ( Cos(w*deltaTime)*Cos(theta) + Sin(w*deltaTime)*Sin(theta)*Sin(phi) );
+            aParticle.fourMomentum.SetVect(trajetory*momentumMagnitude);
+            
+            //estimate the new postion by assuming the particle was moveing linearly for a duration of deltaTime along the trajectory set above
+            aParticle.positions.push_back(aParticle.positions.back() + (deltaTime*velocity) * aParticle.fourMomentum.Vect().Unit());
+            
+            //set the new values for phi and theta based on the trajectory set above
+            phi = aParticle.fourMomentum.Phi();
+            theta = aParticle.fourMomentum.Theta();
+            
+        //check if the particle is outside the current CMS magnet
         }while(Hypot(aParticle.positions.back().Y(), aParticle.positions.back().Z())<CMSMagnets.at(i).externalRadius);
     }
     return aParticle;

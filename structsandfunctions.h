@@ -1,16 +1,14 @@
 //
 //  structsandfunctions.h
 //  MilliChargedParticleDetector
-//
-//  Created by James London on 11/17/14.
-//  Copyright (c) 2014 James London. All rights reserved.
-//
 
 #include <iostream>
 #include <vector>
 #include <time.h>
 #include <stdio.h>
 #include <math.h>
+#include <fstream>
+#include <string>
 
 #include <TMath.h>
 #include <TRandom3.h>
@@ -33,14 +31,13 @@
 #include <TBranch.h>
 #include <TLeaf.h>
 #include <TDirectory.h>
+#include "Riostream.h"
 
 using namespace TMath;
 using namespace std;
 
 #ifndef MilliChargedParticleDetector_structsandfunctions_h
 #define MilliChargedParticleDetector_structsandfunctions_h
-
-enum class direction {negative=-1, neutral=0, positive=1};
 
 //--------------Structs-------------//
 
@@ -76,7 +73,7 @@ struct detectorRoom {
 struct CMSMagnet {
     double internalRadius, externalRadius;
     double strength;
-    direction direction;
+    double direction;
 };
 
 //------------Structs END-----------//
@@ -101,6 +98,8 @@ vector<CMSMagnet> CMSMagnets;
 vector<particle> particles;
 
 int numberOfTotalParticles;
+double particleDataArray[200001][5];
+
 double particleMass;
 double particleCharge;
 
@@ -115,132 +114,61 @@ double unitConversion(string type, double orginalValue)
 {
     double value;
     if (type == "GeV -> kg m/v") {
-        value = orginalValue * ( pow(10,9)/C() );
+        value = orginalValue * ( Power(10,9)/C() );
     }else if (type == "kg m/v -> GeV"){
-        value = orginalValue / ( pow(10,9)/C() );
+        value = orginalValue / ( Power(10,9)/C() );
     }else if (type == "GeV -> kg") {
-        value = orginalValue * (double)( 1.782661845/pow(10,27) );
+        value = orginalValue * (double)( 1.782661845/Power(10,27) );
     }else if (type =="kg -> GeV") {
-        value = orginalValue / ( 1.782661845/pow(10,27) );
+        value = orginalValue / ( 1.782661845/Power(10,27) );
     }else if (type == "e -> C") {
-        value = orginalValue * ( 1.602176565/pow(10, 19) );
+        value = orginalValue * ( 1.602176565/Power(10, 19) );
     }else if (type == "C -> e") {
-        value = orginalValue / ( 1.602176565/pow(10, 19) );
+        value = orginalValue / ( 1.602176565/Power(10, 19) );
     }
     return value;
 }
 
-//Retruns a TLorentzVector aka a four-vector given the double paramters momentum, mass, theta and phi
-TLorentzVector fourMomentumFromMometumMassThetaPhi(double momentum, double mass, double theta, double phi)
+particle getParticle(long long int particleNumber)
 {
-    TLorentzVector fourMomentum;
-    fourMomentum.SetE(  Hypot(mass*Power(C(),2) , momentum*C()) );
-    
-    TVector3 p;
-    p.SetMagThetaPhi(momentum, theta, phi);
-    fourMomentum.SetVect(p);
 
-    return fourMomentum;
-}
-
-double getMomentum()
-{
-    double p;
-    if(useKnownCMSParticleParameters){
-        p = particleDataMomentumHistogram->GetRandom();//GeV
-    }else{
-        p = (randomGenerator.Landau(25,5));//GeV
-    }
-    p = unitConversion("GeV -> kg m/v", p);
-    return p;//kg m/v
-}
-
-double getTheta()
-{
-    if(useKnownCMSParticleParameters){
-        return particleDataThetaHistogram->GetRandom();//radians
-    }
-    return randomGenerator.Gaus(Pi()/2,Pi()/8);//radians
-}
-
-double getPhi()
-{
-    if(useKnownCMSParticleParameters){
-        return particleDataPhiHistogram->GetRandom();//radians
-    }
-    return randomGenerator.Uniform(0,2*Pi());//radians
-}
-
-
-particle getParticle()
-{
-    double momentum                     = getMomentum();
-    double theta                        = getTheta();
-    double phi                          = getPhi();
-    
+	TLorentzVector fourMomentumTemp;
+    fourMomentumTemp.SetPxPyPzE(particleDataArray[particleNumber][0], particleDataArray[particleNumber][1],
+		particleDataArray[particleNumber][2], particleDataArray[particleNumber][3]);
+   
     TVector3 initalPosition;
     initalPosition.SetXYZ(0,0,0);
     
     particle newParticle;
     newParticle.mass                    = particleMass;
     newParticle.charge                  = particleCharge;
-    newParticle.fourMomentum            = fourMomentumFromMometumMassThetaPhi(momentum , newParticle.mass , theta , phi);
+    newParticle.fourMomentum            = fourMomentumTemp;
     newParticle.positions.push_back(initalPosition);
     newParticle.hitDetector.assign(detectors.size(),false);
     
     return newParticle;
 }
 
-void generateKnownCMSParticlesParameterDisributions()
+void generateKnownCMSParticles()
 {
-    //attempt to open the .root file the user entered under the varible CMSParticleParametersRootFileName that contains the CMS particle parameters(phi, eta, px, py, pz)
-    //if this fails then use default particle parameters, put up an error message, and exit this function
-    TFile * rootFile = new TFile(CMSParticleParametersRootFileName.c_str());
-    if (!rootFile->IsOpen()) {
-        Printf("\n*****  Opening File \"%s\" failed!  *****\n", CMSParticleParametersRootFileName.c_str());
-        useKnownCMSParticleParameters = false;
-        return;
-    }
-    
-    //get the LHEF analysis tree
-    TTree *tree = (TTree *)rootFile->Get("LHEF");
-    
-    //get the number of particles in tree
-    int numberOfParticles = (int)tree->GetEntries();
-    
-    //set up place holder arrays to recive values from phi, eta, px, py and pz branches
-    double phiValues[numberOfParticles], etaValues[numberOfParticles], pxValues[numberOfParticles], pyValues[numberOfParticles], pzValues[numberOfParticles];
-    
-    //set up phi, eta, px, py and pz branches
-    TBranch *phiBranch, *etaBranch, *pxBranch, *pyBranch, *pzBranch;
-    phiBranch = new TBranch();
-    etaBranch = new TBranch();
-    pxBranch = new TBranch();
-    pyBranch = new TBranch();
-    pzBranch = new TBranch();
-    
-    //connect place holders with branches
-    tree->SetBranchAddress("Particle.Phi", phiValues, &phiBranch);
-    tree->SetBranchAddress("Particle.Eta", etaValues, &etaBranch);
-    tree->SetBranchAddress("Particle.Px", pxValues, &pxBranch);
-    tree->SetBranchAddress("Particle.Py", pyValues, &pyBranch);
-    tree->SetBranchAddress("Particle.Pz", pzValues, &pzBranch);
-    
-    //calculate values from place holder values and enter them into theta, phi and momentum histograms
-    for (int i = 0; i<numberOfParticles; i++) {
-        double value = 2*ATan(Power(E(),etaValues[i]));//eta to theta
-        particleDataThetaHistogram->Fill(value);
-        
-        particleDataPhiHistogram->Fill(phiValues[i]);
-        
-        value = Sqrt(Power(pxValues[i],2) + Power(pyValues[i],2) + Power(pzValues[i],2));//caluclating momentum magnitude
-        particleDataMomentumHistogram->Fill(value);
-    }
-    
-    //close CMS particle parameter file
-    rootFile->Close();
+	//read in file containing particle data
+	ifstream file;
+	file.open("C:/root/events.csv");
+	string value;
+	int itr = 0;
+	while ( file.good() )
+	{
+		for(int i=0; i<5; i++)
+		{
+			getline( file, value, ',' );
+			particleDataArray[itr][i] = stod(value);
+		}
+		itr++;
+		if(itr == 199999)
+		{break;}
+	}
+	printf("Particle Data loaded\n");
 }
-
 void setupParticleParameterHistograms()
 {
     particleDataPhiHistogram = new TH1D("particleDataPhiHistogram", "Phi Distribution", 100, 0, Pi());
@@ -258,10 +186,6 @@ void setupParticleParameterHistograms()
     particleDataPhiHistogram->SetStats(kFALSE);
     particleDataThetaHistogram->SetStats(kFALSE);
     particleDataMomentumHistogram->SetStats(kFALSE);
-    
-    if (useKnownCMSParticleParameters) {
-        generateKnownCMSParticlesParameterDisributions();
-    }
     
 }
 

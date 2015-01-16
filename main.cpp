@@ -19,9 +19,9 @@ void setUserVaribles()
     
     deltaTime                           = Power(10, -9);//s
     
-    numberOfTotalParticles              = Power(10, 1);
+    numberOfTotalParticles              = 2;
     particleMass                        = 50;//GeV
-    particleCharge                      = Power(10, -3);//e
+    particleCharge                      = Power(10, 19);//e
     
     detectorAlighnmentAngle             = Pi()/6;//radians
     
@@ -49,12 +49,12 @@ void setUserVaribles()
     
     CMSMagnet aCMSMagnet;
     aCMSMagnet.strength                 = 4;//T
-    aCMSMagnet.direction                = direction::positive;
+    aCMSMagnet.direction                = 1;
     aCMSMagnet.internalRadius           = 0;//m
     aCMSMagnet.externalRadius           = 4;//m
     CMSMagnets.push_back(aCMSMagnet);
     
-    aCMSMagnet.direction                = direction::negative;
+    aCMSMagnet.direction                = -1;
     aCMSMagnet.internalRadius           = aCMSMagnet.externalRadius;
     aCMSMagnet.externalRadius           = 8;//m
     CMSMagnets.push_back(aCMSMagnet);
@@ -69,20 +69,14 @@ void setUserVaribles()
     
     calculateWithMagnets                = true;
     
-    CMSParticleParametersRootFileName   = "mQ_prod_LHC14_M050GeV_unweighted_events.root";
-    useKnownCMSParticleParameters       = false;
+    useKnownCMSParticleParameters       = true;
     
     //------------------------ USER MAY SET  ABOVE VARIBLES -------------------------//
     //-------------------------------------------------------------------------------//
     //-------------------------------------------------------------------------------//
     
-    //Convert
-    particleMass = unitConversion("GeV -> kg", particleMass);
-    particleCharge = unitConversion("e -> C", particleCharge);
-    
     initializeDetectorsWith(numberOfDetectors, detectorWidths, detectorDepths, detectorHeights, detectorZDisplacement, numberOfSubDetectorsAlongWidth, numberOfSubDetectorsAlongHeight, subDetectorWidths, subDetectorDepths, subDetectorHeigths);
 }
-
 
 particle adjustmentsFromCMSMagnets(particle aParticle)
 {
@@ -91,9 +85,9 @@ particle adjustmentsFromCMSMagnets(particle aParticle)
     double phi = aParticle.fourMomentum.Phi();
     double theta = aParticle.fourMomentum.Theta();
     
-    //loop a array of the CMS magnets from origin to the last magnet ajusting the particle's trajectory and position at increments of deltaTime until the particle is through all the CMS magnet's
+    //loop a array of the CMS magnets from origin to the last magnet adjusting the particle's trajectory and position at increments of deltaTime until the particle is through all the CMS magnet's
     for (int i=0; i<CMSMagnets.size(); i++) {
-        double w = aParticle.charge * CMSMagnets.at(i).strength * (double)CMSMagnets.at(i).direction * Power(C(), 2) / aParticle.fourMomentum.E();
+        double w = aParticle.charge * CMSMagnets.at(i).strength * CMSMagnets.at(i).direction * Power(C(), 2) / aParticle.fourMomentum.E();
         do{
             //calculate the new trajectory of the particle
             TVector3 trajetory;
@@ -128,7 +122,9 @@ int main()
     randomGenerator.SetSeed(0);
 
     setUserVaribles();
-    
+	
+    generateKnownCMSParticles();
+	
     setupParticleParameterHistograms();
     
     particleDataFile = new TFile("particleData.root","RECREATE");
@@ -137,13 +133,8 @@ int main()
 
     for (long long int p=0; p<numberOfTotalParticles; p++)
     {        
-        particle currentParticle = getParticle();
+        particle currentParticle = getParticle(p);
         
-        if (!useKnownCMSParticleParameters) {
-            particleDataPhiHistogram->Fill(currentParticle.fourMomentum.Phi());
-            particleDataThetaHistogram->Fill(currentParticle.fourMomentum.Theta());
-            particleDataMomentumHistogram->Fill(unitConversion("kg m/v -> GeV",currentParticle.fourMomentum.Vect().Mag()));
-        }
         if (calculateWithMagnets) {
             currentParticle = adjustmentsToParticleTrajetories(currentParticle);
         }

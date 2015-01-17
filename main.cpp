@@ -17,11 +17,11 @@ void setUserVaribles()
     //-------------------------------------------------------------------------------//
     //------------------------ USER MAY SET BELLOW VARIBLES -------------------------//
     
-    deltaTime                           = Power(10, -9);//s
+    deltaTime                           = Power(10, -11);//s
     
-    numberOfTotalParticles              = 2;
+    numberOfTotalParticles              = 100;
     particleMass                        = 50;//GeV
-    particleCharge                      = Power(10, 19);//e
+    particleCharge                      = Power(10, 0);//e
     
     detectorAlighnmentAngle             = Pi()/6;//radians
     
@@ -51,12 +51,12 @@ void setUserVaribles()
     aCMSMagnet.strength                 = 4;//T
     aCMSMagnet.direction                = 1;
     aCMSMagnet.internalRadius           = 0;//m
-    aCMSMagnet.externalRadius           = 4;//m
+    aCMSMagnet.externalRadius           = 8;//m
     CMSMagnets.push_back(aCMSMagnet);
     
-    aCMSMagnet.direction                = -1;
+    aCMSMagnet.direction                = 1;
     aCMSMagnet.internalRadius           = aCMSMagnet.externalRadius;
-    aCMSMagnet.externalRadius           = 8;//m
+    aCMSMagnet.externalRadius           = 16;//m
     CMSMagnets.push_back(aCMSMagnet);
     
     displayDetectorRoom                 = true;
@@ -65,11 +65,10 @@ void setUserVaribles()
     displayAxesInSetup                  = true;
     
     drawAllParticlesPaths               = true;
-    drawDetectedParticlesPaths          = true;
+    drawDetectedParticlesPaths          = false;
     
     calculateWithMagnets                = true;
     
-    useKnownCMSParticleParameters       = true;
     
     //------------------------ USER MAY SET  ABOVE VARIBLES -------------------------//
     //-------------------------------------------------------------------------------//
@@ -80,14 +79,14 @@ void setUserVaribles()
 
 particle adjustmentsFromCMSMagnets(particle aParticle)
 {
-    double velocity = Power(C(), 2)*aParticle.fourMomentum.Vect().Mag()/aParticle.fourMomentum.E();
+    double velocity = C()*aParticle.fourMomentum.Vect().Mag()/aParticle.fourMomentum.E();
     double momentumMagnitude = aParticle.fourMomentum.Vect().Mag();
     double phi = aParticle.fourMomentum.Phi();
     double theta = aParticle.fourMomentum.Theta();
     
     //loop a array of the CMS magnets from origin to the last magnet adjusting the particle's trajectory and position at increments of deltaTime until the particle is through all the CMS magnet's
     for (int i=0; i<CMSMagnets.size(); i++) {
-        double w = aParticle.charge * CMSMagnets.at(i).strength * CMSMagnets.at(i).direction * Power(C(), 2) / aParticle.fourMomentum.E();
+        double w = aParticle.charge * CMSMagnets.at(i).strength * CMSMagnets.at(i).direction * Power(C(), 2) / (aParticle.fourMomentum.E()*Power(10,9));
         do{
             //calculate the new trajectory of the particle
             TVector3 trajetory;
@@ -96,7 +95,7 @@ particle adjustmentsFromCMSMagnets(particle aParticle)
             trajetory.SetZ( Cos(w*deltaTime)*Cos(theta) + Sin(w*deltaTime)*Sin(theta)*Sin(phi) );
             aParticle.fourMomentum.SetVect(trajetory*momentumMagnitude);
             
-            //estimate the new postion by assuming the particle was moveing linearly for a duration of deltaTime along the trajectory set above
+            //estimate the new position by assuming the particle was moving linearly for a duration of deltaTime along the trajectory set above
             aParticle.positions.push_back(aParticle.positions.back() + (deltaTime*velocity) * aParticle.fourMomentum.Vect().Unit());
             
             //set the new values for phi and theta based on the trajectory set above

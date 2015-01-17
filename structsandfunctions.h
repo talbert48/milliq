@@ -104,30 +104,9 @@ double particleMass;
 double particleCharge;
 
 string CMSParticleParametersRootFileName;
-bool useKnownCMSParticleParameters;
 TH1D *particleDataPhiHistogram, *particleDataThetaHistogram, *particleDataMomentumHistogram;
 
 //-------Global Varibles END--------//
-
-//Returns a double after converting the second double parameter based on the unit values specified in the first string parameter
-double unitConversion(string type, double orginalValue)
-{
-    double value;
-    if (type == "GeV -> kg m/v") {
-        value = orginalValue * ( Power(10,9)/C() );
-    }else if (type == "kg m/v -> GeV"){
-        value = orginalValue / ( Power(10,9)/C() );
-    }else if (type == "GeV -> kg") {
-        value = orginalValue * (double)( 1.782661845/Power(10,27) );
-    }else if (type =="kg -> GeV") {
-        value = orginalValue / ( 1.782661845/Power(10,27) );
-    }else if (type == "e -> C") {
-        value = orginalValue * ( 1.602176565/Power(10, 19) );
-    }else if (type == "C -> e") {
-        value = orginalValue / ( 1.602176565/Power(10, 19) );
-    }
-    return value;
-}
 
 particle getParticle(long long int particleNumber)
 {

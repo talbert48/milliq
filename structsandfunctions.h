@@ -124,6 +124,10 @@ particle getParticle(long long int particleNumber)
     newParticle.fourMomentum            = fourMomentumTemp;
     newParticle.positions.push_back(initalPosition);
     newParticle.hitDetector.assign(detectors.size(),false);
+	
+	particleDataMomentumHistogram->Fill(newParticle.fourMomentum.Vect().Mag());
+	particleDataThetaHistogram->Fill(newParticle.fourMomentum.Phi());
+	particleDataPhiHistogram->Fill(newParticle.fourMomentum.Theta());
     
     return newParticle;
 }

@@ -19,7 +19,7 @@ void setUserVaribles()
     
     deltaTime                           = Power(10, -11);//s
     
-    numberOfTotalParticles              = 100;
+    numberOfTotalParticles              = 100000;
     particleMass                        = 50;//GeV
     particleCharge                      = Power(10, 0);//e
     
@@ -51,12 +51,12 @@ void setUserVaribles()
     aCMSMagnet.strength                 = 4;//T
     aCMSMagnet.direction                = 1;
     aCMSMagnet.internalRadius           = 0;//m
-    aCMSMagnet.externalRadius           = 8;//m
+    aCMSMagnet.externalRadius           = 2;//m
     CMSMagnets.push_back(aCMSMagnet);
     
     aCMSMagnet.direction                = 1;
     aCMSMagnet.internalRadius           = aCMSMagnet.externalRadius;
-    aCMSMagnet.externalRadius           = 16;//m
+    aCMSMagnet.externalRadius           = 4;//m
     CMSMagnets.push_back(aCMSMagnet);
     
     displayDetectorRoom                 = true;
@@ -64,10 +64,10 @@ void setUserVaribles()
     displaySubDetetorsInSetup           = false;
     displayAxesInSetup                  = true;
     
-    drawAllParticlesPaths               = true;
+    drawAllParticlesPaths               = false;
     drawDetectedParticlesPaths          = false;
     
-    calculateWithMagnets                = true;
+    calculateWithMagnets                = false;
     
     
     //------------------------ USER MAY SET  ABOVE VARIBLES -------------------------//
@@ -83,11 +83,13 @@ particle adjustmentsFromCMSMagnets(particle aParticle)
     double momentumMagnitude = aParticle.fourMomentum.Vect().Mag();
     double phi = aParticle.fourMomentum.Phi();
     double theta = aParticle.fourMomentum.Theta();
-    
+	int itr = 0;
+    //printf("particle phi %f, particle theta %f, particle momentum %f\n",phi,theta,momentumMagnitude);
     //loop a array of the CMS magnets from origin to the last magnet adjusting the particle's trajectory and position at increments of deltaTime until the particle is through all the CMS magnet's
     for (int i=0; i<CMSMagnets.size(); i++) {
         double w = aParticle.charge * CMSMagnets.at(i).strength * CMSMagnets.at(i).direction * Power(C(), 2) / (aParticle.fourMomentum.E()*Power(10,9));
         do{
+			itr++;
             //calculate the new trajectory of the particle
             TVector3 trajetory;
             trajetory.SetX( Cos(phi)*Sin(theta) );
@@ -101,7 +103,8 @@ particle adjustmentsFromCMSMagnets(particle aParticle)
             //set the new values for phi and theta based on the trajectory set above
             phi = aParticle.fourMomentum.Phi();
             theta = aParticle.fourMomentum.Theta();
-            
+			
+            if(itr>20000){break;}
         //check if the particle is outside the current CMS magnet
         }while(Hypot(aParticle.positions.back().Y(), aParticle.positions.back().Z())<CMSMagnets.at(i).externalRadius);
     }
@@ -126,14 +129,14 @@ int main()
 	
     setupParticleParameterHistograms();
     
-    particleDataFile = new TFile("particleData.root","RECREATE");
-    
     setupDetectorParticlePostionHistogramsAndGraphs();
+	
+	particleDataFile = new TFile("C:/root/particleData2.root","RECREATE");
 
     for (long long int p=0; p<numberOfTotalParticles; p++)
     {        
         particle currentParticle = getParticle(p);
-        
+        printf("--Particle %i--\n",p);
         if (calculateWithMagnets) {
             currentParticle = adjustmentsToParticleTrajetories(currentParticle);
         }
@@ -142,6 +145,7 @@ int main()
             TVector3 pointOfIntersection = getPointOfIntersectionOfParticleWithDetector(currentParticle, detectors.at(d));
             
             if (pointOfIntersectionIsInDetector(pointOfIntersection, detectors.at(d))) {
+				printf("--Particle Detected--\n");
                 detectors.at(d).numberOfParticlesEntered++;
                 currentParticle.hitDetector.at(d) = true;
                 currentParticle.positions.push_back(pointOfIntersection);
@@ -169,6 +173,7 @@ int main()
         particles.push_back(currentParticle);
     }
     
+	printf("--Program Ending--\n");
     drawDetectorsSetup();
     
     drawSubdetectorHitsWithTrajetories();

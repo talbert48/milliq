@@ -112,8 +112,8 @@ particle getParticle(long long int particleNumber)
 {
 
 	TLorentzVector fourMomentumTemp;
-    fourMomentumTemp.SetPxPyPzE(particleDataArray[particleNumber][0], particleDataArray[particleNumber][1],
-		particleDataArray[particleNumber][2], particleDataArray[particleNumber][3]);
+    fourMomentumTemp.SetPxPyPzE(particleDataArray[particleNumber][2], particleDataArray[particleNumber][1],
+		particleDataArray[particleNumber][0], particleDataArray[particleNumber][3]);
    
     TVector3 initalPosition;
     initalPosition.SetXYZ(0,0,0);
@@ -136,7 +136,7 @@ void generateKnownCMSParticles()
 {
 	//read in file containing particle data
 	ifstream file;
-	file.open("C:/root/events.csv");
+	file.open("/Users/JamesLondon/Documents/Milli Charged Particle Detector Project/milliq/events.csv");
 	string value;
 	int itr = 0;
 	while ( file.good() )
@@ -150,13 +150,14 @@ void generateKnownCMSParticles()
 		if(itr == 199999)
 		{break;}
 	}
+    file.close();
 	printf("Particle Data loaded\n");
 }
 void setupParticleParameterHistograms()
 {
     particleDataPhiHistogram = new TH1D("particleDataPhiHistogram", "Phi Distribution", 100, 0, Pi());
-    particleDataThetaHistogram = new TH1D("particleDataThetaHistogram", "Theta Distribution", 100, -1100,1100);//-2*Pi(), 2*Pi());
-    particleDataMomentumHistogram = new TH1D("particleDataMomentumHistogram", "Momentum Distribution", 100, -300, 300);//1, 100);
+    particleDataThetaHistogram = new TH1D("particleDataThetaHistogram", "Theta Distribution", 100, -Pi()/2,Pi()/2);//-2*Pi(), 2*Pi());
+    particleDataMomentumHistogram = new TH1D("particleDataMomentumHistogram", "Momentum Distribution", 100, 0, 600);//1, 100);
     
     particleDataPhiHistogram->SetLineColor(1);
     particleDataThetaHistogram->SetLineColor(1);
@@ -304,6 +305,8 @@ TVector3 getPointOfIntersectionOfParticleWithDetector(particle aParticle, detect
     normal.SetZ(   (vectorAB.X()*vectorAC.Y()) - (vectorAB.Y()*vectorAC.X()) );
     
     double mutiplyer = (normal.X()*(pointA.X()-particlePosition.X()) + normal.Y()*(pointA.Y()-particlePosition.Y()) + normal.Z()*(pointA.Z()-particlePosition.Z()))/(normal.X()*particleTrajectory.X() + normal.Y()*particleTrajectory.Y() + normal.Z()*particleTrajectory.Z());
+    
+    mutiplyer = Abs(mutiplyer);//Stops particles from being detecting backwords
     
     TVector3 pointOfIntersection;
     

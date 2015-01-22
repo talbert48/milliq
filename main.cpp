@@ -17,11 +17,11 @@ void setUserVaribles()
     //-------------------------------------------------------------------------------//
     //------------------------ USER MAY SET BELLOW VARIBLES -------------------------//
     
-    deltaTime                           = Power(10, -11);//s
+    deltaTime                           = Power(10, -10);//s
     
-    numberOfTotalParticles              = 100000;
+    numberOfTotalParticles              = 200000;
     particleMass                        = 50;//GeV
-    particleCharge                      = Power(10, 0);//e
+    particleCharge                      = Power(10, -2);//e
     
     detectorAlighnmentAngle             = Pi()/6;//radians
     
@@ -61,13 +61,13 @@ void setUserVaribles()
     
     displayDetectorRoom                 = true;
     displayDetectorAlignmentAngle       = false;
-    displaySubDetetorsInSetup           = false;
+    displaySubDetetorsInSetup           = true;
     displayAxesInSetup                  = true;
     
     drawAllParticlesPaths               = false;
-    drawDetectedParticlesPaths          = false;
+    drawDetectedParticlesPaths          = true;
     
-    calculateWithMagnets                = false;
+    calculateWithMagnets                = true;
     
     
     //------------------------ USER MAY SET  ABOVE VARIBLES -------------------------//
@@ -77,7 +77,7 @@ void setUserVaribles()
     initializeDetectorsWith(numberOfDetectors, detectorWidths, detectorDepths, detectorHeights, detectorZDisplacement, numberOfSubDetectorsAlongWidth, numberOfSubDetectorsAlongHeight, subDetectorWidths, subDetectorDepths, subDetectorHeigths);
 }
 
-particle adjustmentsFromCMSMagnets(particle aParticle)
+particle adjustmentsFromCMSMagnets(particle aParticle, bool &stuckParticle)
 {
     double velocity = C()*aParticle.fourMomentum.Vect().Mag()/aParticle.fourMomentum.E();
     double momentumMagnitude = aParticle.fourMomentum.Vect().Mag();
@@ -104,15 +104,18 @@ particle adjustmentsFromCMSMagnets(particle aParticle)
             phi = aParticle.fourMomentum.Phi();
             theta = aParticle.fourMomentum.Theta();
 			
-            if(itr>20000){break;}
+            if(itr>2000){
+                stuckParticle = true;
+                return aParticle;
+            }
         //check if the particle is outside the current CMS magnet
         }while(Hypot(aParticle.positions.back().Y(), aParticle.positions.back().Z())<CMSMagnets.at(i).externalRadius);
     }
     return aParticle;
 }
 
-particle adjustmentsToParticleTrajetories(particle aParticle){
-    aParticle = adjustmentsFromCMSMagnets(aParticle);
+particle adjustmentsToParticleTrajetories(particle aParticle, bool &stuckParticle){
+    aParticle = adjustmentsFromCMSMagnets(aParticle, stuckParticle);
     return aParticle;
 }
 
@@ -131,46 +134,48 @@ int main()
     
     setupDetectorParticlePostionHistogramsAndGraphs();
 	
-	particleDataFile = new TFile("C:/root/particleData2.root","RECREATE");
+	particleDataFile = new TFile("particleData.root","RECREATE");
 
     for (long long int p=0; p<numberOfTotalParticles; p++)
-    {        
+    {
         particle currentParticle = getParticle(p);
-        printf("--Particle %i--\n",p);
+        
+        bool stuckParticle = false;
         if (calculateWithMagnets) {
-            currentParticle = adjustmentsToParticleTrajetories(currentParticle);
+            currentParticle = adjustmentsToParticleTrajetories(currentParticle, stuckParticle);
         }
         
-        for (int d=0; d<detectors.size(); d++) {
-            TVector3 pointOfIntersection = getPointOfIntersectionOfParticleWithDetector(currentParticle, detectors.at(d));
-            
-            if (pointOfIntersectionIsInDetector(pointOfIntersection, detectors.at(d))) {
-				printf("--Particle Detected--\n");
-                detectors.at(d).numberOfParticlesEntered++;
-                currentParticle.hitDetector.at(d) = true;
-                currentParticle.positions.push_back(pointOfIntersection);
+        if (!stuckParticle) {
+            for (int d=0; d<detectors.size(); d++) {
+                TVector3 pointOfIntersection = getPointOfIntersectionOfParticleWithDetector(currentParticle, detectors.at(d));
                 
-                for (int w=0; w<detectors.at(d).numberOfSubDetectorsAlongWidth; w++) {
-                    for (int h=0; h<detectors.at(d).numberOfSubDetectorsAlongHeight; h++) {
-                        if(pointOfIntersectionIsInDetector(pointOfIntersection, detectors.at(d).subDetectors.at((w*detectors.at(d).numberOfSubDetectorsAlongHeight)+h))){
-                            detectors.at(d).subDetectors.at((w*detectors.at(d).numberOfSubDetectorsAlongHeight)+h).numberOfParticlesEntered++;
+                if (pointOfIntersectionIsInDetector(pointOfIntersection, detectors.at(d))) {
+                    detectors.at(d).numberOfParticlesEntered++;
+                    currentParticle.hitDetector.at(d) = true;
+                    currentParticle.positions.push_back(pointOfIntersection);
+                    
+                    for (int w=0; w<detectors.at(d).numberOfSubDetectorsAlongWidth; w++) {
+                        for (int h=0; h<detectors.at(d).numberOfSubDetectorsAlongHeight; h++) {
+                            if(pointOfIntersectionIsInDetector(pointOfIntersection, detectors.at(d).subDetectors.at((w*detectors.at(d).numberOfSubDetectorsAlongHeight)+h))){
+                                detectors.at(d).subDetectors.at((w*detectors.at(d).numberOfSubDetectorsAlongHeight)+h).numberOfParticlesEntered++;
+                            }
+                            
+                            TVector3 bottomLeftOfFacePoint, particlePositionOnDetectorFace;
+                            bottomLeftOfFacePoint.SetX( detectors.at(d).lowestYZCorner.X() + detectors.at(d).depth*sin(detectorAlighnmentAngle) - detectors.at(d).width*cos(detectorAlighnmentAngle) );
+                            bottomLeftOfFacePoint.SetY( detectors.at(d).lowestYZCorner.Y() + detectors.at(d).depth*cos(detectorAlighnmentAngle) + detectors.at(d).width*sin(detectorAlighnmentAngle) );
+                            bottomLeftOfFacePoint.SetZ( detectors.at(d).lowestYZCorner.Z() );
+                            
+                            particlePositionOnDetectorFace.SetX( Hypot(pointOfIntersection.X() - bottomLeftOfFacePoint.X() , bottomLeftOfFacePoint.Y() - pointOfIntersection.Y()) );
+                            particlePositionOnDetectorFace.SetY( pointOfIntersection.Z() - bottomLeftOfFacePoint.Z() );
+                            
+                            detectorsParticlePostions.at(d)->SetPoint(detectors.at(d).numberOfParticlesEntered-1, particlePositionOnDetectorFace.X(), particlePositionOnDetectorFace.Y());
                         }
-                        
-                        TVector3 bottomLeftOfFacePoint, particlePositionOnDetectorFace;
-                        bottomLeftOfFacePoint.SetX( detectors.at(d).lowestYZCorner.X() + detectors.at(d).depth*sin(detectorAlighnmentAngle) - detectors.at(d).width*cos(detectorAlighnmentAngle) );
-                        bottomLeftOfFacePoint.SetY( detectors.at(d).lowestYZCorner.Y() + detectors.at(d).depth*cos(detectorAlighnmentAngle) + detectors.at(d).width*sin(detectorAlighnmentAngle) );
-                        bottomLeftOfFacePoint.SetZ( detectors.at(d).lowestYZCorner.Z() );
-                        
-                        particlePositionOnDetectorFace.SetX( Hypot(pointOfIntersection.X() - bottomLeftOfFacePoint.X() , bottomLeftOfFacePoint.Y() - pointOfIntersection.Y()) );
-                        particlePositionOnDetectorFace.SetY( pointOfIntersection.Z() - bottomLeftOfFacePoint.Z() );
-                        
-                        detectorsParticlePostions.at(d)->SetPoint(detectors.at(d).numberOfParticlesEntered-1, particlePositionOnDetectorFace.X(), particlePositionOnDetectorFace.Y());
                     }
                 }
             }
+
+            particles.push_back(currentParticle);
         }
-        
-        particles.push_back(currentParticle);
     }
     
 	printf("--Program Ending--\n");

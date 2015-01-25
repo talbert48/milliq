@@ -98,36 +98,48 @@ vector<CMSMagnet> CMSMagnets;
 vector<particle> particles;
 
 int numberOfTotalParticles;
-double particleDataArray[200001][5];
 
 double particleMass;
 double particleCharge;
 
-string CMSParticleParametersRootFileName;
+bool useEventData;
+string eventDataFilePath;
+int eventDataSize;
+vector<vector<double>> particleDataArray;
+
 TH1D *particleDataPhiHistogram, *particleDataThetaHistogram, *particleDataMomentumHistogram;
 
 //-------Global Varibles END--------//
 
 particle getParticle(long long int particleNumber)
 {
-
-	TLorentzVector fourMomentumTemp;
-    fourMomentumTemp.SetPxPyPzE(particleDataArray[particleNumber][2], particleDataArray[particleNumber][1],
-		particleDataArray[particleNumber][0], particleDataArray[particleNumber][3]);
-   
-    TVector3 initalPosition;
-    initalPosition.SetXYZ(0,0,0);
-    
     particle newParticle;
     newParticle.mass                    = particleMass;
     newParticle.charge                  = particleCharge;
+    
+    TLorentzVector fourMomentumTemp;
+    if (useEventData) {
+        fourMomentumTemp.SetPxPyPzE(particleDataArray[particleNumber][2], particleDataArray[particleNumber][1], particleDataArray[particleNumber][0], particleDataArray[particleNumber][3]);
+    }else{
+        double tempMomentum = randomGenerator.Landau(100,50);
+        fourMomentumTemp.SetE(  Hypot(newParticle.mass*Power(C(),2) , tempMomentum*C()) );
+        
+        TVector3 p;
+        p.SetMagThetaPhi( tempMomentum, randomGenerator.Gaus(Pi()/2,Pi()/8) , randomGenerator.Uniform(0,2*Pi()) );
+        fourMomentumTemp.SetVect(p);
+    }
+    
     newParticle.fourMomentum            = fourMomentumTemp;
+    
+    TVector3 initalPosition;
+    initalPosition.SetXYZ(0,0,0);
+    
     newParticle.positions.push_back(initalPosition);
     newParticle.hitDetector.assign(detectors.size(),false);
 	
 	particleDataMomentumHistogram->Fill(newParticle.fourMomentum.Vect().Mag());
-	particleDataThetaHistogram->Fill(newParticle.fourMomentum.Phi());
-	particleDataPhiHistogram->Fill(newParticle.fourMomentum.Theta());
+	particleDataThetaHistogram->Fill(newParticle.fourMomentum.Theta());
+	particleDataPhiHistogram->Fill(newParticle.fourMomentum.Phi());
     
     return newParticle;
 }
@@ -136,28 +148,36 @@ void generateKnownCMSParticles()
 {
 	//read in file containing particle data
 	ifstream file;
-	file.open("/Users/JamesLondon/Documents/Milli Charged Particle Detector Project/milliq/events.csv");
+    file.open(eventDataFilePath);
+    if(!file.is_open()){
+        useEventData = false;
+        Printf("Particle Event Data: Could Not Load Data from \"%s\"\n",eventDataFilePath.c_str());
+        return;
+    }
 	string value;
 	int itr = 0;
 	while ( file.good() )
 	{
+        vector<double> tempArray(5);
 		for(int i=0; i<5; i++)
 		{
 			getline( file, value, ',' );
-			particleDataArray[itr][i] = stod(value);
+			tempArray[i] = stod(value);
 		}
+        particleDataArray.push_back(tempArray);
 		itr++;
-		if(itr == 199999)
+		if(itr == eventDataSize)
 		{break;}
 	}
     file.close();
-	printf("Particle Data loaded\n");
+	Printf("Particle Event Data: Loaded\n");
 }
+
 void setupParticleParameterHistograms()
 {
-    particleDataPhiHistogram = new TH1D("particleDataPhiHistogram", "Phi Distribution", 100, 0, Pi());
-    particleDataThetaHistogram = new TH1D("particleDataThetaHistogram", "Theta Distribution", 100, -Pi()/2,Pi()/2);//-2*Pi(), 2*Pi());
-    particleDataMomentumHistogram = new TH1D("particleDataMomentumHistogram", "Momentum Distribution", 100, 0, 600);//1, 100);
+    particleDataPhiHistogram = new TH1D("Phi Histogram", "Phi Distribution", 100, 0, Pi());
+    particleDataThetaHistogram = new TH1D("Theta Histogram", "Theta Distribution", 100, -Pi()/2,Pi()/2);
+    particleDataMomentumHistogram = new TH1D("Momentum Histogram", "Momentum Distribution", 100, 0, 1000);
     
     particleDataPhiHistogram->SetLineColor(1);
     particleDataThetaHistogram->SetLineColor(1);
@@ -181,7 +201,7 @@ void setupDetectorParticlePostionHistogramsAndGraphs()
     
     combinedDetectorsParticlePostionsGraph = new TMultiGraph();
     
-    for (int d=0; d<detectors.size(); d++) {
+    for (int d=0; d<(int)detectors.size(); d++) {
         char identifiyer[50];
         sprintf(identifiyer, "subdetectorHistograms.at(%i)", d+1);
         char name[50];
@@ -195,19 +215,19 @@ void setupDetectorParticlePostionHistogramsAndGraphs()
 void enterAndDisplayDetectorParticlePostionHistogramsAndGraphs()
 {
     int cd = 1;
-    TCanvas *particleDataCanvas = new TCanvas("particleDataCanvas","Particle Data Canvas",0,0,2000,1300);
-    particleDataCanvas->Divide(3,(int)(((2*detectors.size()))/3)+((((2*detectors.size()))%3)>0?1:0));
+    TCanvas *detectorCollisionPositionsCanvas = new TCanvas("Detector Collision Positions","Detect Collision Positions",0,0,2000,1300);
+    detectorCollisionPositionsCanvas->Divide(3,(int)(((2*detectors.size()))/3)+((((2*detectors.size()))%3)>0?1:0));
     
     double combinedDetectorsParticlePostionsGraphMaxX = 0, combinedDetectorsParticlePostionsGraphMaxY = 0;
     
-    for (int d=0; d<detectors.size(); d++) {
+    for (int d=0; d<(int)detectors.size(); d++) {
         detectorsParticlePostions.at(d)->SetMarkerColor(detectors.at(d).color);
         detectorsParticlePostions.at(d)->SetMarkerStyle(2);
         detectorsParticlePostions.at(d)->SetMarkerSize(.5);
         char name[50];
-        sprintf(name, "Detector %i Particle Positions", d+1);
+        sprintf(name, "Detector %i Collision Positions", d+1);
         detectorsParticlePostions.at(d)->SetTitle(name);
-        particleDataCanvas->cd(cd);
+        detectorCollisionPositionsCanvas->cd(cd);
         detectorsParticlePostions.at(d)->Draw("AP*");
         detectorsParticlePostions.at(d)->GetXaxis()->SetLimits(0.0 , detectors.at(d).width);
         detectorsParticlePostions.at(d)->GetYaxis()->SetRangeUser(0.0 , detectors.at(d).height );
@@ -228,25 +248,23 @@ void enterAndDisplayDetectorParticlePostionHistogramsAndGraphs()
                 subdetectorHistograms.at(d)->SetBinContent(detectors.at(d).numberOfSubDetectorsAlongWidth - w, h+1, detectors.at(d).subDetectors.at((w*detectors.at(d).numberOfSubDetectorsAlongHeight)+h).numberOfParticlesEntered);
             }
         }
-        particleDataCanvas->cd(cd+(int)detectors.size());
+        detectorCollisionPositionsCanvas->cd(cd+(int)detectors.size());
         cd++;
         subdetectorHistograms.at(d)->Draw("COLZ");
     }
     
-    particleDataCanvas->Update();
-    particleDataCanvas->Modified();
-    particleDataCanvas->Print("particleDataHistograms.png","png");
-    particleDataCanvas->Write();
+    detectorCollisionPositionsCanvas->Update();
+    detectorCollisionPositionsCanvas->Modified();
+    detectorCollisionPositionsCanvas->Write();
     
-    TCanvas *combinedDetectorsParticlePostionsCanvas = new TCanvas("combinedDetectorsParticlePostionsCanvas","Combined Detectors Particle PostionsCanvas",0,0,2000,1300);
-    combinedDetectorsParticlePostionsGraph->SetTitle("Combined Detectors Particle Postions");
+    TCanvas *combinedDetectorsParticlePostionsCanvas = new TCanvas("Combined Detectors Collision Positions","Combined Detectors Collision Positions",0,0,2000,1300);
+    combinedDetectorsParticlePostionsGraph->SetTitle("Combined Detectors Collision Positions");
     combinedDetectorsParticlePostionsGraph->Draw("AP*");
     combinedDetectorsParticlePostionsGraph->GetXaxis()->SetRangeUser(0,combinedDetectorsParticlePostionsGraphMaxX);
     combinedDetectorsParticlePostionsGraph->GetYaxis()->SetRangeUser(0,combinedDetectorsParticlePostionsGraphMaxY);
     combinedDetectorsParticlePostionsGraph->GetXaxis()->SetLimits(0, combinedDetectorsParticlePostionsGraphMaxX);
     combinedDetectorsParticlePostionsCanvas->Update();
     combinedDetectorsParticlePostionsCanvas->Modified();
-    combinedDetectorsParticlePostionsCanvas->Print("combinedDetectorsParticlePostions.png","png");
     combinedDetectorsParticlePostionsCanvas->Write();
 }
 
@@ -598,20 +616,20 @@ void drawSubdetectorHitsWithTrajetories()
     TVector3 aPoint;
     TPolyLine3D *aLine;
     
-    TCanvas *combinedSubdetectorWithTrajetoriesCanvas = new TCanvas("combinedSubdetectorWithTrajetoriesCanvas","Combined Subdetectors with Trajectories",0,0,2000,1300);
+    TCanvas *combinedSubdetectorWithTrajetoriesCanvas = new TCanvas("Particle Trajectories in Setup","Particle Trajectories in Setup",0,0,2000,1300);
     combinedSubdetectorWithTrajetoriesCanvas->cd();
     
     //Particles
     if(drawAllParticlesPaths||drawDetectedParticlesPaths){
-        for(int i=0; i<particles.size(); i++){
+        for(int i=0; i<(int)particles.size(); i++){
             bool particleHitADetector = false;
-            for(int d=0; d<detectors.size(); d++){
+            for(int d=0; d<(int)detectors.size(); d++){
                 if(particles.at(i).hitDetector.at(d))
                 {   particleHitADetector = true; }
             }
             if (particleHitADetector||drawAllParticlesPaths) {
             aLine = new TPolyLine3D((int)particles.at(i).positions.size());
-            for (int c=0; c<particles.at(i).positions.size(); c++) {
+            for (int c=0; c<(int)particles.at(i).positions.size(); c++) {
                 aLine->SetPoint(c, particles.at(i).positions.at(c).X(), particles.at(i).positions.at(c).Y(), particles.at(i).positions.at(c).Z());
             }
             aLine->SetLineWidth(1);
@@ -658,7 +676,6 @@ void drawSubdetectorHitsWithTrajetories()
     
     combinedSubdetectorWithTrajetoriesCanvas->Update();
     combinedSubdetectorWithTrajetoriesCanvas->Modified();
-    combinedSubdetectorWithTrajetoriesCanvas->Print("combinedSubdetectorWithTrajetories.png","png");
     combinedSubdetectorWithTrajetoriesCanvas->Write();
 }
 
@@ -667,16 +684,8 @@ void drawDetectorsSetup()
     TVector3 aPoint;
     TPolyLine3D *aLine;
     
-    TCanvas *detectorSetupCanvas = new TCanvas("detectorSetupCanvas","Detector Setup Canvas",0,0,1000,700);
+    TCanvas *detectorSetupCanvas = new TCanvas("Detector Setup","Detector Setup",0,0,1000,700);
     detectorSetupCanvas->cd();
-    
-    //Particle Collision
-    TPolyMarker3D *point = new TPolyMarker3D(1);
-    point->SetPoint(0, 0, 0, 0);
-    point->SetMarkerSize(0);
-    point->SetMarkerColor(6);
-    point->SetMarkerStyle(8);
-    point->Draw("same");
     
     //Axis Indicators
     if (displayAxesInSetup) {

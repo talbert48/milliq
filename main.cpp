@@ -19,9 +19,9 @@ void setUserVaribles()
     
     deltaTime                           = Power(10, -10);//s
     
-    numberOfTotalParticles              = 200000;
+    numberOfTotalParticles              = 199999;
     particleMass                        = 50;//GeV
-    particleCharge                      = Power(10, -2);//e
+    particleCharge                      = Power(10, -3);//e
     
     detectorAlighnmentAngle             = Pi()/6;//radians
     
@@ -64,8 +64,12 @@ void setUserVaribles()
     displaySubDetetorsInSetup           = true;
     displayAxesInSetup                  = true;
     
-    drawAllParticlesPaths               = false;
+    drawAllParticlesPaths               = true;
     drawDetectedParticlesPaths          = true;
+    
+    useEventData                        = true;
+    eventDataSize                       = 199999;
+    eventDataFilePath                   = "/Users/JamesLondon/Documents/Milli Charged Particle Detector Project/milliq/events.csv";
     
     calculateWithMagnets                = true;
     
@@ -84,9 +88,8 @@ particle adjustmentsFromCMSMagnets(particle aParticle, bool &stuckParticle)
     double phi = aParticle.fourMomentum.Phi();
     double theta = aParticle.fourMomentum.Theta();
 	int itr = 0;
-    //printf("particle phi %f, particle theta %f, particle momentum %f\n",phi,theta,momentumMagnitude);
     //loop a array of the CMS magnets from origin to the last magnet adjusting the particle's trajectory and position at increments of deltaTime until the particle is through all the CMS magnet's
-    for (int i=0; i<CMSMagnets.size(); i++) {
+    for (int i=0; i<(int)CMSMagnets.size(); i++) {
         double w = aParticle.charge * CMSMagnets.at(i).strength * CMSMagnets.at(i).direction * Power(C(), 2) / (aParticle.fourMomentum.E()*Power(10,9));
         do{
 			itr++;
@@ -104,7 +107,7 @@ particle adjustmentsFromCMSMagnets(particle aParticle, bool &stuckParticle)
             phi = aParticle.fourMomentum.Phi();
             theta = aParticle.fourMomentum.Theta();
 			
-            if(itr>2000){
+            if(itr>1000){
                 stuckParticle = true;
                 return aParticle;
             }
@@ -120,15 +123,17 @@ particle adjustmentsToParticleTrajetories(particle aParticle, bool &stuckParticl
 }
 
 int main()
-{
-    printf("--Program Started--\nCalculating...\n");
+{    
+    printf("--Program Started--\n\n");
     clock_t tStart = clock();
     
     randomGenerator.SetSeed(0);
 
     setUserVaribles();
 	
-    generateKnownCMSParticles();
+    if (useEventData) {
+        generateKnownCMSParticles();
+    }
 	
     setupParticleParameterHistograms();
     
@@ -146,7 +151,7 @@ int main()
         }
         
         if (!stuckParticle) {
-            for (int d=0; d<detectors.size(); d++) {
+            for (int d=0; d<(int)detectors.size(); d++) {
                 TVector3 pointOfIntersection = getPointOfIntersectionOfParticleWithDetector(currentParticle, detectors.at(d));
                 
                 if (pointOfIntersectionIsInDetector(pointOfIntersection, detectors.at(d))) {
@@ -178,7 +183,7 @@ int main()
         }
     }
     
-	printf("--Program Ending--\n");
+	printf("--Program Ending--\n\n");
     drawDetectorsSetup();
     
     drawSubdetectorHitsWithTrajetories();
@@ -191,11 +196,11 @@ int main()
     
     particleDataFile->Close();
     
-    printf("repetitions: %i\n", numberOfTotalParticles);
-    for (int d=0; d<detectors.size(); d++)
+    printf("Particles: %i\n", numberOfTotalParticles);
+    for (int d=0; d<(int)detectors.size(); d++)
     {
-        printf("Detector %i: %f%%\n",(d+1), ((double) detectors.at(d).numberOfParticlesEntered)/numberOfTotalParticles*100);
+        printf("Detector %i Hit Ratio: %f%%\n",(d+1), ((double) detectors.at(d).numberOfParticlesEntered)/numberOfTotalParticles*100);
     }
-    printf("length: %f seconds\n" , ((double) (clock() - tStart))/CLOCKS_PER_SEC);
+    printf("Execution Duration: %i seconds\n" , (int)(( (double)(clock() - tStart))/CLOCKS_PER_SEC));
     return 0;
 }

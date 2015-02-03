@@ -73,7 +73,7 @@ struct detectorRoom {
 struct CMSMagnet {
     double internalRadius, externalRadius;
     double strength;
-    double direction;
+    int direction;
 };
 
 //------------Structs END-----------//
@@ -156,7 +156,7 @@ void generateKnownCMSParticles()
     }
 	string value;
 	int itr = 0;
-	while ( file.good() )
+	while ( file.good() && itr < eventDataSize)
 	{
         vector<double> tempArray(5);
 		for(int i=0; i<5; i++)
@@ -166,8 +166,6 @@ void generateKnownCMSParticles()
 		}
         particleDataArray.push_back(tempArray);
 		itr++;
-		if(itr == eventDataSize)
-		{break;}
 	}
     file.close();
 	Printf("Particle Event Data: Loaded\n");
@@ -175,8 +173,8 @@ void generateKnownCMSParticles()
 
 void setupParticleParameterHistograms()
 {
-    particleDataPhiHistogram = new TH1D("Phi Histogram", "Phi Distribution", 100, 0, Pi());
-    particleDataThetaHistogram = new TH1D("Theta Histogram", "Theta Distribution", 100, -Pi()/2,Pi()/2);
+    particleDataPhiHistogram = new TH1D("Phi Histogram", "Phi Distribution", 100, -2*Pi(), 2*Pi());
+    particleDataThetaHistogram = new TH1D("Theta Histogram", "Theta Distribution", 100, 0,Pi());
     particleDataMomentumHistogram = new TH1D("Momentum Histogram", "Momentum Distribution", 100, 0, 1000);
     
     particleDataPhiHistogram->SetLineColor(1);

@@ -49,7 +49,7 @@ void setUserVaribles()
     
     CMSMagnet aCMSMagnet;
     aCMSMagnet.strength                 = 4;//T
-    aCMSMagnet.direction                = 1;
+    aCMSMagnet.direction                = -1;
     aCMSMagnet.internalRadius           = 0;//m
     aCMSMagnet.externalRadius           = 2;//m
     CMSMagnets.push_back(aCMSMagnet);
@@ -68,7 +68,7 @@ void setUserVaribles()
     drawDetectedParticlesPaths          = true;
     
     useEventData                        = true;
-    eventDataSize                       = 199999;
+    eventDataSize                       = 200000;
     eventDataFilePath                   = "/Users/JamesLondon/Documents/Milli Charged Particle Detector Project/milliq/events.csv";
     
     calculateWithMagnets                = true;
@@ -144,7 +144,7 @@ int main()
     for (long long int p=0; p<numberOfTotalParticles; p++)
     {
         particle currentParticle = getParticle(p);
-        
+                
         bool stuckParticle = false;
         if (calculateWithMagnets) {
             currentParticle = adjustmentsToParticleTrajetories(currentParticle, stuckParticle);

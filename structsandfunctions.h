@@ -51,8 +51,9 @@ struct particle {
 
 struct detector {
     double width, depth, height;
-    TVector3 lowestYZCorner;
+    TVector3 FBR,FBL,FTR,FTL,BBR,BBL,BTR,BTL;
     int numberOfParticlesEntered;
+    short color;
 };
 
 struct subDetector:detector {
@@ -62,12 +63,9 @@ struct mainDetector:detector {
     int numberOfSubDetectorsAlongWidth;
     int numberOfSubDetectorsAlongHeight;
     vector<subDetector> subDetectors;
-    short color;
 };
 
-struct detectorRoom {
-    double width, depth, height;
-    TVector3 lowestYZCorner;
+struct detectorRoom:detector {
 };
 
 struct CMSMagnet {
@@ -119,7 +117,7 @@ particle getParticle(long long int particleNumber)
     
     TLorentzVector fourMomentumTemp;
     if (useEventData) {
-        fourMomentumTemp.SetPxPyPzE(particleDataArray[particleNumber][2], particleDataArray[particleNumber][1], particleDataArray[particleNumber][0], particleDataArray[particleNumber][3]);
+        fourMomentumTemp.SetPxPyPzE(particleDataArray[particleNumber][0], particleDataArray[particleNumber][1], particleDataArray[particleNumber][2], particleDataArray[particleNumber][3]);
     }else{
         double tempMomentum = randomGenerator.Landau(100,50);
         fourMomentumTemp.SetE(  Hypot(newParticle.mass*Power(C(),2) , tempMomentum*C()) );
@@ -173,7 +171,7 @@ void generateKnownCMSParticles()
 
 void setupParticleParameterHistograms()
 {
-    particleDataPhiHistogram = new TH1D("Phi Histogram", "Phi Distribution", 100, -2*Pi(), 2*Pi());
+    particleDataPhiHistogram = new TH1D("Phi Histogram", "Phi Distribution", 100, -Pi(), Pi());
     particleDataThetaHistogram = new TH1D("Theta Histogram", "Theta Distribution", 100, 0,Pi());
     particleDataMomentumHistogram = new TH1D("Momentum Histogram", "Momentum Distribution", 100, 0, 1000);
     
@@ -272,19 +270,21 @@ void enterAndDisplayDetectorParticlePostionHistogramsAndGraphs()
 
 bool pointOfIntersectionIsInDetector(TVector3 thePointOfIntersection,detector aDetector)
 {
+    double min,max;
+    
     //X
-    if (thePointOfIntersection.X() >= aDetector.lowestYZCorner.X() + aDetector.depth*sin(detectorAlighnmentAngle) - aDetector.width*cos(detectorAlighnmentAngle)) {
-        if (thePointOfIntersection.X() <= aDetector.lowestYZCorner.X() + aDetector.depth*sin(detectorAlighnmentAngle)) {
-            //Y
-            if (thePointOfIntersection.Y() >= aDetector.lowestYZCorner.Y() + aDetector.depth*cos(detectorAlighnmentAngle)) {
-                if (thePointOfIntersection.Y() <= aDetector.lowestYZCorner.Y() + aDetector.depth*cos(detectorAlighnmentAngle) + aDetector.width*sin(detectorAlighnmentAngle)) {
-                    //Z
-                    if (thePointOfIntersection.Z() >= aDetector.lowestYZCorner.Z()) {
-                        if (thePointOfIntersection.Z() <= aDetector.lowestYZCorner.Z() + aDetector.height) {
-                            return true;
-                        }
-                    }
-                }
+    min = Min(Min(aDetector.BBR.X(),aDetector.BBL.X()),Min(aDetector.BTR.X(),aDetector.BTL.X()));
+    max = Max(Max(aDetector.BBR.X(),aDetector.BBL.X()),Max(aDetector.BTR.X(),aDetector.BTL.X()));
+    if (thePointOfIntersection.X()>=min && thePointOfIntersection.X()<=max) {
+        //Y
+        min = Min(Min(aDetector.BBR.Y(),aDetector.BBL.Y()),Min(aDetector.BTR.Y(),aDetector.BTL.Y()));
+        max = Max(Max(aDetector.BBR.Y(),aDetector.BBL.Y()),Max(aDetector.BTR.Y(),aDetector.BTL.Y()));
+        if (thePointOfIntersection.Y()>=min && thePointOfIntersection.Y()<=max) {
+            //Z
+            min = Min(Min(aDetector.BBR.Z(),aDetector.BBL.Z()),Min(aDetector.BTR.Z(),aDetector.BTL.Z()));
+            max = Max(Max(aDetector.BBR.Z(),aDetector.BBL.Z()),Max(aDetector.BTR.Z(),aDetector.BTL.Z()));
+            if (thePointOfIntersection.Z()>=min && thePointOfIntersection.Z()<=max) {
+                return true;
             }
         }
     }
@@ -298,17 +298,9 @@ TVector3 getPointOfIntersectionOfParticleWithDetector(particle aParticle, detect
     
     TVector3 pointA, pointB , pointC;
     
-    pointA.SetX( aDetector.lowestYZCorner.X() + aDetector.depth*sin(detectorAlighnmentAngle) );
-    pointA.SetY( aDetector.lowestYZCorner.Y() + aDetector.depth*cos(detectorAlighnmentAngle) );
-    pointA.SetZ( aDetector.lowestYZCorner.Z() );
-    
-    pointB.SetX( pointA.X() );
-    pointB.SetY( pointA.Y() );
-    pointB.SetZ( pointA.Z() + aDetector.height );
-    
-    pointC.SetX( pointA.X() - aDetector.width*cos(detectorAlighnmentAngle) );
-    pointC.SetY( pointA.Y() + aDetector.width*sin(detectorAlighnmentAngle) );
-    pointC.SetZ( pointA.Z() );
+    pointA = aDetector.BBR;
+    pointB = aDetector.BTR;
+    pointC = aDetector.BBL;
     
     TVector3 vectorAB, vectorAC, normal;
     
@@ -343,198 +335,140 @@ TVector3 getPointOfIntersectionOfParticleWithDetector(particle aParticle, detect
 //---------------START--------------//
 //-------------Graphics-------------//
 
-void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPoint, double width, double depth, double height, double angle, short color)
+
+void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, detector aDetector)
 {
     TVector3 aPoint;
     TPolyLine3D *aLine;
     
     aCanvas->cd();
     
-    //1
+    //FBR to BBR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FBR.X(), aDetector.FBR.Y(), aDetector.FBR.Z());
+    aLine->SetPoint(1, aDetector.BBR.X(), aDetector.BBR.Y(), aDetector.BBR.Z());
     
     aLine->Draw("same");
     
-    //2
+    //FTR to BTR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FTR.X(), aDetector.FTR.Y(), aDetector.FTR.Z());
+    aLine->SetPoint(1, aDetector.BTR.X(), aDetector.BTR.Y(), aDetector.BTR.Z());
     
     aLine->Draw("same");
     
-    //3
+    //FBL to BBL
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
+    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
     
     aLine->Draw("same");
     
-    //4
+    //FTL to BTL
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FTL.X(), aDetector.FTL.Y(), aDetector.FTL.Z());
+    aLine->SetPoint(1, aDetector.BTL.X(), aDetector.BTL.Y(), aDetector.BTL.Z());
     
     aLine->Draw("same");
     
-    //5
+    //BBR to BBL
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.BBR.X(), aDetector.BBR.Y(), aDetector.BBR.Z());
+    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
     
     aLine->Draw("same");
     
-    //6
+    //BTR to BTL
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.BTR.X(), aDetector.BTR.Y(), aDetector.BTR.Z());
+    aLine->SetPoint(1, aDetector.BTL.X(), aDetector.BTL.Y(), aDetector.BTL.Z());
     
     aLine->Draw("same");
     
-    //7
+    //FBR to FBL
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FBR.X(), aDetector.FBR.Y(), aDetector.FBR.Z());
+    aLine->SetPoint(1, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
     
     aLine->Draw("same");
     
-    //8
+    //FTR to FTL
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FTR.X(), aDetector.FTR.Y(), aDetector.FTR.Z());
+    aLine->SetPoint(1, aDetector.FTL.X(), aDetector.FTL.Y(), aDetector.FTL.Z());
     
     aLine->Draw("same");
     
-    //9
+    //FTR to FBR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FTR.X(), aDetector.FTR.Y(), aDetector.FTR.Z());
+    aLine->SetPoint(1, aDetector.FBR.X(), aDetector.FBR.Y(), aDetector.FBR.Z());
     
     aLine->Draw("same");
     
-    //10
+    //BBR to BTR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.BBR.X(), aDetector.BBR.Y(), aDetector.BBR.Z());
+    aLine->SetPoint(1, aDetector.BTR.X(), aDetector.BTR.Y(), aDetector.BTR.Z());
     
     aLine->Draw("same");
     
-    //11
+    //BBL to BTL
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
+    aLine->SetPoint(1, aDetector.BTL.X(), aDetector.BTL.Y(), aDetector.BTL.Z());
     
     aLine->Draw("same");
     
-    //12
+    //FBL to FTL
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
+    aLine->SetLineColor(aDetector.color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
+    aLine->SetPoint(1, aDetector.FTL.X(), aDetector.FTL.Y(), aDetector.FTL.Z());
     
     aLine->Draw("same");
     
 }
+
+/////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////ENDED////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
 
 void drawBoxOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPoint, double width, double depth, double height, double angle, short color)
 {
@@ -548,14 +482,8 @@ void drawBoxOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPo
     aLine->SetLineWidth(1);
     aLine->SetLineColor(color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
+    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
     
     aLine->Draw("same");
     
@@ -564,15 +492,8 @@ void drawBoxOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPo
     aLine->SetLineWidth(1);
     aLine->SetLineColor(color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
+    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
     
     aLine->Draw("same");
     
@@ -581,13 +502,8 @@ void drawBoxOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPo
     aLine->SetLineWidth(1);
     aLine->SetLineColor(color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
+    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
     
     aLine->Draw("same");
     
@@ -596,15 +512,8 @@ void drawBoxOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPo
     aLine->SetLineWidth(1);
     aLine->SetLineColor(color);
     
-    aPoint = bottomRightFrontPoint;
-    aPoint.SetX(aPoint.X() + depth*sin(angle));
-    aPoint.SetY(aPoint.Y() + depth*cos(angle));
-    aPoint.SetX(aPoint.X() - width*cos(angle));
-    aPoint.SetY(aPoint.Y() + width*sin(angle));
-    aLine->SetPoint(0, aPoint.X(), aPoint.Y(), aPoint.Z());
-    
-    aPoint.SetZ(aPoint.Z() + height);
-    aLine->SetPoint(1, aPoint.X(), aPoint.Y(), aPoint.Z());
+    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
+    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
     
     aLine->Draw("same");
 }

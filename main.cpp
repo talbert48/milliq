@@ -81,6 +81,25 @@ void setUserVaribles()
     initializeDetectorsWith(numberOfDetectors, detectorWidths, detectorDepths, detectorHeights, detectorZDisplacement, numberOfSubDetectorsAlongWidth, numberOfSubDetectorsAlongHeight, subDetectorWidths, subDetectorDepths, subDetectorHeigths);
 }
 
+particle momentumAfterDeltaTime(particle aParticle, TVector3 magneticField)
+{
+    double w = aParticle.charge * magneticField.Mag() * Power(C(), 2) / (aParticle.fourMomentum.E()*Power(10,9));
+    
+    TVector3 newMomentum;
+    newMomentum.SetX( (1/magneticField.Mag2()) * (aParticle.fourMomentum.Px()*(    (Power(magneticField.Py(),2) + Power(magneticField.Pz(),2)) * Cos(w*deltaTime) + Power(magneticField.Px(),2)      ) +
+                                                  aParticle.fourMomentum.Py()*(    magneticField.Mag()*magneticField.Z()*Sin(w*deltaTime) + magneticField.X()*magneticField.Y()*(1-Cos(w*deltaTime)) ) +
+                                                  aParticle.fourMomentum.Pz()*( -1*magneticField.Mag()*magneticField.Y()*Sin(w*deltaTime) + magneticField.X()*magneticField.Z()*(1-Cos(w*deltaTime)) )
+                                                  ));
+    newMomentum.SetY( (1/magneticField.Mag2()) * (aParticle.fourMomentum.Py()*(    (Power(magneticField.Px(),2) + Power(magneticField.Pz(),2)) * Cos(w*deltaTime) + Power(magneticField.Py(),2)      ) +
+                                                  aParticle.fourMomentum.Pz()*(    magneticField.Mag()*magneticField.X()*Sin(w*deltaTime) + magneticField.Y()*magneticField.Z()*(1-Cos(w*deltaTime)) ) +
+                                                  aParticle.fourMomentum.Px()*( -1*magneticField.Mag()*magneticField.Z()*Sin(w*deltaTime) + magneticField.X()*magneticField.Y()*(1-Cos(w*deltaTime)) )
+                                                  ));
+    newMomentum.SetZ( (1/magneticField.Mag2()) * (aParticle.fourMomentum.Pz()*(    (Power(magneticField.Px(),2) + Power(magneticField.Py(),2)) * Cos(w*deltaTime) + Power(magneticField.Pz(),2)      ) +
+                                                  aParticle.fourMomentum.Px()*(    magneticField.Mag()*magneticField.Y()*Sin(w*deltaTime) + magneticField.X()*magneticField.Z()*(1-Cos(w*deltaTime)) ) +
+                                                  aParticle.fourMomentum.Py()*( -1*magneticField.Mag()*magneticField.X()*Sin(w*deltaTime) + magneticField.Y()*magneticField.Z()*(1-Cos(w*deltaTime)) )
+                                                  ));
+}
+
 particle adjustmentsFromCMSMagnets(particle aParticle, bool &stuckParticle)
 {
     double velocity = C()*aParticle.fourMomentum.Vect().Mag()/aParticle.fourMomentum.E();

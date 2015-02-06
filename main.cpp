@@ -23,11 +23,12 @@ void setUserVaribles()
     particleMass                        = 50;//GeV
     particleCharge                      = Power(10, -3);//e
     
-    detectorAlighnmentAngle             = Pi()/6;//radians
+    detectorAlighnmentTheta             = Pi()/6;//radians
+    detectorAlighnmentPhi               = Pi()/12;//radians
     
-    detectorRoom.lowestYZCorner.SetX(     0);//m
-    detectorRoom.lowestYZCorner.SetY(     10);//m
-    detectorRoom.lowestYZCorner.SetZ(     0);//m
+    detectorRoom.FBL.SetX(                -10);//m
+    detectorRoom.FBL.SetY(                -5);//m
+    detectorRoom.FBL.SetZ(                -10);//m
     detectorRoom.width                  = 10;//m
     detectorRoom.depth                  = 10;//m
     detectorRoom.height                 = 2;//m

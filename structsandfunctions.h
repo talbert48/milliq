@@ -83,29 +83,28 @@ double deltaTime;
 TRandom3 randomGenerator;
 
 TFile *particleDataFile;
+TH1D *particleDataPhiHistogram, *particleDataThetaHistogram, *particleDataMomentumHistogram;
 vector<TH2D*> subdetectorHistograms;
 TMultiGraph *combinedDetectorsParticlePostionsGraph;
 vector<TGraph*> detectorsParticlePostions;
 
 detectorRoom detectorRoom;
-double detectorAlighnmentAngle;
+vector<mainDetector> detectors;
+
+double detectorAlighnmentTheta, detectorAlighnmentPhi;
+
 bool displayDetectorRoom, displayDetectorAlignmentAngle, displaySubDetetorsInSetup, displayAxesInSetup, calculateWithMagnets, drawAllParticlesPaths, drawDetectedParticlesPaths;
 
-vector<mainDetector> detectors;
 vector<CMSMagnet> CMSMagnets;
+
 vector<particle> particles;
-
 int numberOfTotalParticles;
-
-double particleMass;
-double particleCharge;
+double particleMass, particleCharge;
 
 bool useEventData;
 string eventDataFilePath;
 int eventDataSize;
 vector<vector<double>> particleDataArray;
-
-TH1D *particleDataPhiHistogram, *particleDataThetaHistogram, *particleDataMomentumHistogram;
 
 //-------Global Varibles END--------//
 
@@ -268,7 +267,7 @@ void enterAndDisplayDetectorParticlePostionHistogramsAndGraphs()
 //---------------START--------------//
 //-------------Detection------------//
 
-bool pointOfIntersectionIsInDetector(TVector3 thePointOfIntersection,detector aDetector)
+bool pointOfIntersectionIsInDetector(TVector3 thePointOfIntersection, detector aDetector)
 {
     double min,max;
     
@@ -335,10 +334,33 @@ TVector3 getPointOfIntersectionOfParticleWithDetector(particle aParticle, detect
 //---------------START--------------//
 //-------------Graphics-------------//
 
+TVector3 getPointOfIntersectionOfPointVectorWithPlane(TVector3 point, TVector3 vector, TVector3 pointA, TVector3 pointB, TVector3 pointC)
+{
+    TVector3 vectorAB, vectorAC, normal;
+    
+    vectorAB = pointB - pointA;
+    
+    vectorAC = pointC - pointA;
+    
+    normal.SetX(   (vectorAB.Y()*vectorAC.Z()) - (vectorAB.Z()*vectorAC.Y()) );
+    normal.SetY( -((vectorAB.X()*vectorAC.Z()) - (vectorAB.Z()*vectorAC.X())) );
+    normal.SetZ(   (vectorAB.X()*vectorAC.Y()) - (vectorAB.Y()*vectorAC.X()) );
+    
+    double mutiplyer = (normal.X()*(pointA.X()-point.X()) + normal.Y()*(pointA.Y()-point.Y()) + normal.Z()*(pointA.Z()-point.Z()))/(normal.X()*vector.X() + normal.Y()*vector.Y() + normal.Z()*vector.Z());
+    
+    mutiplyer = Abs(mutiplyer);//Stops particles from being detecting backwords
+    
+    TVector3 pointOfIntersection;
+    
+    pointOfIntersection = vector;
+    pointOfIntersection *= mutiplyer;
+    pointOfIntersection += point;
+    
+    return pointOfIntersection;
+}
 
 void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, detector aDetector)
 {
-    TVector3 aPoint;
     TPolyLine3D *aLine;
     
     aCanvas->cd();
@@ -383,138 +405,47 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, detector aDetector)
     
     aLine->Draw("same");
     
-    //BBR to BBL
+    //BBR to BBL to BTL to BTR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
     aLine->SetLineColor(aDetector.color);
     
     aLine->SetPoint(0, aDetector.BBR.X(), aDetector.BBR.Y(), aDetector.BBR.Z());
     aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
+    aLine->SetPoint(2, aDetector.BTL.X(), aDetector.BTL.Y(), aDetector.BTL.Z());
+    aLine->SetPoint(3, aDetector.BTR.X(), aDetector.BTR.Y(), aDetector.BTR.Z());
     
     aLine->Draw("same");
     
-    //BTR to BTL
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(aDetector.color);
-    
-    aLine->SetPoint(0, aDetector.BTR.X(), aDetector.BTR.Y(), aDetector.BTR.Z());
-    aLine->SetPoint(1, aDetector.BTL.X(), aDetector.BTL.Y(), aDetector.BTL.Z());
-    
-    aLine->Draw("same");
-    
-    //FBR to FBL
+    //FBR to FBL to FTL to FTR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
     aLine->SetLineColor(aDetector.color);
     
     aLine->SetPoint(0, aDetector.FBR.X(), aDetector.FBR.Y(), aDetector.FBR.Z());
     aLine->SetPoint(1, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
+    aLine->SetPoint(2, aDetector.FTL.X(), aDetector.FTL.Y(), aDetector.FTL.Z());
+    aLine->SetPoint(3, aDetector.FTR.X(), aDetector.FTR.Y(), aDetector.FTR.Z());
     
     aLine->Draw("same");
+}
+
+void drawBoxOnCanvasWithDimensions(TCanvas *aCanvas, detector aDetector)
+{
+    TPolyLine3D *aLine;
     
-    //FTR to FTL
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(aDetector.color);
+    aCanvas->cd();
     
-    aLine->SetPoint(0, aDetector.FTR.X(), aDetector.FTR.Y(), aDetector.FTR.Z());
-    aLine->SetPoint(1, aDetector.FTL.X(), aDetector.FTL.Y(), aDetector.FTL.Z());
-    
-    aLine->Draw("same");
-    
-    //FTR to FBR
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(aDetector.color);
-    
-    aLine->SetPoint(0, aDetector.FTR.X(), aDetector.FTR.Y(), aDetector.FTR.Z());
-    aLine->SetPoint(1, aDetector.FBR.X(), aDetector.FBR.Y(), aDetector.FBR.Z());
-    
-    aLine->Draw("same");
-    
-    //BBR to BTR
+    //BBR to BBL to BTL to BTR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
     aLine->SetLineColor(aDetector.color);
     
     aLine->SetPoint(0, aDetector.BBR.X(), aDetector.BBR.Y(), aDetector.BBR.Z());
-    aLine->SetPoint(1, aDetector.BTR.X(), aDetector.BTR.Y(), aDetector.BTR.Z());
-    
-    aLine->Draw("same");
-    
-    //BBL to BTL
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(aDetector.color);
-    
-    aLine->SetPoint(0, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
-    aLine->SetPoint(1, aDetector.BTL.X(), aDetector.BTL.Y(), aDetector.BTL.Z());
-    
-    aLine->Draw("same");
-    
-    //FBL to FTL
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(aDetector.color);
-    
-    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
-    aLine->SetPoint(1, aDetector.FTL.X(), aDetector.FTL.Y(), aDetector.FTL.Z());
-    
-    aLine->Draw("same");
-    
-}
+    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
+    aLine->SetPoint(2, aDetector.BTL.X(), aDetector.BTL.Y(), aDetector.BTL.Z());
+    aLine->SetPoint(3, aDetector.BTR.X(), aDetector.BTR.Y(), aDetector.BTR.Z());
 
-/////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////ENDED////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
-
-
-void drawBoxOnCanvasWithDimensions(TCanvas *aCanvas, TVector3 bottomRightFrontPoint, double width, double depth, double height, double angle, short color)
-{
-    TVector3 aPoint;
-    TPolyLine3D *aLine;
-    
-    aCanvas->cd();
-    
-    //5
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
-    
-    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
-    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
-    
-    aLine->Draw("same");
-    
-    //6
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
-    
-    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
-    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
-    
-    aLine->Draw("same");
-    
-    //10
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
-    
-    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
-    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
-    
-    aLine->Draw("same");
-    
-    //11
-    aLine = new TPolyLine3D(2);
-    aLine->SetLineWidth(1);
-    aLine->SetLineColor(color);
-    
-    aLine->SetPoint(0, aDetector.FBL.X(), aDetector.FBL.Y(), aDetector.FBL.Z());
-    aLine->SetPoint(1, aDetector.BBL.X(), aDetector.BBL.Y(), aDetector.BBL.Z());
-    
     aLine->Draw("same");
 }
 
@@ -573,19 +504,21 @@ void drawSubdetectorHitsWithTrajetories()
         for (int w=0; w<detectors.at(i).numberOfSubDetectorsAlongWidth; w++) {
             for (int h=0; h<detectors.at(i).numberOfSubDetectorsAlongHeight; h++) {
                 if (detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).numberOfParticlesEntered>0) {
-                    drawBoxOnCanvasWithDimensions(combinedSubdetectorWithTrajetoriesCanvas, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).lowestYZCorner, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).width, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).depth, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).height, detectorAlighnmentAngle, detectors.at(i).color);
+                    drawBoxOnCanvasWithDimensions( combinedSubdetectorWithTrajetoriesCanvas, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h) );
                 }
             }
         }
         //Draw Main Detector Volume
-        drawBlockOnCanvasWithDimensions(combinedSubdetectorWithTrajetoriesCanvas, detectors.at(i).lowestYZCorner, detectors.at(i).width, detectors.at(i).depth, detectors.at(i).height, detectorAlighnmentAngle, detectors.at(i).color);
+        drawBlockOnCanvasWithDimensions(combinedSubdetectorWithTrajetoriesCanvas, detectors.at(i) );
     }
     
     combinedSubdetectorWithTrajetoriesCanvas->Update();
     combinedSubdetectorWithTrajetoriesCanvas->Modified();
     combinedSubdetectorWithTrajetoriesCanvas->Write();
 }
-
+/////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////ENDED////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 void drawDetectorsSetup()
 {
     TVector3 aPoint;
@@ -623,7 +556,7 @@ void drawDetectorsSetup()
     if (displayDetectorAlignmentAngle) {
         aLine = new TPolyLine3D(2);
         aLine->SetPoint(0, 0, 0, 0);
-        aLine->SetPoint(1, (detectorRoom.lowestYZCorner.Y()+detectorRoom.depth)*tan(detectorAlighnmentAngle), detectorRoom.lowestYZCorner.Y()+detectorRoom.depth, 0);
+        aLine->SetPoint(1, (detectorRoom.FBR.Y()+detectorRoom.depth)*tan(detectorAlighnmentAngle), detectorRoom.FBR.Y()+detectorRoom.depth, 0);
         aLine->SetLineWidth(1);
         aLine->SetLineColor(2);
         aLine->Draw("same");
@@ -634,20 +567,17 @@ void drawDetectorsSetup()
         if(displaySubDetetorsInSetup){
             for (int w=0; w<detectors.at(i).numberOfSubDetectorsAlongWidth; w++) {
                 for (int h=0; h<detectors.at(i).numberOfSubDetectorsAlongHeight; h++) {
-                    drawBlockOnCanvasWithDimensions(detectorSetupCanvas, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).lowestYZCorner, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).width, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).depth, detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h).height, detectorAlighnmentAngle, detectors.at(i).color);
+                    drawBlockOnCanvasWithDimensions( detectorSetupCanvas , detectors.at(i).subDetectors.at((w*detectors.at(i).numberOfSubDetectorsAlongHeight)+h) );
                 }
             }
         }
         //Draw Main Detector Volume
-        drawBlockOnCanvasWithDimensions(detectorSetupCanvas, detectors.at(i).lowestYZCorner, detectors.at(i).width, detectors.at(i).depth, detectors.at(i).height, detectorAlighnmentAngle, detectors.at(i).color);
+        drawBlockOnCanvasWithDimensions(detectorSetupCanvas, detectors.at(i));
     }
     
     //Detector Room
     if (displayDetectorRoom) {
-        aPoint.SetX( detectorRoom.lowestYZCorner.X() + detectorRoom.width);
-        aPoint.SetY( detectorRoom.lowestYZCorner.Y());
-        aPoint.SetZ( detectorRoom.lowestYZCorner.Z());
-        drawBlockOnCanvasWithDimensions(detectorSetupCanvas, aPoint, detectorRoom.width, detectorRoom.depth, detectorRoom.height, 0, 1);
+        drawBlockOnCanvasWithDimensions(detectorSetupCanvas, detectorRoom);
     }
     
     detectorSetupCanvas->Update();
@@ -665,12 +595,21 @@ void drawDetectorsSetup()
 
 void initializeDetectorsWith(int numberOfDetectors, double width, double depth, double height, double detectorZDisplacement, int numberOfSubDetectorsAlongWidth, int numberOfSubDetectorsAlongHeight, double subDetectorWidth, double subDetectorDepth, double subDetectorHeigth)
 {
-    double detectorXSeperation;
-    double detectorYSeperation;
-    double firstDetectorBottomLeftCornerXDisplacement;
-    double firstDetectorBottomLeftCornerYDisplacement;
-    double lastDetectorBottomLeftCornerXDisplacement;
-    double lastDetectorBottomLeftCornerYDisplacement;
+    detectorRoom.color = 1;
+
+    
+    //Detector Positions set bellow//
+    
+    TVector3 seperation, firstDetectorFBL, lastDetectorFBL, frontOfDetectorIntersection, backOfDetectorIntersection;
+    
+    TVector3 detectorAlighnmentAngleVector = *new TVector3();
+    detectorAlighnmentAngleVector.SetPtThetaPhi(1, detectorAlighnmentTheta, detectorAlighnmentPhi);
+    frontOfDetectorIntersection = getPointOfIntersectionOfPointVectorWithPlane(*new TVector3(0,0,0), detectorAlighnmentAngleVector, detectorRoom.FBL, detectorRoom.FBR, detectorRoom.FTR);
+    backOfDetectorIntersection  = getPointOfIntersectionOfPointVectorWithPlane(*new TVector3(0,0,0), detectorAlighnmentAngleVector, detectorRoom.BBL, detectorRoom.BBR, detectorRoom.BTR);
+    
+    ////////////////////////////////////////////////////////////////
+    ////////////////////////////////ENDED////////////////////////
+    ////////////////////////////////////////////////////////////////
     
     firstDetectorBottomLeftCornerXDisplacement = detectorRoom.lowestYZCorner.Y()*tan(detectorAlighnmentAngle) + ((width/2)*(1/cos(detectorAlighnmentAngle)));
     firstDetectorBottomLeftCornerYDisplacement = detectorRoom.lowestYZCorner.Y();

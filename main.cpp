@@ -19,23 +19,21 @@ void setUserVaribles()
     
     deltaTime                           = Power(10, -10);//s
     
-    numberOfTotalParticles              = 199999;
+    numberOfTotalParticles              = 200;
     particleMass                        = 50;//GeV
     particleCharge                      = Power(10, -3);//e
     
     detectorAlighnmentTheta             = Pi()/6;//radians
     detectorAlighnmentPhi               = Pi()/12;//radians
     
-    detectorRoom.FBL.SetX(                -10);//m
-    detectorRoom.FBL.SetY(                -5);//m
-    detectorRoom.FBL.SetZ(                -10);//m
+    detectorRoom.corners["FBL"].SetX(     0);//m
+    detectorRoom.corners["FBL"].SetY(     0);//m
+    detectorRoom.corners["FBL"].SetZ(     0);//m
     detectorRoom.width                  = 10;//m
     detectorRoom.depth                  = 10;//m
     detectorRoom.height                 = 2;//m
     
     int numberOfDetectors               = 3;
-    
-    double detectorZDisplacement        = 0;//m
     
     double detectorWidths               = 1;//m
     double detectorDepths               = 1.4;//m
@@ -62,10 +60,10 @@ void setUserVaribles()
     
     displayDetectorRoom                 = true;
     displayDetectorAlignmentAngle       = false;
-    displaySubDetetorsInSetup           = true;
+    displaySubDetetorsInSetup           = false;
     displayAxesInSetup                  = true;
     
-    drawAllParticlesPaths               = true;
+    drawAllParticlesPaths               = false;
     drawDetectedParticlesPaths          = true;
     
     useEventData                        = true;
@@ -74,15 +72,14 @@ void setUserVaribles()
     
     calculateWithMagnets                = true;
     
-    
     //------------------------ USER MAY SET  ABOVE VARIBLES -------------------------//
     //-------------------------------------------------------------------------------//
     //-------------------------------------------------------------------------------//
     
-    initializeDetectorsWith(numberOfDetectors, detectorWidths, detectorDepths, detectorHeights, detectorZDisplacement, numberOfSubDetectorsAlongWidth, numberOfSubDetectorsAlongHeight, subDetectorWidths, subDetectorDepths, subDetectorHeigths);
+    initializeDetectorsWith(numberOfDetectors, detectorWidths, detectorDepths, detectorHeights, numberOfSubDetectorsAlongWidth, numberOfSubDetectorsAlongHeight, subDetectorWidths, subDetectorDepths, subDetectorHeigths);
 }
 
-particle momentumAfterDeltaTime(particle aParticle, TVector3 magneticField)
+void momentumAfterDeltaTime(particle &aParticle, TVector3 magneticField)
 {
     double w = aParticle.charge * magneticField.Mag() * Power(C(), 2) / (aParticle.fourMomentum.E()*Power(10,9));
     
@@ -99,6 +96,8 @@ particle momentumAfterDeltaTime(particle aParticle, TVector3 magneticField)
                                                   aParticle.fourMomentum.Px()*(    magneticField.Mag()*magneticField.Y()*Sin(w*deltaTime) + magneticField.X()*magneticField.Z()*(1-Cos(w*deltaTime)) ) +
                                                   aParticle.fourMomentum.Py()*( -1*magneticField.Mag()*magneticField.X()*Sin(w*deltaTime) + magneticField.Y()*magneticField.Z()*(1-Cos(w*deltaTime)) )
                                                   ));
+    
+    aParticle.fourMomentum.SetVect(newMomentum);
 }
 
 particle adjustmentsFromCMSMagnets(particle aParticle, bool &stuckParticle)
@@ -186,9 +185,7 @@ int main()
                             }
                             
                             TVector3 bottomLeftOfFacePoint, particlePositionOnDetectorFace;
-                            bottomLeftOfFacePoint.SetX( detectors.at(d).lowestYZCorner.X() + detectors.at(d).depth*sin(detectorAlighnmentAngle) - detectors.at(d).width*cos(detectorAlighnmentAngle) );
-                            bottomLeftOfFacePoint.SetY( detectors.at(d).lowestYZCorner.Y() + detectors.at(d).depth*cos(detectorAlighnmentAngle) + detectors.at(d).width*sin(detectorAlighnmentAngle) );
-                            bottomLeftOfFacePoint.SetZ( detectors.at(d).lowestYZCorner.Z() );
+                            bottomLeftOfFacePoint = detectors.at(d).corners["BBL"];
                             
                             particlePositionOnDetectorFace.SetX( Hypot(pointOfIntersection.X() - bottomLeftOfFacePoint.X() , bottomLeftOfFacePoint.Y() - pointOfIntersection.Y()) );
                             particlePositionOnDetectorFace.SetY( pointOfIntersection.Z() - bottomLeftOfFacePoint.Z() );

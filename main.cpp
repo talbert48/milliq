@@ -19,7 +19,7 @@ void setUserVaribles()
     
     deltaTime                           = Power(10, -10);//s
     
-    numberOfTotalParticles              = 200;
+    numberOfTotalParticles              = 10;
     particleMass                        = 50;//GeV
     particleCharge                      = Power(10, -3);//e
     
@@ -85,16 +85,16 @@ void momentumAfterDeltaTime(particle &aParticle, TVector3 magneticField)
     
     TVector3 newMomentum;
     newMomentum.SetX( (1/magneticField.Mag2()) * (aParticle.fourMomentum.Px()*(    (Power(magneticField.Py(),2) + Power(magneticField.Pz(),2)) * Cos(w*deltaTime) + Power(magneticField.Px(),2)      ) +
-                                                  aParticle.fourMomentum.Py()*(    magneticField.Mag()*magneticField.Z()*Sin(w*deltaTime) + magneticField.X()*magneticField.Y()*(1-Cos(w*deltaTime)) ) +
-                                                  aParticle.fourMomentum.Pz()*( -1*magneticField.Mag()*magneticField.Y()*Sin(w*deltaTime) + magneticField.X()*magneticField.Z()*(1-Cos(w*deltaTime)) )
+                                                  aParticle.fourMomentum.Py()*(    magneticField.Mag()*magneticField.Z()*Sin(w*deltaTime) + magneticField.X()*magneticField.Y()*(1.0-Cos(w*deltaTime)) ) +
+                                                  aParticle.fourMomentum.Pz()*( -1.0*magneticField.Mag()*magneticField.Y()*Sin(w*deltaTime) + magneticField.X()*magneticField.Z()*(1.0-Cos(w*deltaTime)) )
                                                   ));
     newMomentum.SetY( (1/magneticField.Mag2()) * (aParticle.fourMomentum.Py()*(    (Power(magneticField.Px(),2) + Power(magneticField.Pz(),2)) * Cos(w*deltaTime) + Power(magneticField.Py(),2)      ) +
-                                                  aParticle.fourMomentum.Pz()*(    magneticField.Mag()*magneticField.X()*Sin(w*deltaTime) + magneticField.Y()*magneticField.Z()*(1-Cos(w*deltaTime)) ) +
-                                                  aParticle.fourMomentum.Px()*( -1*magneticField.Mag()*magneticField.Z()*Sin(w*deltaTime) + magneticField.X()*magneticField.Y()*(1-Cos(w*deltaTime)) )
+                                                  aParticle.fourMomentum.Pz()*(    magneticField.Mag()*magneticField.X()*Sin(w*deltaTime) + magneticField.Y()*magneticField.Z()*(1.0-Cos(w*deltaTime)) ) +
+                                                  aParticle.fourMomentum.Px()*( -1.0*magneticField.Mag()*magneticField.Z()*Sin(w*deltaTime) + magneticField.Y()*magneticField.X()*(1.0-Cos(w*deltaTime)) )
                                                   ));
     newMomentum.SetZ( (1/magneticField.Mag2()) * (aParticle.fourMomentum.Pz()*(    (Power(magneticField.Px(),2) + Power(magneticField.Py(),2)) * Cos(w*deltaTime) + Power(magneticField.Pz(),2)      ) +
-                                                  aParticle.fourMomentum.Px()*(    magneticField.Mag()*magneticField.Y()*Sin(w*deltaTime) + magneticField.X()*magneticField.Z()*(1-Cos(w*deltaTime)) ) +
-                                                  aParticle.fourMomentum.Py()*( -1*magneticField.Mag()*magneticField.X()*Sin(w*deltaTime) + magneticField.Y()*magneticField.Z()*(1-Cos(w*deltaTime)) )
+                                                  aParticle.fourMomentum.Px()*(    magneticField.Mag()*magneticField.Y()*Sin(w*deltaTime) + magneticField.Z()*magneticField.X()*(1.0-Cos(w*deltaTime)) ) +
+                                                  aParticle.fourMomentum.Py()*( -1.0*magneticField.Mag()*magneticField.X()*Sin(w*deltaTime) + magneticField.Z()*magneticField.Y()*(1.0-Cos(w*deltaTime)) )
                                                   ));
     
     aParticle.fourMomentum.SetVect(newMomentum);
@@ -112,6 +112,7 @@ particle adjustmentsFromCMSMagnets(particle aParticle, bool &stuckParticle)
         double w = aParticle.charge * CMSMagnets.at(i).strength * CMSMagnets.at(i).direction * Power(C(), 2) / (aParticle.fourMomentum.E()*Power(10,9));
         do{
 			itr++;
+            
             //calculate the new trajectory of the particle
             TVector3 trajetory;
             trajetory.SetX( Cos(phi)*Sin(theta) );
@@ -119,6 +120,11 @@ particle adjustmentsFromCMSMagnets(particle aParticle, bool &stuckParticle)
             trajetory.SetZ( Cos(w*deltaTime)*Cos(theta) + Sin(w*deltaTime)*Sin(theta)*Sin(phi) );
             aParticle.fourMomentum.SetVect(trajetory*momentumMagnitude);
             
+            Printf("      Before  X: %f, Y: %f, Z: %f" , aParticle.fourMomentum.Vect().X() , aParticle.fourMomentum.Vect().Y() , aParticle.fourMomentum.Vect().Z());
+            Printf("After Orginal X: %f, Y: %f, Z: %f" , trajetory.X() , trajetory.Y() , trajetory.Z());
+            momentumAfterDeltaTime(aParticle , *new TVector3(CMSMagnets.at(i).strength,0,0));
+            Printf("After Newishh X: %f, Y: %f, Z: %f\n" , aParticle.fourMomentum.Vect().X() , aParticle.fourMomentum.Vect().Y() , aParticle.fourMomentum.Vect().Z());
+
             //estimate the new position by assuming the particle was moving linearly for a duration of deltaTime along the trajectory set above
             aParticle.positions.push_back(aParticle.positions.back() + (deltaTime*velocity) * aParticle.fourMomentum.Vect().Unit());
             

@@ -674,13 +674,6 @@ void initializeDetectorsWith(int numberOfDetectors, double width, double depth, 
     frontOfDetectorRoomIntersection = getPointOfIntersectionOfPointVectorWithPlane(*new TVector3(0,0,0), detectorAlighnmentAngleVector, detectorRoom.corners["FBL"], detectorRoom.corners["FBR"], detectorRoom.corners["FTR"]);
     backOfDetectorRoomIntersection  = getPointOfIntersectionOfPointVectorWithPlane(*new TVector3(0,0,0), detectorAlighnmentAngleVector, detectorRoom.corners["BBL"], detectorRoom.corners["BBR"], detectorRoom.corners["BTR"]);
     
-    /*Printf("FBL X: %f, Y:%f, Z:%f",detectorRoom.corners["FBL"].X(),detectorRoom.corners["FBL"].Y(),detectorRoom.corners["FBL"].Z());
-    Printf("FBR X: %f, Y:%f, Z:%f",detectorRoom.corners["FBR"].X(),detectorRoom.corners["FBR"].Y(),detectorRoom.corners["FBR"].Z());
-    Printf("FTR X: %f, Y:%f, Z:%f",detectorRoom.corners["FTR"].X(),detectorRoom.corners["FTR"].Y(),detectorRoom.corners["FTR"].Z());
-    Printf("FTL X: %f, Y:%f, Z:%f",detectorRoom.corners["FTL"].X(),detectorRoom.corners["FTL"].Y(),detectorRoom.corners["FTL"].Z());
-    Printf("BTL X: %f, Y:%f, Z:%f",detectorRoom.corners["BTL"].X(),detectorRoom.corners["BTL"].Y(),detectorRoom.corners["BTL"].Z());
-    Printf("BTR X: %f, Y:%f, Z:%f",detectorRoom.corners["BTR"].X(),detectorRoom.corners["BTR"].Y(),detectorRoom.corners["BTR"].Z());*/
-    
     if(detectorAlighnmentTheta>=-Pi()/2){
         aFirstDetectorCorner = frontOfDetectorRoomIntersection;
         aFirstDetectorCorner.SetY(aFirstDetectorCorner.Y() - ((double)1/2)*height*Sin(((double)3/2)*Pi()-detectorAlighnmentPhi));

@@ -23,11 +23,11 @@ void setUserVaribles()
     particleMass                        = 50;//GeV
     particleCharge                      = Power(10, -3);//e
     
-    detectorAlighnmentTheta             = Pi()/6;//radians
-    detectorAlighnmentPhi               = Pi()/12;//radians
+    detectorAlighnmentTheta             = 0;//radians
+    detectorAlighnmentPhi               = 0;//radians
     
-    detectorRoom.corners["FBL"].SetX(     0);//m
-    detectorRoom.corners["FBL"].SetY(     0);//m
+    detectorRoom.corners["FBL"].SetX(     -20);//m
+    detectorRoom.corners["FBL"].SetY(     -10);//m
     detectorRoom.corners["FBL"].SetZ(     0);//m
     detectorRoom.width                  = 10;//m
     detectorRoom.depth                  = 10;//m
@@ -59,7 +59,7 @@ void setUserVaribles()
     CMSMagnets.push_back(aCMSMagnet);
     
     displayDetectorRoom                 = true;
-    displayDetectorAlignmentAngle       = false;
+    displayDetectorAlignmentAngle       = true;
     displaySubDetetorsInSetup           = false;
     displayAxesInSetup                  = true;
     

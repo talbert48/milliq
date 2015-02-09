@@ -365,6 +365,13 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, detector aDetector)
     
     aCanvas->cd();
     
+    TPolyMarker3D *point = new TPolyMarker3D(1);
+    point->SetPoint(1,aDetector.corners["FBL"].X(),aDetector.corners["FBL"].Y(),aDetector.corners["FBL"].Z());
+    point->SetMarkerSize(1);
+    point->SetMarkerColor(6);
+    point->SetMarkerStyle(8);
+    point->Draw("same");
+
     //FBR to BBR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
@@ -405,7 +412,7 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, detector aDetector)
     
     aLine->Draw("same");
     
-    //BBR to BBL to BTL to BTR
+    //BBR to BBL to BTL to BTR to BBR
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
     aLine->SetLineColor(aDetector.color);
@@ -414,10 +421,11 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, detector aDetector)
     aLine->SetPoint(1, aDetector.corners["BBL"].X(), aDetector.corners["BBL"].Y(), aDetector.corners["BBL"].Z());
     aLine->SetPoint(2, aDetector.corners["BTL"].X(), aDetector.corners["BTL"].Y(), aDetector.corners["BTL"].Z());
     aLine->SetPoint(3, aDetector.corners["BTR"].X(), aDetector.corners["BTR"].Y(), aDetector.corners["BTR"].Z());
+    aLine->SetPoint(4, aDetector.corners["BBR"].X(), aDetector.corners["BBR"].Y(), aDetector.corners["BBR"].Z());
     
     aLine->Draw("same");
     
-    //FBR to FBL to FTL to FTR
+    //FBR to FBL to FTL to FTR to
     aLine = new TPolyLine3D(2);
     aLine->SetLineWidth(1);
     aLine->SetLineColor(aDetector.color);
@@ -426,7 +434,8 @@ void drawBlockOnCanvasWithDimensions(TCanvas *aCanvas, detector aDetector)
     aLine->SetPoint(1, aDetector.corners["FBL"].X(), aDetector.corners["FBL"].Y(), aDetector.corners["FBL"].Z());
     aLine->SetPoint(2, aDetector.corners["FTL"].X(), aDetector.corners["FTL"].Y(), aDetector.corners["FTL"].Z());
     aLine->SetPoint(3, aDetector.corners["FTR"].X(), aDetector.corners["FTR"].Y(), aDetector.corners["FTR"].Z());
-    
+    aLine->SetPoint(4, aDetector.corners["FBR"].X(), aDetector.corners["FBR"].Y(), aDetector.corners["FBR"].Z());
+
     aLine->Draw("same");
 }
 
@@ -519,7 +528,6 @@ void drawSubdetectorHitsWithTrajetories()
 
 void drawDetectorsSetup()
 {
-    TVector3 aPoint;
     TPolyLine3D *aLine;
     
     TCanvas *detectorSetupCanvas = new TCanvas("Detector Setup","Detector Setup",0,0,1000,700);
@@ -554,7 +562,7 @@ void drawDetectorsSetup()
     if (displayDetectorAlignmentAngle) {
         TVector3 detectorAlighnmentAngleVector = *new TVector3();
         detectorAlighnmentAngleVector.SetPtThetaPhi(1, detectorAlighnmentTheta, detectorAlighnmentPhi);
-        TVector3 pointOfIntersectionWithDetectorRoomBack = getPointOfIntersectionOfPointVectorWithPlane(*new TVector3(0,0,0), detectorAlighnmentAngleVector, detectorRoom.corners["FBL"], detectorRoom.corners["FBR"], detectorRoom.corners["FTR"]);
+        TVector3 pointOfIntersectionWithDetectorRoomBack = getPointOfIntersectionOfPointVectorWithPlane(*new TVector3(0,0,0), detectorAlighnmentAngleVector, detectorRoom.corners["BBL"], detectorRoom.corners["BBR"], detectorRoom.corners["BTL"]);
         
         aLine = new TPolyLine3D(2);
         aLine->SetPoint(0, 0, 0, 0);
@@ -587,55 +595,58 @@ void drawDetectorsSetup()
     detectorSetupCanvas->Write();
 }
 
-map<string,TVector3> getCornersFromCorner(string cornerType, TVector3 corner, double width, double depth, double height, double theta, double phi){
+map<string,TVector3> getCornersFromCorner(string cornerType, TVector3 corner, double width, double depth, double height, double theta, double phi)
+{
     map<string,TVector3> corners;
     
-    corners["FTR"] = corner;
+    double widthAjuster = 1.0;
+    double depthAjuster = -1.0;
     
+    corners["FTR"] = corner;
+
     //From Left to Right
     if(cornerType == "FTL"||cornerType == "FBL"||cornerType == "BTL"||cornerType == "BBL"){
-        corners["FTR"].SetZ(corners["FTR"].Z() - width*Sin(Pi()-theta));
-        corners["FTR"].SetX(corners["FTR"].X() + width*Cos(Pi()-theta));
+        corners["FTR"].SetZ(corners["FTR"].Z() - widthAjuster*width*Cos(theta-(Pi()/2)));
+        corners["FTR"].SetX(corners["FTR"].X() + widthAjuster*width*Sin(theta-(Pi()/2)));
     }
-    //From Back to Frount
+    //From Back to Front
     if(cornerType == "BBL"||cornerType == "BBR"||cornerType == "BTL"||cornerType == "BTR"){
-        corners["FTR"].SetZ(corners["FTR"].Z() + depth*Cos(Pi()-theta));
-        corners["FTR"].SetX(corners["FTR"].X() + depth*Sin(Pi()-theta));
+        corners["FTR"].SetZ(corners["FTR"].Z() - depthAjuster*depth*Cos(Pi()-theta));
+        corners["FTR"].SetX(corners["FTR"].X() - depthAjuster*depth*Cos(theta-(Pi()/2))*Sin(((double)3/2)*Pi()-phi));
     }
     //From Bottom to Top
     if(cornerType == "BBL"||cornerType == "BBR"||cornerType == "FBL"||cornerType == "FBR"){
-        corners["FTR"].SetY(corners["FTR"].Y() + height*Sin((3/4)*Pi()-phi));
-        corners["FTR"].SetX(corners["FTR"].X() - height*Cos((3/4)*Pi()-phi));
+        corners["FTR"].SetY(corners["FTR"].Y() + height*Sin(((double)3/2)*Pi()-phi));
+        corners["FTR"].SetX(corners["FTR"].X() - height*Cos(((double)3/2)*Pi()-phi));
     }
-    
 
     corners["FTL"] = corners["FTR"];
-    corners["FTL"].SetZ(corners["FTR"].Z() + width*Sin(Pi()-theta));
-    corners["FTL"].SetX(corners["FTR"].X() - width*Cos(Pi()-theta));
+    corners["FTL"].SetZ(corners["FTR"].Z() + widthAjuster*width*Cos(theta-(Pi()/2)));
+    corners["FTL"].SetX(corners["FTR"].X() - widthAjuster*width*Sin(theta-(Pi()/2)));
 
     corners["FBR"] = corners["FTR"];
-    corners["FBR"].SetY(corners["FTR"].Y() - height*Sin((3/4)*Pi()-phi));
-    corners["FBR"].SetX(corners["FTR"].X() + height*Cos((3/4)*Pi()-phi));
+    corners["FBR"].SetY(corners["FTR"].Y() - height*Sin(((double)3/2)*Pi()-phi));
+    corners["FBR"].SetX(corners["FTR"].X() + height*Cos(((double)3/2)*Pi()-phi));
 
     corners["FBL"] = corners["FBR"];
-    corners["FBL"].SetZ(corners["FBR"].Z() + width*Sin(Pi()-theta));
-    corners["FBL"].SetX(corners["FBR"].X() - width*Cos(Pi()-theta));
+    corners["FBL"].SetZ(corners["FBR"].Z() + widthAjuster*width*Cos(theta-(Pi()/2)));
+    corners["FBL"].SetX(corners["FBR"].X() - widthAjuster*width*Sin(theta-(Pi()/2)));
     
     corners["BTR"] = corners["FTR"];
-    corners["BTR"].SetZ(corners["FTR"].Z() - depth*Cos(Pi()-theta));
-    corners["BTR"].SetX(corners["FTR"].X() - depth*Sin(Pi()-theta));
+    corners["BTR"].SetZ(corners["FTR"].Z() + depthAjuster*depth*Cos(Pi()-theta));
+    corners["BTR"].SetX(corners["FTR"].X() + depthAjuster*depth*Cos(theta-(Pi()/2))*Sin(((double)3/2)*Pi()-phi));
     
     corners["BTL"] = corners["FTL"];
-    corners["BTL"].SetZ(corners["FTL"].Z() - depth*Cos(Pi()-theta));
-    corners["BTL"].SetX(corners["FTL"].X() - depth*Sin(Pi()-theta));
+    corners["BTL"].SetZ(corners["FTL"].Z() + depthAjuster*depth*Cos(Pi()-theta));
+    corners["BTL"].SetX(corners["FTL"].X() + depthAjuster*depth*Cos(theta-(Pi()/2))*Sin(((double)3/2)*Pi()-phi));
     
     corners["BBR"] = corners["FBR"];
-    corners["BBR"].SetZ(corners["FBR"].Z() - depth*Cos(Pi()-theta));
-    corners["BBR"].SetX(corners["FBR"].X() - depth*Sin(Pi()-theta));
+    corners["BBR"].SetZ(corners["FBR"].Z() + depthAjuster*depth*Cos(Pi()-theta));
+    corners["BBR"].SetX(corners["FBR"].X() + depthAjuster*depth*Cos(theta-(Pi()/2))*Sin(((double)3/2)*Pi()-phi));
     
     corners["BBL"] = corners["FBL"];
-    corners["BBL"].SetZ(corners["FBL"].Z() - depth*Cos(Pi()-theta));
-    corners["BBL"].SetX(corners["FBL"].X() - depth*Sin(Pi()-theta));
+    corners["BBL"].SetZ(corners["FBL"].Z() + depthAjuster*depth*Cos(Pi()-theta));
+    corners["BBL"].SetX(corners["FBL"].X() + depthAjuster*depth*Cos(theta-(Pi()/2))*Sin(((double)3/2)*Pi()-phi));
     
     return corners;
 }
@@ -651,11 +662,8 @@ map<string,TVector3> getCornersFromCorner(string cornerType, TVector3 corner, do
 void initializeDetectorsWith(int numberOfDetectors, double width, double depth, double height, int numberOfSubDetectorsAlongWidth, int numberOfSubDetectorsAlongHeight, double subDetectorWidth, double subDetectorDepth, double subDetectorHeigth)
 {
     detectorRoom.color = 1;
-    detectorRoom.corners = getCornersFromCorner("FBL", detectorRoom.corners["FBL"], width, depth, height, -Pi()/2, Pi());
-    
-    Printf("X: %f, Y: %f, Z: %f",detectorRoom.corners["FBR"].x(),detectorRoom.corners["FBR"].y(),detectorRoom.corners["FBR"].z());
+    detectorRoom.corners = getCornersFromCorner("FBL", detectorRoom.corners["FBL"], detectorRoom.width, detectorRoom.depth, detectorRoom.height, Pi()/2, Pi());
 
-    
     //Detector Positions Set bellow//
     
     TVector3 FTRSeperation, aFirstDetectorCorner, aLastDetectorCorner, frontOfDetectorRoomIntersection, backOfDetectorRoomIntersection;
@@ -666,38 +674,45 @@ void initializeDetectorsWith(int numberOfDetectors, double width, double depth, 
     frontOfDetectorRoomIntersection = getPointOfIntersectionOfPointVectorWithPlane(*new TVector3(0,0,0), detectorAlighnmentAngleVector, detectorRoom.corners["FBL"], detectorRoom.corners["FBR"], detectorRoom.corners["FTR"]);
     backOfDetectorRoomIntersection  = getPointOfIntersectionOfPointVectorWithPlane(*new TVector3(0,0,0), detectorAlighnmentAngleVector, detectorRoom.corners["BBL"], detectorRoom.corners["BBR"], detectorRoom.corners["BTR"]);
     
+    /*Printf("FBL X: %f, Y:%f, Z:%f",detectorRoom.corners["FBL"].X(),detectorRoom.corners["FBL"].Y(),detectorRoom.corners["FBL"].Z());
+    Printf("FBR X: %f, Y:%f, Z:%f",detectorRoom.corners["FBR"].X(),detectorRoom.corners["FBR"].Y(),detectorRoom.corners["FBR"].Z());
+    Printf("FTR X: %f, Y:%f, Z:%f",detectorRoom.corners["FTR"].X(),detectorRoom.corners["FTR"].Y(),detectorRoom.corners["FTR"].Z());
+    Printf("FTL X: %f, Y:%f, Z:%f",detectorRoom.corners["FTL"].X(),detectorRoom.corners["FTL"].Y(),detectorRoom.corners["FTL"].Z());
+    Printf("BTL X: %f, Y:%f, Z:%f",detectorRoom.corners["BTL"].X(),detectorRoom.corners["BTL"].Y(),detectorRoom.corners["BTL"].Z());
+    Printf("BTR X: %f, Y:%f, Z:%f",detectorRoom.corners["BTR"].X(),detectorRoom.corners["BTR"].Y(),detectorRoom.corners["BTR"].Z());*/
+    
     if(detectorAlighnmentTheta>=-Pi()/2){
         aFirstDetectorCorner = frontOfDetectorRoomIntersection;
-        aFirstDetectorCorner.SetZ(aFirstDetectorCorner.Y() + (1/2)*height*Sin((3/4)*Pi()-detectorAlighnmentPhi));
-        aFirstDetectorCorner.SetX(aFirstDetectorCorner.X() - (1/2)*height*Cos((3/4)*Pi()-detectorAlighnmentPhi));
-        aFirstDetectorCorner.SetZ(aFirstDetectorCorner.Z() + (1/2)*width*Sin(Pi()-detectorAlighnmentTheta));
-        aFirstDetectorCorner.SetX(aFirstDetectorCorner.X() - (1/2)*width*Cos(Pi()-detectorAlighnmentTheta));
+        aFirstDetectorCorner.SetY(aFirstDetectorCorner.Y() - ((double)1/2)*height*Sin(((double)3/2)*Pi()-detectorAlighnmentPhi));
+        aFirstDetectorCorner.SetX(aFirstDetectorCorner.X() + ((double)1/2)*height*Cos(((double)3/2)*Pi()-detectorAlighnmentPhi));
+        aFirstDetectorCorner.SetZ(aFirstDetectorCorner.Z() - ((double)1/2)*width*Cos(detectorAlighnmentTheta-(Pi()/2)));
+        aFirstDetectorCorner.SetX(aFirstDetectorCorner.X() + ((double)1/2)*width*Sin(detectorAlighnmentTheta-(Pi()/2)));
         firstDetectorCorners = getCornersFromCorner("FTL", aFirstDetectorCorner, width, depth, height, detectorAlighnmentTheta, detectorAlighnmentPhi);
         
         aLastDetectorCorner = backOfDetectorRoomIntersection;
-        aLastDetectorCorner.SetZ(aLastDetectorCorner.Y() + (1/2)*height*Sin((3/4)*Pi()-detectorAlighnmentPhi));
-        aLastDetectorCorner.SetX(aLastDetectorCorner.X() - (1/2)*height*Cos((3/4)*Pi()-detectorAlighnmentPhi));
-        aLastDetectorCorner.SetZ(aLastDetectorCorner.Z() - (1/2)*width*Sin(Pi()-detectorAlighnmentTheta));
-        aLastDetectorCorner.SetX(aLastDetectorCorner.X() + (1/2)*width*Cos(Pi()-detectorAlighnmentTheta));
+        aLastDetectorCorner.SetY(aLastDetectorCorner.Y() - ((double)1/2)*height*Sin(((double)3/2)*Pi()-detectorAlighnmentPhi));
+        aLastDetectorCorner.SetX(aLastDetectorCorner.X() + ((double)1/2)*height*Cos(((double)3/2)*Pi()-detectorAlighnmentPhi));
+        aLastDetectorCorner.SetZ(aLastDetectorCorner.Z() + ((double)1/2)*width*Cos(detectorAlighnmentTheta-(Pi()/2)));
+        aLastDetectorCorner.SetX(aLastDetectorCorner.X() - ((double)1/2)*width*Sin(detectorAlighnmentTheta-(Pi()/2)));
         lastDetectorCorners  = getCornersFromCorner("BTR", aLastDetectorCorner, width, depth, height, detectorAlighnmentTheta, detectorAlighnmentPhi);
     }else{
         aFirstDetectorCorner = frontOfDetectorRoomIntersection;
-        aFirstDetectorCorner.SetZ(aFirstDetectorCorner.Y() + (1/2)*height*Sin((3/4)*Pi()-detectorAlighnmentPhi));
-        aFirstDetectorCorner.SetX(aFirstDetectorCorner.X() - (1/2)*height*Cos((3/4)*Pi()-detectorAlighnmentPhi));
-        aFirstDetectorCorner.SetZ(aFirstDetectorCorner.Z() - (1/2)*width*Sin(Pi()-detectorAlighnmentTheta));
-        aFirstDetectorCorner.SetX(aFirstDetectorCorner.X() + (1/2)*width*Cos(Pi()-detectorAlighnmentTheta));
+        aFirstDetectorCorner.SetY(aFirstDetectorCorner.Y() - ((double)1/2)*height*Sin(((double)3/2)*Pi()-detectorAlighnmentPhi));
+        aFirstDetectorCorner.SetX(aFirstDetectorCorner.X() + ((double)1/2)*height*Cos(((double)3/2)*Pi()-detectorAlighnmentPhi));
+        aFirstDetectorCorner.SetZ(aFirstDetectorCorner.Z() + ((double)1/2)*width*Cos(detectorAlighnmentTheta-(Pi()/2)));
+        aFirstDetectorCorner.SetX(aFirstDetectorCorner.X() - ((double)1/2)*width*Sin(detectorAlighnmentTheta-(Pi()/2)));
         firstDetectorCorners = getCornersFromCorner("FTR", aFirstDetectorCorner, width, depth, height, detectorAlighnmentTheta, detectorAlighnmentPhi);
         
         aLastDetectorCorner = backOfDetectorRoomIntersection;
-        aLastDetectorCorner.SetZ(aLastDetectorCorner.Y() + (1/2)*height*Sin((3/4)*Pi()-detectorAlighnmentPhi));
-        aLastDetectorCorner.SetX(aLastDetectorCorner.X() - (1/2)*height*Cos((3/4)*Pi()-detectorAlighnmentPhi));
-        aLastDetectorCorner.SetZ(aLastDetectorCorner.Z() + (1/2)*width*Sin(Pi()-detectorAlighnmentTheta));
-        aLastDetectorCorner.SetX(aLastDetectorCorner.X() - (1/2)*width*Cos(Pi()-detectorAlighnmentTheta));
+        aLastDetectorCorner.SetY(aLastDetectorCorner.Y() - ((double)1/2)*height*Sin(((double)3/2)*Pi()-detectorAlighnmentPhi));
+        aLastDetectorCorner.SetX(aLastDetectorCorner.X() + ((double)1/2)*height*Cos(((double)3/2)*Pi()-detectorAlighnmentPhi));
+        aLastDetectorCorner.SetZ(aLastDetectorCorner.Z() - ((double)1/2)*width*Cos(detectorAlighnmentTheta-(Pi()/2)));
+        aLastDetectorCorner.SetX(aLastDetectorCorner.X() + ((double)1/2)*width*Sin(detectorAlighnmentTheta-(Pi()/2)));
         lastDetectorCorners  = getCornersFromCorner("BTL", aLastDetectorCorner, width, depth, height, detectorAlighnmentTheta, detectorAlighnmentPhi);
     }
     
-    FTRSeperation = (lastDetectorCorners["FTR"]-firstDetectorCorners["FTR"])*(1/(numberOfDetectors-1));
-    
+    FTRSeperation = (lastDetectorCorners["FTR"]-firstDetectorCorners["FTR"])*((double)1/(numberOfDetectors-1));
+
     for(int i=0; i<numberOfDetectors; i++)
     {
         mainDetector newDetector;
@@ -712,7 +727,7 @@ void initializeDetectorsWith(int numberOfDetectors, double width, double depth, 
         newDetector.depth = depth;
         newDetector.height = height;
         
-        newDetector.corners = getCornersFromCorner("FTR", firstDetectorCorners["FTR"]+(FTRSeperation*i), newDetector.width, newDetector.depth, newDetector.height, detectorAlighnmentTheta, detectorAlighnmentPhi);
+        newDetector.corners = getCornersFromCorner("FTR", firstDetectorCorners["FTR"]+((double)i*FTRSeperation), newDetector.width, newDetector.depth, newDetector.height, detectorAlighnmentTheta, detectorAlighnmentPhi);
 
         newDetector.numberOfSubDetectorsAlongWidth = numberOfSubDetectorsAlongWidth;
         newDetector.numberOfSubDetectorsAlongHeight = numberOfSubDetectorsAlongHeight;
@@ -725,15 +740,17 @@ void initializeDetectorsWith(int numberOfDetectors, double width, double depth, 
                 
                 newSubDetector.numberOfParticlesEntered = 0;
                 
+                newSubDetector.color = newDetector.color;
+                
                 newSubDetector.width = subDetectorWidth;
                 newSubDetector.depth = subDetectorDepth;
                 newSubDetector.height = subDetectorHeigth;
                 
                 newSubDetector.corners["FBL"] = newDetector.corners["FBL"];
-                newSubDetector.corners["FBL"].SetZ(newSubDetector.corners["FBL"].Z() - w*subDetectorWidth*Sin(Pi()-detectorAlighnmentTheta));
-                newSubDetector.corners["FBL"].SetX(newSubDetector.corners["FBL"].X() + w*subDetectorWidth*Cos(Pi()-detectorAlighnmentTheta));
-                newSubDetector.corners["FBL"].SetZ(newSubDetector.corners["FBL"].Y() + h*subDetectorHeigth*Sin((3/4)*Pi()-detectorAlighnmentPhi));
-                newSubDetector.corners["FBL"].SetX(newSubDetector.corners["FBL"].X() - h*subDetectorHeigth*Cos((3/4)*Pi()-detectorAlighnmentPhi));
+                newSubDetector.corners["FBL"].SetZ(newSubDetector.corners["FBL"].Z() - (double)w*subDetectorWidth*Cos(detectorAlighnmentTheta-(Pi()/2)));
+                newSubDetector.corners["FBL"].SetX(newSubDetector.corners["FBL"].X() + (double)w*subDetectorWidth*Sin(detectorAlighnmentTheta-(Pi()/2)));
+                newSubDetector.corners["FBL"].SetY(newSubDetector.corners["FBL"].Y() + (double)h*subDetectorHeigth*Sin(((double)3/2)*Pi()-detectorAlighnmentPhi));
+                newSubDetector.corners["FBL"].SetX(newSubDetector.corners["FBL"].X() - (double)h*subDetectorHeigth*Cos(((double)3/2)*Pi()-detectorAlighnmentPhi));
                 
                 newSubDetector.corners = getCornersFromCorner("FBL", newSubDetector.corners["FBL"], newSubDetector.width, newSubDetector.depth, newSubDetector.height, detectorAlighnmentTheta, detectorAlighnmentPhi);
 

@@ -23,12 +23,12 @@ void setUserVaribles()
     particleMass                        = 50;//GeV
     particleCharge                      = Power(10, -3);//e
     
-    detectorAlighnmentTheta             = 0;//radians
-    detectorAlighnmentPhi               = 0;//radians
+    detectorAlighnmentTheta             = ((double)17/24)*Pi();//radians >0 and <Pi and !=Pi/2
+    detectorAlighnmentPhi               = ((double)-15/16)*Pi();//radians !=Pi()/2
     
-    detectorRoom.corners["FBL"].SetX(     -20);//m
-    detectorRoom.corners["FBL"].SetY(     -10);//m
-    detectorRoom.corners["FBL"].SetZ(     0);//m
+    detectorRoom.corners["FBL"].SetX(     -10);//m
+    detectorRoom.corners["FBL"].SetY(     -5);//m
+    detectorRoom.corners["FBL"].SetZ(     -5);//m
     detectorRoom.width                  = 10;//m
     detectorRoom.depth                  = 10;//m
     detectorRoom.height                 = 2;//m
@@ -107,7 +107,7 @@ particle adjustmentsFromCMSMagnets(particle aParticle, bool &stuckParticle)
     for (int i=0; i<(int)CMSMagnets.size(); i++) {
         do{
             //calculate the new momentum of the particle
-            momentumAfterDeltaTime(aParticle , *new TVector3(-CMSMagnets.at(i).direction*CMSMagnets.at(i).strength,0,0));
+            momentumAfterDeltaTime(aParticle , *new TVector3(0,0,CMSMagnets.at(i).direction*CMSMagnets.at(i).strength));
 
             //estimate the new position by assuming the particle was moving linearly for a duration of deltaTime along the momentum set above
             TVector3 velocity = C()*aParticle.fourMomentum.Vect()*(1.0/aParticle.fourMomentum.E());

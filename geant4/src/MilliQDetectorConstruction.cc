@@ -1,7 +1,6 @@
 
 #include "MilliQDetectorConstruction.hh"
 #include "MilliQPMTSD.hh"
-#include "MilliQScintSD.hh"
 #include "MilliQDetectorMessenger.hh"
 #include "MilliQDetectorBlockLV.hh"
 #include "MilliQDetectorStack.hh"
@@ -180,8 +179,9 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                              G4ThreeVector(fScint_x,fScint_y,fScint_z),
                                              fD_mtl,
                                              fOuterRadius_pmt,
+                                             20*cm,             //pmt height
                                              fRefl,
-                                             fPmt_SD.Get());
+                                             0/*fPmt_SD.Get()*/);
     
     G4Box* wall = new G4Box("Wall V",5.*m,5.*m,.5*m);
     G4LogicalVolume* wallLV = new G4LogicalVolume(wall,
@@ -202,26 +202,32 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 }
 
 
-void MilliQDetectorConstruction::ConstructSDandField() {
-
+void MilliQDetectorConstruction::ConstructSDandField()
+{
     if (!fDetectorStack) return;
 
     // PMT SD
 
     if (!fPmt_SD.Get()) {
-    //Created here so it exists as pmts are being placed
-    G4cout << "Construction /MilliQDet/pmtSD" << G4endl;
-    MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
-    fPmt_SD.Put(pmt_SD);
+        //Created here so it exists as pmts are being placed
+        G4cout << "Construction /MilliQDet/pmtSD" << G4endl;
+        MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
+        fPmt_SD.Put(pmt_SD);
     }
     
+    //((MilliQDetectorBlockLV*)fDetectorStack->GetLogicalVolume()->GetDaughter(0)->GetLogicalVolume())->GetPhotocathodeLV()->SetSensitiveDetector(fPmt_SD.Get());
+    
+    
+    //for(int a=0; a<fDetectorStack->GetLogicalVolume()->GetNoDaughters(); a++){
+        //fDetectorStack->GetLogicalVolume()->GetDaughter(0)->GetLogicalVolume()->GetDaughter(1)->GetLogicalVolume()->GetDaughter(1)->GetLogicalVolume()->GetName()
+        
+        //MilliQDetectorBlockLV* aBlockLV = (MilliQDetectorBlockLV*)fDetectorStack->GetLogicalVolume()->GetDaughter(a);
 
-    for(int i=0; i<fDetectorStack->GetLogicalVolume()->GetNoDaughters(); i++){
         //MilliQDetectorBlockLV* aBlockLV = (MilliQDetectorBlockLV*)fDetectorStack->GetLogicalVolume()->GetDaughter(i);
         //SetSensitiveDetector(aBlockLV->GetPhotocathodeLV(), fPmt_SD.Get());
         //MilliQDetectorBlockLV* aBlockLV = (MilliQDetectorBlockLV*)fDetectorStack->GetLogicalVolume()->GetDaughter(i);
         //aBlockLV->GetPhotocathodeLV()->SetSensitiveDetector(fPmt_SD.Get());
-    }
+    //}
 }
 
 
@@ -246,7 +252,7 @@ void MilliQDetectorConstruction::SetDefaults() {
   fScint_y = 10.*cm;
   fScint_z = 140*cm;
 
-  fOuterRadius_pmt = 5.*cm;
+  fOuterRadius_pmt = 2.5*cm;
 
   fRefl=1.0;
 

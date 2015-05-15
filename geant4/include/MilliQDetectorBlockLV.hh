@@ -18,42 +18,39 @@ class MilliQDetectorBlockLV : public G4LogicalVolume
 
     MilliQDetectorBlockLV(G4VSolid*              pSolid,
                           G4Material*            pMaterial,
-                          const G4String&        name,
-                          G4FieldManager*        pFieldMgr,
-                          G4VSensitiveDetector*  pSDetector,
-                          G4UserLimits*          pULimits,
-                          G4bool                 optimise,
+                          const G4String&        pName,
+                          G4FieldManager*        pFieldManager,
+                          G4VSensitiveDetector*  pSD,
+                          G4UserLimits*          pUserLimits,
+                          G4bool                 pOptimise,
                           
-                          G4ThreeVector  scintillatorSize,
-                          G4double       housingThickness,
-                          G4double       pmtRadius,
-                          G4double       reflectivity,
-                          MilliQPMTSD*   pSD);
+                          G4ThreeVector  pScintillatorDimensions,
+                          G4double       pScintillatorHousingThickness,
+                          G4double       pScintillatorHousingReflectivity,
+                          
+                          G4double  pPmtRadius,                 //outer radius of pmt including glass, not including metal shielding or housing
+                          G4double  pPmtHeight,                 //height of pmt including glass, not including metal sheilding or housing
+                          G4double  pPmtPhotocathodeDepth,      //depth from front(scinillator side) of pmt to beginning of phtocathode section, including glass
+                          G4double  pPmtHousingThickness,
+                          G4double  pPmtGlassThickness,
+                          G4double  pPmtHousingReflectivity);
     
-
-    G4LogicalVolume* GetPhotocathodeLV(){return _photocathodeLV;}
-    G4LogicalVolume* GetScintillatorLV(){return _scintillatorLV;}
+    G4ThreeVector GetDimensions(){return fDimensions;};
     
   private:
-
+    
     void VisAttributes();
-    void SurfaceProperties();
-
-    G4double _reflectivity;
-    G4ThreeVector _housingSize;
-
-    // Basic Volumes
-    //
-    G4Box*  _scintillatorV;
-    G4Tubs* _pmtV;
-    G4Tubs* _photocathodeV;
-
-    // Logical volumes
-    //
-    G4LogicalVolume* _scintillatorLV;
-    G4LogicalVolume* _pmtLV;
-    G4LogicalVolume* _photocathodeLV;
-
+    void SurfaceProperties(G4double pScintillatorHousingReflectivity, G4double pPmtHousingReflectivity);
+    
+    G4ThreeVector    fDimensions;
+    
+    G4LogicalVolume* fScintillatorHousingLV;
+    G4LogicalVolume* fScintillatorLV;
+    
+    G4LogicalVolume* fPmtHousingLV;
+    G4LogicalVolume* fPmtGlassLV;
+    G4LogicalVolume* fPmtVacuumSectionLV;
+    G4LogicalVolume* fPmtPhotocathodeSectionLV;
 };
 
 #endif

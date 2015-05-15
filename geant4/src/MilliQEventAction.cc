@@ -30,7 +30,6 @@
 //
 //
 #include "MilliQEventAction.hh"
-#include "MilliQScintHit.hh"
 #include "MilliQPMTHit.hh"
 #include "MilliQUserEventInformation.hh"
 #include "MilliQTrajectory.hh"
@@ -51,7 +50,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 MilliQEventAction::MilliQEventAction(MilliQRecorderBase* r)
-  : fRecorder(r),fSaveThreshold(0),fScintCollID(-1),fPMTCollID(-1),fVerbose(0),
+  : fRecorder(r),fSaveThreshold(0),fPMTCollID(-1),fVerbose(0),
    fPMTThreshold(1),fForcedrawphotons(false),fForcenophotons(false)
 {
   fEventMessenger = new MilliQEventMessenger(this);
@@ -70,8 +69,6 @@ void MilliQEventAction::BeginOfEventAction(const G4Event* anEvent){
     GetEventManager()->SetUserInformation(new MilliQUserEventInformation);
 
   G4SDManager* SDman = G4SDManager::GetSDMpointer();
-  if(fScintCollID<0)
-    fScintCollID=SDman->GetCollectionID("scintCollection");
   if(fPMTCollID<0)
     fPMTCollID=SDman->GetCollectionID("pmtHitCollection");
 
@@ -103,49 +100,12 @@ void MilliQEventAction::EndOfEventAction(const G4Event* anEvent){
     }
   }
  
-  MilliQScintHitsCollection* scintHC = 0;
   MilliQPMTHitsCollection* pmtHC = 0;
   G4HCofThisEvent* hitsCE = anEvent->GetHCofThisEvent();
  
   //Get the hit collections
   if(hitsCE){
-    if(fScintCollID>=0)scintHC = (MilliQScintHitsCollection*)(hitsCE->GetHC(fScintCollID));
     if(fPMTCollID>=0)pmtHC = (MilliQPMTHitsCollection*)(hitsCE->GetHC(fPMTCollID));
-  }
-
-  //Hits in scintillator
-  if(scintHC){
-    int n_hit = scintHC->entries();
-    G4ThreeVector  eWeightPos(0.);
-    G4double edep;
-    G4double edepMax=0;
-
-    for(int i=0;i<n_hit;i++){ //gather info on hits in scintillator
-      edep=(*scintHC)[i]->GetEdep();
-      eventInformation->IncEDep(edep); //sum up the edep
-      eWeightPos += (*scintHC)[i]->GetPos()*edep;//calculate energy weighted pos
-      if(edep>edepMax){
-        edepMax=edep;//store max energy deposit
-        G4ThreeVector posMax=(*scintHC)[i]->GetPos();
-        eventInformation->SetPosMax(posMax,edep);
-      }
-    }
-    if(eventInformation->GetEDep()==0.){
-      if(fVerbose>0)G4cout<<"No hits in the scintillator this event."<<G4endl;
-    }
-    else{
-      //Finish calculation of energy weighted position
-      eWeightPos/=eventInformation->GetEDep();
-      eventInformation->SetEWeightPos(eWeightPos);
-      if(fVerbose>0){
-        G4cout << "\tEnergy weighted position of hits in MilliQ : "
-               << eWeightPos/mm << G4endl;
-      }
-    }
-    if(fVerbose>0){
-    G4cout << "\tTotal energy deposition in scintillator : "
-           << eventInformation->GetEDep() / keV << " (keV)" << G4endl;
-    }
   }
  
   if(pmtHC){

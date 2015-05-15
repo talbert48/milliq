@@ -13,7 +13,6 @@ class MilliQDetectorStack;
 #include "G4VisAttributes.hh"
 #include "G4RotationMatrix.hh"
 
-#include "MilliQScintSD.hh"
 #include "MilliQPMTSD.hh"
 
 #include "G4VUserDetectorConstruction.hh"

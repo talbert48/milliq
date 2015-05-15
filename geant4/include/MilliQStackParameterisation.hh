@@ -3,6 +3,7 @@
 #include "G4Box.hh"
 #include "G4VPhysicalVolume.hh"
 #include "MilliQDetectorBlockLV.hh"
+#include "MilliQPMTSD.hh"
 
 // For G4ThreeVector storage of dimensional data:
 //      x dimension is treated as width
@@ -23,7 +24,6 @@ public:
     virtual void ComputeTransformation(const G4int pId,
                                        G4VPhysicalVolume* pPV) const;
     
-    
     void GetIdDimensionsFromId(G4int           pId,
                                G4ThreeVector&  pIdDimensions) const;
     
@@ -33,5 +33,4 @@ private:
     
     G4ThreeVector fN;
     G4ThreeVector fBlockDimensions, fGapDimensions;
-
 };

@@ -68,7 +68,6 @@ class MilliQEventAction : public G4UserEventAction
 
     G4int              fSaveThreshold;
 
-    G4int              fScintCollID;
     G4int              fPMTCollID;
 
     G4int              fVerbose;

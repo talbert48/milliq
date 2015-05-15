@@ -1,0 +1,1 @@
+Function SurfaceProperties in DetectorBlockLV needs work, currently just thrown together

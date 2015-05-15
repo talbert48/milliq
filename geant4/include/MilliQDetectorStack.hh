@@ -25,7 +25,8 @@ public:
                         G4int               pCopyNo,
                         G4ThreeVector       sSize,
                         G4double            hThickness,
-                        G4double            pmtRadius,
+                        G4double            pmtRadius,          //must not exsede sinilator size
+                        G4double       pmtHeight,
                         G4double            refl,
                         MilliQPMTSD*        pSD);
     

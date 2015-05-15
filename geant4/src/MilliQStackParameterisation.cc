@@ -34,6 +34,7 @@ void MilliQStackParameterisation::ComputeTransformation(const G4int         pId,
     pPV->SetRotation(0);
 }
 
+
 void MilliQStackParameterisation::GetIdDimensionsFromId(G4int           pId,
                                                         G4ThreeVector&  pIdDimensions) const
 {

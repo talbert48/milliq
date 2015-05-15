@@ -17,6 +17,7 @@ MilliQDetectorStack::MilliQDetectorStack(G4RotationMatrix*              pRot,
                                          G4ThreeVector                  scintillatorSize,
                                          G4double                       housingThickness,
                                          G4double                       pmtRadius,
+                                         G4double                       pmtHeight,
                                          G4double                       reflectivity,
                                          MilliQPMTSD*                   pSD)
                     :G4PVPlacement(pRot,
@@ -46,27 +47,35 @@ MilliQDetectorStack::MilliQDetectorStack(G4RotationMatrix*              pRot,
     //
     // parameterise and place detector blocks
     //
-    G4ThreeVector housingSize = scintillatorSize + (2.*G4ThreeVector(housingThickness,housingThickness,housingThickness));
     
     G4Box* houseingV = new G4Box("Housing Volume" ,
-                           housingSize.x()/2. , housingSize.y()/2. , housingSize.z()/2. );
+                           1*m , 1*m , 1*m );//temp dimension
 
     
     MilliQDetectorBlockLV* aDetectorBlock
     = new MilliQDetectorBlockLV(houseingV,
-                                G4Material::GetMaterial("Al"),
-                                "Houseing Logical Volume",
-                                0,0,0,
-                                true,
-                                scintillatorSize,
-                                housingThickness,
-                                pmtRadius,
-                                reflectivity,
-                                pSD);
+                          G4Material::GetMaterial("Air"),
+                          "Houseing Logical Volume",
+                          0,
+                          0,
+                          0,
+                          true,
+                          
+                          scintillatorSize,
+                          10*cm,
+                          reflectivity,
+                          
+                          pmtRadius,
+                          pmtHeight,
+                          5*cm,
+                          housingThickness,
+                          housingThickness,
+                          reflectivity);
+    
     
     MilliQStackParameterisation* parameterisation
     = new MilliQStackParameterisation(G4ThreeVector(1.,1.,1.),          //n
-                                      housingSize,                      //block dimensions
+                                      aDetectorBlock->GetDimensions(),  //block dimensions
                                       G4ThreeVector(1.*cm,1.*cm,1.*cm));//gap dimensions
     
     new G4PVParameterised( "Detector Blocks",

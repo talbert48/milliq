@@ -16,15 +16,15 @@ MilliQPrimaryGeneratorAction::MilliQPrimaryGeneratorAction(){
     fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 0.));           //position
 
     if(fKnownDataOn){
-        fParticleGun->SetParticleEnergy(fKnownData[fKnownDataInterator][3]*GeV);                            //energy
-        fParticleGun->SetParticleMomentumDirection(G4ThreeVector(fKnownData[fKnownDataInterator][0]*GeV,    //x-direction
-                                                                 fKnownData[fKnownDataInterator][1]*GeV,    //y-direction
-                                                                 fKnownData[fKnownDataInterator][2]*GeV));  //z-direction
+        fParticleGun->SetParticleEnergy(fKnownData[fKnownDataInterator][3]*GeV); //energy
+        fParticleGun->SetParticleMomentumDirection(G4ThreeVector(fKnownData[fKnownDataInterator][0]*GeV, //x-direction
+                                                                 fKnownData[fKnownDataInterator][1]*GeV, //y-direction
+                                                                 fKnownData[fKnownDataInterator][2]*GeV)); //z-direction
         //iterate or start over iteration if it excesses known data size
         fKnownDataInterator = fKnownDataInterator+1>=fKnownDataSize ? 0 : fKnownDataInterator+1;
     }else{
         fParticleGun->SetParticleEnergy(1.*GeV);                                //energy
-        fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));  //direction
+        fParticleGun->SetParticleMomentumDirection(G4ThreeVector(1., 0., 0.));  //direction
     }
 }
 

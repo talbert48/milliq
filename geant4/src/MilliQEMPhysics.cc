@@ -76,12 +76,9 @@ void MilliQEMPhysics::ConstructParticle()
 
 void MilliQEMPhysics::ConstructProcess()
 {
-  G4PhotoElectricEffect* fPhotoEffect =
-    new G4PhotoElectricEffect();
-  G4ComptonScattering* fComptonEffect =
-    new G4ComptonScattering();
-  G4GammaConversion* fPairProduction =
-    new G4GammaConversion();
+  G4PhotoElectricEffect* fPhotoEffect = new G4PhotoElectricEffect();
+  G4ComptonScattering* fComptonEffect = new G4ComptonScattering();
+  G4GammaConversion* fPairProduction = new G4GammaConversion();
  
     // Electron physics
   G4eMultipleScattering* fElectronMultipleScattering =

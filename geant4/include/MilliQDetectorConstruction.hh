@@ -14,6 +14,7 @@ class MilliQDetectorStack;
 #include "G4RotationMatrix.hh"
 
 #include "MilliQPMTSD.hh"
+#include "MilliQDetectorStackParameterisation.hh"
 
 #include "G4VUserDetectorConstruction.hh"
 #include "G4Cache.hh"
@@ -34,9 +35,6 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     void SetDefaults();
 
     //Get values
-    G4double GetScintX(){return fScint_x;}
-    G4double GetScintY(){return fScint_y;}
-    G4double GetScintZ(){return fScint_z;}
     G4double GetHousingThickness(){return fD_mtl;}
     G4double GetPMTRadius(){return fOuterRadius_pmt;}
 
@@ -52,21 +50,15 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
 
     MilliQDetectorMessenger* fDetectorMessenger;
 
-    G4Box* fExperimentalHall_box;
-    G4LogicalVolume* fExperimentalHall_log;
-    G4VPhysicalVolume* fExperimentalHall_phys;
+    G4VPhysicalVolume* fWorldPV;
 
     //Materials & Elements
-    G4Material* fScintillator;
-    G4Material* fAl;
-    G4Element* fN;
-    G4Element* fO;
-    G4Material* fAir;
-    G4Material* fVacuum;
-    G4Element* fC;
-    G4Element* fH;
-    G4Material* fGlass;
-    G4Material* fConcrete;
+    G4Material* fScintillatorMaterial;
+    G4Material* fAluminiumMaterial;
+    G4Material* fAirMaterial;
+    G4Material* fVacuumMaterial;
+    G4Material* fGlassMaterial;
+    G4Material* fConcreteMaterial;
 
     //Geometry
     G4double fScint_x;

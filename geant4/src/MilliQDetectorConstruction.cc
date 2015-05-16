@@ -3,7 +3,7 @@
 #include "MilliQPMTSD.hh"
 #include "MilliQDetectorMessenger.hh"
 #include "MilliQDetectorBlockLV.hh"
-#include "MilliQDetectorStack.hh"
+#include "MilliQDetectorStackLV.hh"
 
 #include "G4SDManager.hh"
 #include "G4RunManager.hh"
@@ -34,61 +34,74 @@
 MilliQDetectorConstruction::MilliQDetectorConstruction()
 : fScintillator_mt(NULL)
 {
-  fExperimentalHall_box = NULL;
-  fExperimentalHall_log = NULL;
-  fExperimentalHall_phys = NULL;
+    fWorldPV = NULL;
 
-  fScintillator = fAl = fAir = fVacuum = fGlass = NULL;
+    fScintillatorMaterial = fAluminiumMaterial = fAirMaterial = fVacuumMaterial = fGlassMaterial = NULL;
 
-  fN = fO = fC = fH = NULL;
+    SetDefaults();
 
-  SetDefaults();
-
-  fDetectorMessenger = new MilliQDetectorMessenger(this);
+    fDetectorMessenger = new MilliQDetectorMessenger(this);
 }
 
 
 void MilliQDetectorConstruction::DefineMaterials(){
-    G4double a;  // atomic mass
-    G4double z;  // atomic number
-    G4double density;
     
     G4NistManager* nist = G4NistManager::Instance();
     nist->SetVerbose(0);
 
-    //***Elements
-    fH = new G4Element("H", "H", z=1., a=1.01*g/mole);
-    fC = new G4Element("C", "C", z=6., a=12.01*g/mole);
-    fN = new G4Element("N", "N", z=7., a= 14.01*g/mole);
-    fO = new G4Element("O", "O", z=8., a= 16.00*g/mole);
+    // Elements
+    //                            name          symbole number  wieght
+    G4Element* fH = new G4Element("Hydrogen",   "H",    1.,     1.01*g/mole);
+    G4Element* fC = new G4Element("Carbon",     "C",    6.,     12.01*g/mole);
+    G4Element* fN = new G4Element("Nitrogen",   "N",    7.,     14.01*g/mole);
+    G4Element* fO = new G4Element("Oxegen",     "O",    8.,     16.00*g/mole);
 
     //
     // Materials
     //
     
     //Scintillator
-    fScintillator = new G4Material("Scintillator Material",density=3.020*g/cm3,2);
-    fScintillator->AddElement(fC,10);
-    fScintillator->AddElement(fH,11);
+    fScintillatorMaterial = new G4Material("Scintillator", //name
+                                           3.020*g/cm3, //density
+                                           2); //n elements
+    fScintillatorMaterial->AddElement(fC,10);
+    fScintillatorMaterial->AddElement(fH,11);
+    
     //Aluminum
-    fAl = new G4Material("Al",z=13.,a=26.98*g/mole,density=2.7*g/cm3);
+    fAluminiumMaterial = new G4Material("Aluminium", //name
+                                        13., //number
+                                        26.98*g/mole, //wieght
+                                        2.7*g/cm3); //density
+    
     //Vacuum
-    fVacuum = new G4Material("Vacuum",z=1.,a=1.01*g/mole,
-                          density=universe_mean_density,kStateGas,0.1*kelvin,
-                          1.e-19*pascal);
+    fVacuumMaterial = new G4Material("Vacuum", //name
+                                     1., //atomic number
+                                     1.01*g/mole, //weight
+                                     universe_mean_density, //density
+                                     kStateGas, //state
+                                     0.1*kelvin, //tempature
+                                     1.e-19*pascal); //presure
     //Air
-    fAir = new G4Material("Air", density= 1.29*mg/cm3, 2);
-    fAir->AddElement(fN, 70*perCent);
-    fAir->AddElement(fO, 30*perCent);
+    fAirMaterial = new G4Material("Air", //name
+                                  1.29*mg/cm3, //density
+                                  2); //n elements
+    fAirMaterial->AddElement(fN, 70*perCent); //compose of nitrogen
+    fAirMaterial->AddElement(fO, 30*perCent); //compose of oxegen
+    
     //Glass
-    fGlass = new G4Material("Glass", density=1.032*g/cm3,2);
-    fGlass->AddElement(fC,91.533*perCent);
-    fGlass->AddElement(fH,8.467*perCent);
+    fGlassMaterial = new G4Material("Glass", //name
+                                    1.032*g/cm3, //density
+                                    2); //n elements
+    fGlassMaterial->AddElement(fC,91.533*perCent); //compose of carbon
+    fGlassMaterial->AddElement(fH,8.467*perCent); //compose of hydrogen
+    
     //Concrete
-    fConcrete = nist->FindOrBuildMaterial("G4_CONCRETE");
+    fConcreteMaterial = nist->FindOrBuildMaterial("G4_CONCRETE");
 
-    //***Material properties tables
-
+    //
+    //Material properties tables
+    //
+    
     G4double MilliQ_Energy[]    = { 7.0*eV , 7.07*eV, 7.14*eV };
     const G4int MilliQnum = sizeof(MilliQ_Energy)/sizeof(G4double);
 
@@ -108,11 +121,11 @@ void MilliQDetectorConstruction::DefineMaterials(){
     fScintillator_mt->AddConstProperty("FASTTIMECONSTANT",20.*ns);
     fScintillator_mt->AddConstProperty("SLOWTIMECONSTANT",45.*ns);
     fScintillator_mt->AddConstProperty("YIELDRATIO",1.0);
-    fScintillator->SetMaterialPropertiesTable(fScintillator_mt);
+    fScintillatorMaterial->SetMaterialPropertiesTable(fScintillator_mt);
 
-    // Set the Birks Constant for the MilliQ scintillator
+    // Set the Birks Constant for the scintillator
 
-    fScintillator->GetIonisation()->SetBirksConstant(0.126*mm/MeV);
+    fScintillatorMaterial->GetIonisation()->SetBirksConstant(0.126*mm/MeV);
 
     G4double glass_RIND[]={1.49,1.49,1.49};
     assert(sizeof(glass_RIND) == sizeof(MilliQ_Energy));
@@ -121,7 +134,7 @@ void MilliQDetectorConstruction::DefineMaterials(){
     G4MaterialPropertiesTable *glass_mt = new G4MaterialPropertiesTable();
     glass_mt->AddProperty("ABSLENGTH",MilliQ_Energy,glass_AbsLength,MilliQnum);
     glass_mt->AddProperty("RINDEX",MilliQ_Energy,glass_RIND,MilliQnum);
-    fGlass->SetMaterialPropertiesTable(glass_mt);
+    fGlassMaterial->SetMaterialPropertiesTable(glass_mt);
 
     G4double vacuum_Energy[]={2.0*eV,7.0*eV,7.14*eV};
     const G4int vacnum = sizeof(vacuum_Energy)/sizeof(G4double);
@@ -129,14 +142,14 @@ void MilliQDetectorConstruction::DefineMaterials(){
     assert(sizeof(vacuum_RIND) == sizeof(vacuum_Energy));
     G4MaterialPropertiesTable *vacuum_mt = new G4MaterialPropertiesTable();
     vacuum_mt->AddProperty("RINDEX", vacuum_Energy, vacuum_RIND,vacnum);
-    fVacuum->SetMaterialPropertiesTable(vacuum_mt);
-    fAir->SetMaterialPropertiesTable(vacuum_mt);//Give air the same rindex
+    fVacuumMaterial->SetMaterialPropertiesTable(vacuum_mt);
+    fAirMaterial->SetMaterialPropertiesTable(vacuum_mt);//Give air the same rindex
 }
 
 
 G4VPhysicalVolume* MilliQDetectorConstruction::Construct(){
 
-  if (fExperimentalHall_phys) {
+  if (fWorldPV) {
      G4GeometryManager::GetInstance()->OpenGeometry();
      G4PhysicalVolumeStore::GetInstance()->Clean();
      G4LogicalVolumeStore::GetInstance()->Clean();
@@ -152,53 +165,134 @@ G4VPhysicalVolume* MilliQDetectorConstruction::Construct(){
 
 G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 {
-    //The experimental hall walls are all 1m away from housing walls
-    G4double expHall_x = 10.*m;
-    G4double expHall_y = 10.*m;
-    G4double expHall_z = 20.*m;
-
-    //Create experimental hall
-    fExperimentalHall_box
-    = new G4Box("expHall_box",expHall_x,expHall_y,expHall_z);
-    fExperimentalHall_log = new G4LogicalVolume(fExperimentalHall_box,
-                                              G4Material::GetMaterial("Air"),
-                                              "expHall_log",
-                                              0,0,0);
-    fExperimentalHall_phys = new G4PVPlacement(0,G4ThreeVector(),
-                              fExperimentalHall_log,"expHall",0,false,0);
-
-    fExperimentalHall_log->SetVisAttributes(G4VisAttributes::Invisible);
-
-    //Place the main volume
+    //
+    //World
+    //
     
-    fDetectorStack = new MilliQDetectorStack(0,
-                                             G4ThreeVector(0.,0.,10.*m),
-                                             fExperimentalHall_log,
-                                             false,
-                                             0,
-                                             G4ThreeVector(fScint_x,fScint_y,fScint_z),
-                                             fD_mtl,
-                                             fOuterRadius_pmt,
-                                             20*cm,             //pmt height
-                                             fRefl,
-                                             0/*fPmt_SD.Get()*/);
+    //World - Volume
+    G4Box* worldV = new G4Box("World Volume", //name
+                              50.*m, 50.*m, 50.*m); //dimentions
+    //World - Logical Volume
+    G4LogicalVolume* worldLV = new G4LogicalVolume(worldV,
+                                                   G4Material::GetMaterial("Air"),
+                                                   "World Logical Volume",
+                                                   0,0,0);
+    //World - Physical Volume
+    fWorldPV = new G4PVPlacement(0, //rotation
+                                 G4ThreeVector(), //translation
+                                 worldLV, //logical volume
+                                 "World Physical Volume", //name
+                                 0,false,0);
     
-    G4Box* wall = new G4Box("Wall V",5.*m,5.*m,.5*m);
-    G4LogicalVolume* wallLV = new G4LogicalVolume(wall,
-                                                fConcrete,
+    //worldLV->SetVisAttributes(G4VisAttributes::Invisible);
+
+    //Photocathode Sensitive Detectors setup
+    //
+    MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
+    G4SDManager* sDManager = G4SDManager::GetSDMpointer();
+    sDManager->AddNewDetector(pmt_SD);
+    
+    
+    //
+    // Detection Room
+    //
+    
+    // Detection Room - Volume
+    G4Box* detectionRoomV = new G4Box("Detection Room Volume",  //name
+                                      10.*m, 20.*m, 20.*m); //temp dimentions
+    
+    // Detection Room - Logical Volume
+    G4LogicalVolume* detectionRoomLV
+    = new G4LogicalVolume(detectionRoomV, //volume
+                          G4Material::GetMaterial("Air"), //material
+                          "Detection Room Logical Volume"); //name
+    
+    // Detection Room - Physical Volume
+    new G4PVPlacement(0, //rotation
+                      G4ThreeVector(15.*m,0.,0.*m), //translation
+                      detectionRoomLV, //logical volume
+                      "Detection Room Physical Volume", //name
+                      worldLV, //mother logical volume
+                      false, //many
+                      0); //copy n
+
+    
+    //
+    // Detector Stacks
+    //
+    
+    // Detector Stacks - Volume
+    G4Box* stackHouseingV = new G4Box("Detector Stack Housing Volume" ,
+                                      1.*m , 1.*m , 1.*m );//temp dimension
+    
+    // Detector Stacks - Logical Volume
+    MilliQDetectorStackLV* aDetectorStackLV
+    = new MilliQDetectorStackLV(stackHouseingV, //volume
+                                G4Material::GetMaterial("Air"), //material
+                                "Detector Stack H", //name
+                                0, //field manager
+                                0, //sensitve detector
+                                0, //user limits
+                                true, //optimise
+                                
+                                G4ThreeVector(1.,20.,10.), //number of blocks
+                                G4ThreeVector(1.*cm,1.*cm,1.*cm), //between block spacing
+                                
+                                G4ThreeVector(140.*cm,10.*cm,20.*cm), //scintillator dimensions
+                                1.*mm, //scintillator housing thickness
+                                1., //scintillator housing reflectivity
+                                
+                                2.5*cm, //pmt radius
+                                7.*cm, //pmt height
+                                2.*cm, //pmt photocathode depth from fount of pmt
+                                1.*mm, //pmt housing thickness
+                                4.*mm, //pmt glass thickness
+                                1., //pmt housing reflective
+                                pmt_SD); //pmt sensitive detector
+    
+    // Detector Stacks - Parameterisation
+    MilliQDetectorStackParameterisation* fDetectorStackParameterisation
+    = new MilliQDetectorStackParameterisation(3, //n
+                                              aDetectorStackLV->GetDimensions(), //block dimensions
+                                              G4ThreeVector(1.,0.,0.), //alingment vector
+                                              -10.*m, //start depth
+                                              10.*m); //end depth
+
+    // Detector Stacks - Physical Volume
+    new G4PVParameterised("Detector Stack Housing Physical Volume",
+                          aDetectorStackLV,
+                          detectionRoomLV,
+                          kZAxis,
+                          fDetectorStackParameterisation->GetNumberOfBlocks(),
+                          fDetectorStackParameterisation);
+
+    /*
+    G4ThreeVector stackContainerDimentions = fDetectorStackParameterisation->GetStackDimensions();
+    detectorStacksContainerV->SetXHalfLength(stackContainerDimentions.x()/2.);
+    detectorStacksContainerV->SetYHalfLength(stackContainerDimentions.y()/2.);
+    detectorStacksContainerV->SetZHalfLength(stackContainerDimentions.z()/2.);
+    */
+     
+    //
+    // Concrete Wall
+    //
+    
+    G4Box* wallV = new G4Box("Wall V",.5*m,10.*m,15.*m);
+    G4LogicalVolume* wallLV = new G4LogicalVolume(wallV,
+                                                fConcreteMaterial,
                                                 "Wall LV",
                                                 0,0,0);
     wallLV->SetVisAttributes(G4Colour(.5,.5,.5,.5));
-    /*new G4PVPlacement(0,
-                      G4ThreeVector(0,0,3.*m),
+    new G4PVPlacement(0,
+                      G4ThreeVector(1.5*m,0.,0.),
                       wallLV,
                       "Wall PV",
-                      fExperimentalHall_log,
+                      worldLV,
                       0,
                       0,
-                      0);*/
+                      0);
     
-  return fExperimentalHall_phys;
+  return fWorldPV;
 }
 
 
@@ -207,14 +301,19 @@ void MilliQDetectorConstruction::ConstructSDandField()
     if (!fDetectorStack) return;
 
     // PMT SD
+    
+    //MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
 
+    
+    
+    /*
     if (!fPmt_SD.Get()) {
         //Created here so it exists as pmts are being placed
         G4cout << "Construction /MilliQDet/pmtSD" << G4endl;
         MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
         fPmt_SD.Put(pmt_SD);
     }
-    
+    */
     //((MilliQDetectorBlockLV*)fDetectorStack->GetLogicalVolume()->GetDaughter(0)->GetLogicalVolume())->GetPhotocathodeLV()->SetSensitiveDetector(fPmt_SD.Get());
     
     
@@ -250,7 +349,7 @@ void MilliQDetectorConstruction::SetDefaults() {
 
   fScint_x = 20.*cm;
   fScint_y = 10.*cm;
-  fScint_z = 140*cm;
+  fScint_z = 40.*cm;//140.*cm;
 
   fOuterRadius_pmt = 2.5*cm;
 

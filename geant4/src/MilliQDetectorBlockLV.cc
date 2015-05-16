@@ -17,16 +17,17 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
                                              G4UserLimits*          pUserLimits,
                                              G4bool                 pOptimise,
                                              
-                                             G4ThreeVector  pScintillatorDimensions,
-                                             G4double       pScintillatorHousingThickness,
-                                             G4double       pScintillatorHousingReflectivity,
+                                             G4ThreeVector          pScintillatorDimensions,
+                                             G4double               pScintillatorHousingThickness,
+                                             G4double               pScintillatorHousingReflectivity,
                                              
-                                             G4double  pPmtRadius,
-                                             G4double  pPmtHeight,
-                                             G4double  pPmtPhotocathodeDepth,
-                                             G4double  pPmtHousingThickness,
-                                             G4double  pPmtGlassThickness,
-                                             G4double  pPmtHousingReflectivity)
+                                             G4double               pPmtRadius,
+                                             G4double               pPmtHeight,
+                                             G4double               pPmtPhotocathodeDepth,
+                                             G4double               pPmtHousingThickness,
+                                             G4double               pPmtGlassThickness,
+                                             G4double               pPmtHousingReflectivity,
+                                             G4VSensitiveDetector*  pPmtSD)
                     :G4LogicalVolume(pSolid,
                                      pMaterial,
                                      pName,
@@ -62,14 +63,14 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
     //
     
     // Scintillator Housing - Volume
-    G4Box* scintillatorHousingV = new G4Box("Scintillator Housing Volume",                  //name
-                                     pScintillatorDimensions.x()/2.+pScintillatorHousingThickness,   //half x dimension
-                                     pScintillatorDimensions.y()/2.+pScintillatorHousingThickness,   //half y dimension
-                                     pScintillatorDimensions.z()/2.+pScintillatorHousingThickness);  //half z dimension
+    G4Box* scintillatorHousingV = new G4Box("Scintillator Housing Volume",                          //name
+                                     pScintillatorDimensions.x()/2.+pScintillatorHousingThickness,  //half x dimension
+                                     pScintillatorDimensions.y()/2.+pScintillatorHousingThickness,  //half y dimension
+                                     pScintillatorDimensions.z()/2.+pScintillatorHousingThickness); //half z dimension
     // Scintillator Housing - Logical Volume
-    fScintillatorHousingLV = new G4LogicalVolume(scintillatorHousingV,                      //volume
-                                          G4Material::GetMaterial("Scintillator Housing"),  //material
-                                          "Scintillator Housing Logical Volume");           //name
+    fScintillatorHousingLV = new G4LogicalVolume(scintillatorHousingV, //volume
+                                          G4Material::GetMaterial("Aluminium"), //material
+                                          "Scintillator Housing Logical Volume"); //name
     // Scintillator Housing - Physical Volume
     new G4PVPlacement(0,                                                            //rotation
                       G4ThreeVector(0,0,-(pPmtHeight+pPmtHousingThickness)/2.),     //translation
@@ -114,16 +115,16 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
                                      360.*deg);                             //end angle
     // PMT Housing - Logical Volume
     fPmtHousingLV = new G4LogicalVolume(pmtHousingV,                            //volume
-                                        G4Material::GetMaterial("PMT Housing"), //material
+                                        G4Material::GetMaterial("Aluminium"), //material
                                         "PMT Housing Logical Volume");          //name
     // PMT Housing - Physical Volume
-    new G4PVPlacement(0,                                                                //rotation
-                      G4ThreeVector(0,0,(fDimensions.z()/2.)-(pPmtHeight+pPmtHousingThickness)/2.),   //translation
-                      fPmtHousingLV,                                                    //logical volume
-                      "PMT Housing Physical Volume",                                    //name
-                      this,                                                             //mother logical volume
-                      false,                                                            //many
-                      0);                                                               //copy n
+    new G4PVPlacement(0,                                                                                //rotation
+                      G4ThreeVector(0,0,(fDimensions.z()/2.)-(pPmtHeight+pPmtHousingThickness)/2.),     //translation
+                      fPmtHousingLV,                                                                    //logical volume
+                      "PMT Housing Physical Volume",                                                    //name
+                      this,                                                                             //mother logical volume
+                      false,                                                                            //many
+                      0);                                                                               //copy n
     
     // PMT Glass - Volume
     G4Tubs* pmtGlassV = new G4Tubs("PMT Glass Volume",  //name
@@ -134,7 +135,7 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
                                    360.*deg);           //end angle
     // PMT Glass - Logical Volume
     fPmtGlassLV = new G4LogicalVolume(pmtGlassV,                                //volume
-                                        G4Material::GetMaterial("PMT Glass"),   //material
+                                        G4Material::GetMaterial("Glass"),   //material
                                         "PMT Glass Logical Volume");            //name
     // PMT Glass - Physical Volume
     new G4PVPlacement(0,                                                                //rotation
@@ -154,35 +155,41 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
                                    360.*deg);                           //end angle
     // PMT Vacuum Section - Logical Volume
     fPmtVacuumSectionLV = new G4LogicalVolume(pmtVacuumSectionV,                      //volume
-                                      G4Material::GetMaterial("PMT Vaccum Section"),  //material
+                                      G4Material::GetMaterial("Vacuum"),  //material
                                       "PMT Vacuum Section Logical Volume");           //name
     // PMT Vacuum Section - Physical Volume
-    new G4PVPlacement(0,                                                                                //rotation
+    new G4PVPlacement(0,                                                            //rotation
                       G4ThreeVector(0,0,-(pPmtHeight-pPmtPhotocathodeDepth)/2.),    //translation
-                      fPmtVacuumSectionLV,                                                              //logical volume
-                      "PMT Vacumm Scection Physical Volume",                                            //name
-                      fPmtGlassLV,                                                                      //mother logical volume
-                      false,                                                                            //many
-                      0);                                                                               //copy n
+                      fPmtVacuumSectionLV,                                          //logical volume
+                      "PMT Vacumm Scection Physical Volume",                        //name
+                      fPmtGlassLV,                                                  //mother logical volume
+                      false,                                                        //many
+                      0);                                                           //copy n
     
     // PMT Photocathode Section - Volume
     G4Tubs* pmtPhotocathodeSectionV = new G4Tubs("PMT Photocathode Section Volume", //name
-                                           0.*cm,                               //inner radius
-                                           pPmtRadius-pPmtGlassThickness,       //outer radius
-                                           (pPmtHeight-pPmtPhotocathodeDepth)/2.,            //half height
-                                           0.*deg,                              //start angle
-                                           360.*deg);                           //end angle
+                                           0.*cm,                                   //inner radius
+                                           pPmtRadius-pPmtGlassThickness,           //outer radius
+                                           (pPmtHeight-pPmtPhotocathodeDepth)/2.,   //half height
+                                           0.*deg,                                  //start angle
+                                           360.*deg);                               //end angle
     // PMT Photocathode Section - Logical Volume
-    fPmtPhotocathodeSectionLV = new G4LogicalVolume(pmtPhotocathodeSectionV,                      //volume
-                                              G4Material::GetMaterial("PMT Photocathode Section"),  //material
-                                              "PMT Photocathode Section Logical Volume");           //name
+    fPmtPhotocathodeSectionLV = new G4LogicalVolume(pmtPhotocathodeSectionV, //volume
+                                                    G4Material::GetMaterial("Aluminium"),  //material
+                                                    "PMT Photocathode Section Logical Volume", //name
+                                                    0, //field manager
+                                                    pPmtSD, //sensitive detector
+                                                    0, //userlimits
+                                                    true); //optimise
+    
+    
     // PMT Photocathode Section - Physical Volume
-    new G4PVPlacement(0,                                                                                //rotation
-                      G4ThreeVector(0,0,pPmtPhotocathodeDepth/2.),    //translation
-                      fPmtPhotocathodeSectionLV,                                                              //logical volume
-                      "PMT Vacumm Scection Physical Volume",                                            //name
-                      fPmtGlassLV,                                                                      //mother logical volume
-                      false,                                                                            //many
+    new G4PVPlacement(0,                                            //rotation
+                      G4ThreeVector(0,0,pPmtPhotocathodeDepth/2.),  //translation
+                      fPmtPhotocathodeSectionLV,                    //logical volume
+                      "PMT Vacumm Scection Physical Volume",        //name
+                      fPmtGlassLV,                                  //mother logical volume
+                      false,                                        //many
                       0);
     
     

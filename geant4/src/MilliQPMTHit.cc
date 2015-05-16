@@ -57,4 +57,7 @@ void MilliQPMTHit::Draw(){
 }
 
 
-void MilliQPMTHit::Print() {}
+void MilliQPMTHit::Print()
+{
+    G4cout << "*************HIT****************";
+}

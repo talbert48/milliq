@@ -82,26 +82,17 @@ void MilliQMuonPhysics::ConstructParticle()
 
 void MilliQMuonPhysics::ConstructProcess()
 {
-  G4MuIonisation* fMuPlusIonisation =
-    new G4MuIonisation();
-  G4MuMultipleScattering* fMuPlusMultipleScattering =
-    new G4MuMultipleScattering();
-  G4MuBremsstrahlung* fMuPlusBremsstrahlung=
-    new G4MuBremsstrahlung();
-  G4MuPairProduction* fMuPlusPairProduction=
-    new G4MuPairProduction();
+  G4MuIonisation* fMuPlusIonisation = new G4MuIonisation();
+  G4MuMultipleScattering* fMuPlusMultipleScattering = new G4MuMultipleScattering();
+  G4MuBremsstrahlung* fMuPlusBremsstrahlung = new G4MuBremsstrahlung();
+  G4MuPairProduction* fMuPlusPairProduction = new G4MuPairProduction();
 
-  G4MuIonisation* fMuMinusIonisation =
-    new G4MuIonisation();
-  G4MuMultipleScattering* fMuMinusMultipleScattering =
-    new G4MuMultipleScattering();
-  G4MuBremsstrahlung* fMuMinusBremsstrahlung =
-    new G4MuBremsstrahlung();
-  G4MuPairProduction* fMuMinusPairProduction =
-    new G4MuPairProduction();
+  G4MuIonisation* fMuMinusIonisation = new G4MuIonisation();
+  G4MuMultipleScattering* fMuMinusMultipleScattering = new G4MuMultipleScattering();
+  G4MuBremsstrahlung* fMuMinusBremsstrahlung = new G4MuBremsstrahlung();
+  G4MuPairProduction* fMuMinusPairProduction = new G4MuPairProduction();
 
-  G4MuonMinusCapture* fMuMinusCaptureAtRest =
-    new G4MuonMinusCapture();
+  G4MuonMinusCapture* fMuMinusCaptureAtRest = new G4MuonMinusCapture();
 
   G4ProcessManager * pManager = 0;
 

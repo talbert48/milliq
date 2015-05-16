@@ -33,7 +33,8 @@ class MilliQDetectorBlockLV : public G4LogicalVolume
                           G4double  pPmtPhotocathodeDepth,      //depth from front(scinillator side) of pmt to beginning of phtocathode section, including glass
                           G4double  pPmtHousingThickness,
                           G4double  pPmtGlassThickness,
-                          G4double  pPmtHousingReflectivity);
+                          G4double  pPmtHousingReflectivity,
+                          G4VSensitiveDetector*   pPmtSD);
     
     G4ThreeVector GetDimensions(){return fDimensions;};
     

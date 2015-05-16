@@ -1,0 +1,53 @@
+
+#ifndef MilliQDetectorStack_H
+#define MilliQDetectorStack_H 1
+
+#include "G4PVPlacement.hh"
+#include "G4Box.hh"
+#include "G4Tubs.hh"
+#include "G4Material.hh"
+#include "G4LogicalVolume.hh"
+#include "G4OpticalSurface.hh"
+#include "G4PVParameterised.hh"
+
+#include "MilliQDetectorBlockParameterisation.hh"
+#include "MilliQDetectorBlockLV.hh"
+#include "MilliQPMTSD.hh"
+
+class MilliQDetectorStackLV : public G4LogicalVolume
+{
+public:
+    
+    MilliQDetectorStackLV(G4VSolid*               pSolid,
+                        G4Material*             pMaterial,
+                        const G4String&         pName,
+                        G4FieldManager*         pFieldManager,
+                        G4VSensitiveDetector*   pSD,
+                        G4UserLimits*           pUserLimits,
+                        G4bool                  pOptimise,
+                        
+                        G4ThreeVector           pNumberOfBlocks,
+                        G4ThreeVector           pBetweenBlockSpacing,
+                        
+                        G4ThreeVector           pScintillatorDimensions,
+                        G4double                pScintillatorHousingThickness,
+                        G4double                pScintillatorHousingReflectivity,
+                        
+                        G4double                pPmtRadius,
+                        G4double                pPmtHeight,
+                        G4double                pPmtPhotocathodeDepth,
+                        G4double                pPmtHousingThickness,
+                        G4double                pPmtGlassThickness,
+                        G4double                pPmtHousingReflectivity,
+                        G4VSensitiveDetector*   pPmtSD);
+    
+    G4ThreeVector GetDimensions(){return fStackDimensions;}
+    
+private:
+    MilliQDetectorBlockParameterisation* fDetectorBlockParameterisation;
+    G4ThreeVector fStackDimensions;
+    void VisAttributes();
+    void AdjustVolume();
+};
+
+#endif

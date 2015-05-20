@@ -12,7 +12,6 @@ def AnalyzeFile(filename,type):
     Tail = np.zeros(NTraces)
     outData = np.zeros((3,NTraces))
     for i in range(NTraces):
-        #data[i,:] = data[i,:] - Offset(data[i,0:75])
         data[i,:] = data[i,:] - np.amin(data[i,200:])
         data[i,:] = data[i,:] - Offset(data[i,200:])
         if np.amax(data[i,:]) < 7: # zero out garbage events
@@ -21,15 +20,12 @@ def AnalyzeFile(filename,type):
         if type == 0:
             sums[i] = data[i,:].sum()
         else:
-            sums[i] = data[i,90:250].sum()
-        # if sums[i] < 0:
-        plotEvent(data[i,:])            
+            sums[i] = data[i,90:250].sum()     
         maxs[i] = np.amax(data[i,:])
         Tail[i] = data[i,110:250].sum();
         outData[0,i] = sums[i]
         outData[1,i] = maxs[i]
         outData[2,i] = Tail[i]/sums[i]
-        #outData[2,i] = np.amin(data[i,:])
     return outData
         
     
@@ -51,12 +47,21 @@ def Offset(data):
     offset = (hist * bin).sum() / hist.sum()
     return offset
 
-def plotEvent(data):
+def plotEvent(filename):
+    print('Plotting ' + filename)
+    data = ReadData(filename)
+    plt.ion()
+    for i in range(NTraces):
+        data[i,:] = data[i,:] - np.amin(data[i,200:])
+        data[i,:] = data[i,:] - Offset(data[i,200:])
         x = np.linspace(0.0,12.8, num = NPoints)
-        plt.plot(x,data)
+        plt.figure()
+        plt.plot(x,data[i,:])
         plt.xlabel('$\mu$s')
         plt.ylabel('mV')
         plt.title('PMT Pulse')
-        plt.show()
-        plt.waitforbuttonpress()
-        plt.clf()
+        plt.draw()
+        if input('Press 0 to exit or enter to continue... ') == '0':
+            return True #exit
+        plt.close()
+    return False

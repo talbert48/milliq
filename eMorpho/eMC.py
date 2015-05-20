@@ -81,6 +81,54 @@ def multi_trace_daq(run_time, directory): #takes data for given time in minutes
 			fout.close()
 			fout = open('{0}/{1}_trace.dat'.format(directory,ind/filesize),'w')
 	print "Data acquisition complete"
+def multi_buffer_lm(run_time, directory): #takes lm data for given time in minutes
+	""" Connect to MDS, boot eMorpho, acquire num_buffers list_mode buffers, save data and exit """
+	IP_Address = "tcp://localhost:5507" # on the LAN: "tcp://192.168.6.1:5507"
+	context = zmq.Context()
+	socket = context.socket(zmq.REQ)
+	socket.connect (IP_Address)
+	
+	# always send and receive; don't break up the pair.
+	socket.send ('<em_cmd cmd="version"> </em_cmd>')
+	msg = socket.recv()
+	attributes, data = parse_data(msg)
+	version = '.'.join(data.split()[1:])
+	print 'MDS version = ', version
+	
+	#get serial number
+	socket.send ('<em_cmd cmd="hello"> </em_cmd>')
+	msg = socket.recv()
+	attributes, data = parse_data(msg)
+	items = data.split()
+	num_det = int(items[0])
+	sn_list = items[1:]
+	sn = sn_list[0] # We will use just one eMorpho here
+	print 'serial numbers = ',sn_list
+	
+	run_time = run_time * 60 # convert runTime to seconds
+	end_time = time.time() + run_time # determine end_time
+	itr = 0
+	
+	with open('{0}/{1}_lm.lmdat'.format(directory,sn),'a') as fout:
+		while time.time() < end_time:
+			# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_lm.php
+			socket.send ('<em_cmd cmd="start_lm" engage="0" sn="{0}"> 2 0 1 </em_cmd>'.format(sn))
+			msg = socket.recv()
+			while True:
+				print 'Buffer Count = ',itr
+				itr = itr + 1				
+				# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_cal.php
+				socket.send ('<em_cmd cmd="read_cal" engage="0" sn="{0}"> 1 22 </em_cmd>'.format(sn))
+				msg = socket.recv()
+				attributes, data = parse_data(msg)
+				lm_done = data.split()[15] == '1'
+				if lm_done:
+					# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_lm.php
+					socket.send ('<em_cmd cmd="read_lm" engage="0" sn="{0}"> 1 1 </em_cmd>'.format(sn))
+					msg = socket.recv()
+					attributes, data = parse_data(msg) # attributes is a dict, data is a string
+					fout.write(data+'\n')
+					break
 def getParameters():
 	IP_Address = "tcp://localhost:5507" # on the LAN: "tcp://192.168.6.1:5507"
 	context = zmq.Context()
@@ -263,6 +311,7 @@ def main():
 		print '  2: Take timed run'
 		print '  3: Turn on/off LED pulser'
 		print '  4: Show all parameters'
+		print '  5: Take time lm mode run'
 		choice=raw_input('Select item> ')
 		if choice == '1': #change parameters
 			getParameters()
@@ -283,6 +332,19 @@ def main():
 			getLED()
 		elif choice == '4':#display parameters
 			printParameters()
+		elif choice == '5':#display parameters
+			length = raw_input('Length of Run: ')
+			runTime = convertStrFloat(length)
+			if runTime == 0:
+				print 'Invalid Input'
+				continue;
+			print '% Input the name for the directory where the data will be saved'
+			print '% If the directory does not exist it will be created'
+			print '% Format: data\\\\run1'
+			dataDir = raw_input('Data directory: ')
+			if not os.path.exists(dataDir):
+				os.makedirs(dataDir)
+			multi_buffer_lm(runTime, dataDir)
 		else:
 			choice == ' '
 

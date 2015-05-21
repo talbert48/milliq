@@ -12,13 +12,14 @@ def AnalyzeFile(filename,type):
     Tail = np.zeros(NTraces)
     outData = np.zeros((3,NTraces))
     for i in range(NTraces):
-        data[i,:] = data[i,:] - np.amin(data[i,200:])
-        data[i,:] = data[i,:] - Offset(data[i,200:])
-        if np.amax(data[i,:]) < 7: # zero out garbage events
-            data[i,np.arange(0,NPoints)]=0
-            continue
+        #data[i,:] = data[i,:] - np.amin(data[i,200:])
+        #data[i,:] = data[i,:] - Offset(data[i,200:])
+        # if np.amax(data[i,:]) < 7: # zero out garbage events
+        #     data[i,np.arange(0,NPoints)]=0
+        #     continue
         if type == 0:
-            sums[i] = data[i,:].sum()
+           # sums[i] = data[i,:].sum()
+           sums[i] = data[i,0:320].sum() * 16807 / (2**18)
         else:
             sums[i] = data[i,90:250].sum()     
         maxs[i] = np.amax(data[i,:])
@@ -37,7 +38,9 @@ def ReadData(filename):
         if temp == ['']:
             break      
         for j in range(NPoints):
-            data[i,j] = float(temp[j+4]) - 115
+            data[i,j] = (float(temp[j+4]) - 114.5) * 32
+            if data[i,j] < 0:
+                data[i,j] = 0                
     f.close()
     return data
     

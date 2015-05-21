@@ -112,10 +112,60 @@ def multi_buffer_lm(run_time, directory): #takes lm data for given time in minut
 	with open('{0}/{1}_lm.lmdat'.format(directory,sn),'a') as fout:
 		while time.time() < end_time:
 			# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_lm.php
+			socket.send ('<em_cmd cmd="start_lm" engage="0" sn="{0}"> 1 0 </em_cmd>'.format(sn))
+			msg = socket.recv()
+			while True:
+				if itr % 1000 == 0:
+					print 'Buffer Count = ',itr								
+				# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_cal.php
+				socket.send ('<em_cmd cmd="read_cal" engage="0" sn="{0}"> 1 22 </em_cmd>'.format(sn))
+				msg = socket.recv()
+				attributes, data = parse_data(msg)
+				lm_done = data.split()[15] == '1'
+				if lm_done:
+					itr = itr + 1
+					# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_lm.php
+					socket.send ('<em_cmd cmd="read_lm" engage="0" sn="{0}"> 1 1 </em_cmd>'.format(sn))
+					msg = socket.recv()
+					attributes, data = parse_data(msg) # attributes is a dict, data is a string
+					fout.write(data+'\n')
+					break
+def multi_rawbuffer_lm(run_time, directory): #takes lm data for given time in minutes
+	""" Connect to MDS, boot eMorpho, acquire num_buffers list_mode buffers, save data and exit """
+	IP_Address = "tcp://localhost:5507" # on the LAN: "tcp://192.168.6.1:5507"
+	context = zmq.Context()
+	socket = context.socket(zmq.REQ)
+	socket.connect (IP_Address)
+	
+	# always send and receive; don't break up the pair.
+	socket.send ('<em_cmd cmd="version"> </em_cmd>')
+	msg = socket.recv()
+	attributes, data = parse_data(msg)
+	version = '.'.join(data.split()[1:])
+	print 'MDS version = ', version
+	
+	#get serial number
+	socket.send ('<em_cmd cmd="hello"> </em_cmd>')
+	msg = socket.recv()
+	attributes, data = parse_data(msg)
+	items = data.split()
+	num_det = int(items[0])
+	sn_list = items[1:]
+	sn = sn_list[0] # We will use just one eMorpho here
+	print 'serial numbers = ',sn_list
+	
+	run_time = run_time * 60 # convert runTime to seconds
+	end_time = time.time() + run_time # determine end_time
+	itr = 0
+	
+	with open('{0}/{1}_lm.rlmdat'.format(directory,sn),'a') as fout:
+		while time.time() < end_time:
+			# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_lm.php
 			socket.send ('<em_cmd cmd="start_lm" engage="0" sn="{0}"> 2 0 1 </em_cmd>'.format(sn))
 			msg = socket.recv()
 			while True:
-				print 'Buffer Count = ',itr
+				if itr % 1000 == 0:
+					print 'Buffer Count = ',itr
 				itr = itr + 1				
 				# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_cal.php
 				socket.send ('<em_cmd cmd="read_cal" engage="0" sn="{0}"> 1 22 </em_cmd>'.format(sn))
@@ -123,12 +173,49 @@ def multi_buffer_lm(run_time, directory): #takes lm data for given time in minut
 				attributes, data = parse_data(msg)
 				lm_done = data.split()[15] == '1'
 				if lm_done:
-					# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_lm.php
-					socket.send ('<em_cmd cmd="read_lm" engage="0" sn="{0}"> 1 1 </em_cmd>'.format(sn))
+					# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_lm_raw.php
+					socket.send ('<em_cmd cmd="read_lm_raw" engage="0" sn="{0}"> 1024 </em_cmd>'.format(sn))
 					msg = socket.recv()
 					attributes, data = parse_data(msg) # attributes is a dict, data is a string
 					fout.write(data+'\n')
 					break
+def histo_daq(runTime, directory):
+	""" Connect to MDS, boot eMorpho, acquire histogram, save data and exit """
+	IP_Address = "tcp://localhost:5507" # on the LAN: "tcp://192.168.6.1:5507"
+	context = zmq.Context()
+	socket = context.socket(zmq.REQ)
+	socket.connect (IP_Address)
+	
+	# always send and receive; don't break up the pair.
+	socket.send ('<em_cmd cmd="version"> </em_cmd>')
+	msg = socket.recv()
+	attributes, data = parse_data(msg)
+	version = '.'.join(data.split()[1:])
+	print 'MDS version = ', version
+	
+	#get serial number
+	socket.send ('<em_cmd cmd="hello"> </em_cmd>')
+	msg = socket.recv()
+	attributes, data = parse_data(msg)
+	items = data.split()
+	num_det = int(items[0])
+	sn_list = items[1:]
+	sn = sn_list[0] # We will use just one eMorpho here
+	print 'serial numbers = ',sn_list
+	
+	runTime = runTime * 60 #convert min -> sec
+	# start new MCA acquisition
+	# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_mca.php
+	socket.send ('<em_cmd cmd="start_mca" engage="1"> 7 1 0 0 1 1 0 1 </em_cmd>')
+	msg = socket.recv()
+	time.sleep(runTime) # Acquire a histogram for runTime seconds
+	# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_mca.php
+	socket.send ('<em_cmd cmd="read_mca" engage="0" sn="{0}"> 3 52 21 4096 </em_cmd>'.format(sn))
+	msg = socket.recv()
+	attributes, data = parse_data(msg)# attributes is a dict, data is a string
+	
+	with open('{0}/{1}_mca.hgdat'.format(directory,sn),'w') as fout:
+		fout.write(data+'\n')
 def getParameters():
 	IP_Address = "tcp://localhost:5507" # on the LAN: "tcp://192.168.6.1:5507"
 	context = zmq.Context()
@@ -261,14 +348,16 @@ def printParameters():
 	print 'serial numbers = ',sn_list
 	
 	#http://www.bridgeportinstruments.com/products/mds/mds_doc/get_set_dsp.php
-	socket.send ('<em_cmd cmd="get_dsp" engage="0" sn="{0}"> </em_cmd>'.format(sn))
+	socket.send ('<em_cmd cmd="get_is" engage="0" sn="{0}"> </em_cmd>'.format(sn))
 	msg = socket.recv()
 	attributes, data = parse_data(msg)
 	items = data.split()
 	print '\n Current Values'
-	print 'Trigger Threshold: {0} mV'.format(items[3])
-	print 'Integration time: {0} microseconds'.format(items[4])
-	print 'Hold-off time: {0} microseconds'.format(items[5])
+	print 'fine_gain: {0}'.format(items[3])
+	print 'baseline_threshold: {0} mV'.format(items[4])
+	print 'Trigger Threshold: {0} mV'.format(items[5])
+	print 'Integration time: {0} microseconds'.format(items[6])
+	print 'Hold-off time: {0} microseconds'.format(items[7])
 	
 	#http://www.bridgeportinstruments.com/products/mds/mds_doc/get_set_pulser.php
 	socket.send ('<em_cmd cmd="get_pulser" engage="0" sn="{0}"> </em_cmd>'.format(sn))
@@ -311,7 +400,9 @@ def main():
 		print '  2: Take timed run'
 		print '  3: Turn on/off LED pulser'
 		print '  4: Show all parameters'
-		print '  5: Take time lm mode run'
+		print '  5: Take timed lm mode run'
+		print '  6: Take timed lm raw mode run'
+		print '  7: Take timed energy histogram'
 		choice=raw_input('Select item> ')
 		if choice == '1': #change parameters
 			getParameters()
@@ -332,7 +423,7 @@ def main():
 			getLED()
 		elif choice == '4':#display parameters
 			printParameters()
-		elif choice == '5':#display parameters
+		elif choice == '5':#timed lm mode
 			length = raw_input('Length of Run: ')
 			runTime = convertStrFloat(length)
 			if runTime == 0:
@@ -345,6 +436,32 @@ def main():
 			if not os.path.exists(dataDir):
 				os.makedirs(dataDir)
 			multi_buffer_lm(runTime, dataDir)
+		elif choice == '6':#timed raw lm mode
+			length = raw_input('Length of Run (in minutes): ')
+			runTime = convertStrFloat(length)
+			if runTime == 0:
+				print 'Invalid Input'
+				continue;
+			print '% Input the name for the directory where the data will be saved'
+			print '% If the directory does not exist it will be created'
+			print '% Format: data\\\\run1'
+			dataDir = raw_input('Data directory: ')
+			if not os.path.exists(dataDir):
+				os.makedirs(dataDir)
+			multi_rawbuffer_lm(runTime, dataDir)
+		elif choice == '7':#timed histogram
+			length = raw_input('Length of Run (in minutes): ')
+			runTime = convertStrFloat(length)
+			if runTime == 0:
+				print 'Invalid Input'
+				continue;
+			print '% Input the name for the directory where the data will be saved'
+			print '% If the directory does not exist it will be created'
+			print '% Format: data\\\\run1'
+			dataDir = raw_input('Data directory: ')
+			if not os.path.exists(dataDir):
+				os.makedirs(dataDir)
+			histo_daq(runTime, dataDir)
 		else:
 			choice == ' '
 

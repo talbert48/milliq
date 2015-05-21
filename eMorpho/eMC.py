@@ -114,9 +114,7 @@ def multi_buffer_lm(run_time, directory): #takes lm data for given time in minut
 			# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_lm.php
 			socket.send ('<em_cmd cmd="start_lm" engage="0" sn="{0}"> 1 0 </em_cmd>'.format(sn))
 			msg = socket.recv()
-			while True:
-				if itr % 1000 == 0:
-					print 'Buffer Count = ',itr								
+			while True:								
 				# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_cal.php
 				socket.send ('<em_cmd cmd="read_cal" engage="0" sn="{0}"> 1 22 </em_cmd>'.format(sn))
 				msg = socket.recv()
@@ -124,6 +122,8 @@ def multi_buffer_lm(run_time, directory): #takes lm data for given time in minut
 				lm_done = data.split()[15] == '1'
 				if lm_done:
 					itr = itr + 1
+					if itr % 5 == 0:
+						print 'Buffer Count = ',itr
 					# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_lm.php
 					socket.send ('<em_cmd cmd="read_lm" engage="0" sn="{0}"> 1 1 </em_cmd>'.format(sn))
 					msg = socket.recv()
@@ -163,16 +163,16 @@ def multi_rawbuffer_lm(run_time, directory): #takes lm data for given time in mi
 			# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_lm.php
 			socket.send ('<em_cmd cmd="start_lm" engage="0" sn="{0}"> 2 0 1 </em_cmd>'.format(sn))
 			msg = socket.recv()
-			while True:
-				if itr % 1000 == 0:
-					print 'Buffer Count = ',itr
-				itr = itr + 1				
+			while True:				
 				# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_cal.php
 				socket.send ('<em_cmd cmd="read_cal" engage="0" sn="{0}"> 1 22 </em_cmd>'.format(sn))
 				msg = socket.recv()
 				attributes, data = parse_data(msg)
 				lm_done = data.split()[15] == '1'
 				if lm_done:
+					itr = itr + 1	
+					if itr % 5 == 0:
+						print 'Buffer Count = ',itr
 					# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_lm_raw.php
 					socket.send ('<em_cmd cmd="read_lm_raw" engage="0" sn="{0}"> 1024 </em_cmd>'.format(sn))
 					msg = socket.recv()
@@ -348,16 +348,14 @@ def printParameters():
 	print 'serial numbers = ',sn_list
 	
 	#http://www.bridgeportinstruments.com/products/mds/mds_doc/get_set_dsp.php
-	socket.send ('<em_cmd cmd="get_is" engage="0" sn="{0}"> </em_cmd>'.format(sn))
+	socket.send ('<em_cmd cmd="get_dsp" engage="0" sn="{0}"> </em_cmd>'.format(sn))
 	msg = socket.recv()
 	attributes, data = parse_data(msg)
 	items = data.split()
 	print '\n Current Values'
-	print 'fine_gain: {0}'.format(items[3])
-	print 'baseline_threshold: {0} mV'.format(items[4])
-	print 'Trigger Threshold: {0} mV'.format(items[5])
-	print 'Integration time: {0} microseconds'.format(items[6])
-	print 'Hold-off time: {0} microseconds'.format(items[7])
+	print 'Trigger Threshold: {0} mV'.format(items[3])
+	print 'Integration time: {0} microseconds'.format(items[4])
+	print 'Hold-off time: {0} microseconds'.format(items[5])
 	
 	#http://www.bridgeportinstruments.com/products/mds/mds_doc/get_set_pulser.php
 	socket.send ('<em_cmd cmd="get_pulser" engage="0" sn="{0}"> </em_cmd>'.format(sn))

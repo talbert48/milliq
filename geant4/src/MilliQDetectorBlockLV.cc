@@ -4,7 +4,10 @@
 #include "MilliQDetectorBlockLV.hh"
 
 #include "G4LogicalSkinSurface.hh"
+#include "G4RotationMatrix.hh"
+#include "G4Transform3D.hh"
 #include "G4LogicalBorderSurface.hh"
+#include "G4PhysicalConstants.hh"
 
 #include "G4SystemOfUnits.hh"
 
@@ -40,13 +43,13 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
     // Detector Block(this)
     //
     
-    G4double detectorBlockHalfDimensionX = pScintillatorHousingThickness+(pScintillatorDimensions.x()/2.) > pPmtHousingThickness+pPmtRadius
-    ? pScintillatorHousingThickness+(pScintillatorDimensions.x()/2.) : pPmtHousingThickness+pPmtRadius; //find max half x dimension of detector block
-    
-    G4double detectorBlockHalfDimensionY = pScintillatorHousingThickness+(pScintillatorDimensions.y()/2.) > pPmtHousingThickness+pPmtRadius
+	G4double detectorBlockHalfDimensionX = pScintillatorHousingThickness+(pScintillatorDimensions.x() + pPmtHousingThickness+pPmtHeight)/2.; //find half z dimension of detector block
+
+	G4double detectorBlockHalfDimensionY = pScintillatorHousingThickness+(pScintillatorDimensions.y()/2.) > pPmtHousingThickness+pPmtRadius
     ? pScintillatorHousingThickness+(pScintillatorDimensions.y()/2.) : pPmtHousingThickness+pPmtRadius; //find max half y dimension of detector block
-    
-    G4double detectorBlockHalfDimensionZ = pScintillatorHousingThickness+(pScintillatorDimensions.z() + pPmtHousingThickness+pPmtHeight)/2.; //find half z dimension of detector block
+
+    G4double detectorBlockHalfDimensionZ = pScintillatorHousingThickness+(pScintillatorDimensions.z()/2.) > pPmtHousingThickness+pPmtRadius
+    ? pScintillatorHousingThickness+(pScintillatorDimensions.z()/2.) : pPmtHousingThickness+pPmtRadius; //find max half x dimension of detector block
     
     fDimensions = G4ThreeVector(2.*detectorBlockHalfDimensionX,2.*detectorBlockHalfDimensionY,2.*detectorBlockHalfDimensionZ);
     
@@ -67,13 +70,14 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
                                      pScintillatorDimensions.x()/2.+pScintillatorHousingThickness,  //half x dimension
                                      pScintillatorDimensions.y()/2.+pScintillatorHousingThickness,  //half y dimension
                                      pScintillatorDimensions.z()/2.+pScintillatorHousingThickness); //half z dimension
+
     // Scintillator Housing - Logical Volume
     fScintillatorHousingLV = new G4LogicalVolume(scintillatorHousingV, //volume
                                           G4Material::GetMaterial("Aluminium"), //material
                                           "Scintillator Housing Logical Volume"); //name
     // Scintillator Housing - Physical Volume
     new G4PVPlacement(0,                                                            //rotation
-                      G4ThreeVector(0,0,-(pPmtHeight+pPmtHousingThickness)/2.),     //translation
+                      G4ThreeVector(-(pPmtHeight+pPmtHousingThickness)/2.,0,0),     //translation
                       fScintillatorHousingLV,                                       //logical volume
                       "Scintillator Housing Physical Volume",                       //name
                       this,                                                         //mother logical volume
@@ -97,6 +101,7 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
                       fScintillatorHousingLV,               //mother logical volume
                       false,                                //many
                       0);                                   //copy n
+
     //
     // PMT
     // Composed of "PMT Housing" with "PMT Glass" inside.
@@ -117,9 +122,15 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
     fPmtHousingLV = new G4LogicalVolume(pmtHousingV,                            //volume
                                         G4Material::GetMaterial("Aluminium"), //material
                                         "PMT Housing Logical Volume");          //name
+
+    G4RotationMatrix* rotm  = new G4RotationMatrix(); // This orientation makes the sensitive part farthest away from beam
+    rotm->rotateX(90*deg);
+    rotm->rotateY(270*deg);
+    rotm->rotateZ(0*deg);
+
     // PMT Housing - Physical Volume
-    new G4PVPlacement(0,                                                                                //rotation
-                      G4ThreeVector(0,0,(fDimensions.z()/2.)-(pPmtHeight+pPmtHousingThickness)/2.),     //translation
+    new G4PVPlacement(rotm,                                                                                //rotation
+                      G4ThreeVector((fDimensions.x()/2.)-(pPmtHeight+pPmtHousingThickness)/2.,0,0),     //translation
                       fPmtHousingLV,                                                                    //logical volume
                       "PMT Housing Physical Volume",                                                    //name
                       this,                                                                             //mother logical volume

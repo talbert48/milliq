@@ -59,6 +59,8 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4Material* fVacuumMaterial;
     G4Material* fGlassMaterial;
     G4Material* fConcreteMaterial;
+    G4Material* led;
+    G4Material* polyethylene;
 
     //Geometry
     G4double fScint_x;

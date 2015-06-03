@@ -21,6 +21,8 @@
 #include "G4Material.hh"
 #include "G4Box.hh"
 #include "G4Tubs.hh"
+#include "G4SubtractionSolid.hh"
+
 #include "G4LogicalVolume.hh"
 #include "G4ThreeVector.hh"
 #include "G4PVPlacement.hh"
@@ -97,6 +99,11 @@ void MilliQDetectorConstruction::DefineMaterials(){
     
     //Concrete
     fConcreteMaterial = nist->FindOrBuildMaterial("G4_CONCRETE");
+
+    //Shielding Material
+    led = G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb");
+   	polyethylene = G4NistManager::Instance()->FindOrBuildMaterial("G4_POLYETHYLENE");
+
 
     //
     //Material properties tables
@@ -207,24 +214,29 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                           G4Material::GetMaterial("Air"), //material
                           "Detection Room Logical Volume"); //name
     
+    G4ThreeVector DetectionRoomTrans = G4ThreeVector(15.*m,0.*m,0.*m);
+
     // Detection Room - Physical Volume
     new G4PVPlacement(0, //rotation
-                      G4ThreeVector(15.*m,0.,0.*m), //translation
+    				  DetectionRoomTrans, //translation
                       detectionRoomLV, //logical volume
                       "Detection Room Physical Volume", //name
                       worldLV, //mother logical volume
                       false, //many
                       0); //copy n
 
-    
+
+
+
+
     //
     // Detector Stacks
     //
-    
+
     // Detector Stacks - Volume
     G4Box* stackHouseingV = new G4Box("Detector Stack Housing Volume" ,
                                       1.*m , 1.*m , 1.*m );//temp dimension
-    
+
     // Detector Stacks - Logical Volume
     MilliQDetectorStackLV* aDetectorStackLV
     = new MilliQDetectorStackLV(stackHouseingV, //volume
@@ -234,14 +246,14 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                 0, //sensitve detector
                                 0, //user limits
                                 true, //optimise
-                                
-                                G4ThreeVector(1.,20.,10.), //number of blocks
+
+                                G4ThreeVector(1.,20.,10.),//20.,10.), //number of blocks
                                 G4ThreeVector(1.*cm,1.*cm,1.*cm), //between block spacing
-                                
+
                                 G4ThreeVector(140.*cm,10.*cm,20.*cm), //scintillator dimensions
                                 1.*mm, //scintillator housing thickness
                                 1., //scintillator housing reflectivity
-                                
+
                                 2.5*cm, //pmt radius
                                 7.*cm, //pmt height
                                 2.*cm, //pmt photocathode depth from fount of pmt
@@ -249,30 +261,116 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                 4.*mm, //pmt glass thickness
                                 1., //pmt housing reflective
                                 pmt_SD); //pmt sensitive detector
-    
+
+    G4double TotalStackStart = -5.*m;
+    G4double TotalStackEnd = 10.*m;
+
     // Detector Stacks - Parameterisation
     MilliQDetectorStackParameterisation* fDetectorStackParameterisation
     = new MilliQDetectorStackParameterisation(3, //n
                                               aDetectorStackLV->GetDimensions(), //block dimensions
-                                              G4ThreeVector(1.,0.,0.), //alingment vector
-                                              -10.*m, //start depth
-                                              10.*m); //end depth
+                                              G4ThreeVector(-1.,0.,0.), //alignment vector
+											  TotalStackStart, //start depth
+											  TotalStackEnd); //end depth
 
     // Detector Stacks - Physical Volume
     new G4PVParameterised("Detector Stack Housing Physical Volume",
                           aDetectorStackLV,
-                          detectionRoomLV,
+						  detectionRoomLV,
                           kZAxis,
                           fDetectorStackParameterisation->GetNumberOfBlocks(),
                           fDetectorStackParameterisation);
 
-    /*
+
     G4ThreeVector stackContainerDimentions = fDetectorStackParameterisation->GetStackDimensions();
-    detectorStacksContainerV->SetXHalfLength(stackContainerDimentions.x()/2.);
-    detectorStacksContainerV->SetYHalfLength(stackContainerDimentions.y()/2.);
-    detectorStacksContainerV->SetZHalfLength(stackContainerDimentions.z()/2.);
-    */
-     
+ //   detectorStacksContainerV->SetXHalfLength(stackContainerDimentions.x()/2.);
+ //   detectorStacksContainerV->SetYHalfLength(stackContainerDimentions.y()/2.);
+ //   detectorStacksContainerV->SetZHalfLength(stackContainerDimentions.z()/2.);
+
+
+
+
+
+
+    //
+    //Shielding Around Experiment
+    //
+
+    G4ThreeVector SingleStackDimension = aDetectorStackLV->GetDimensions();
+	// The shield is an open box of a certain thickness
+	//Define shielding thickness
+	G4ThreeVector shield1Thick = G4ThreeVector(10.0*cm,10.0*cm,10.0*cm);
+	G4ThreeVector shield2Thick = G4ThreeVector(10.0*cm,10.0*cm,10.0*cm);
+	//Define led shielding inner half length(polyethylene butted around led)
+	G4ThreeVector shield1InnerHL= G4ThreeVector(TotalStackStart+TotalStackEnd+70*cm,SingleStackDimension.y(),SingleStackDimension.z());
+	//Define global center for shielding
+	G4ThreeVector centreGlobalShield = G4ThreeVector(15.0*m,0,0);
+	//Define center location of led shielding (relative to global center)
+	G4ThreeVector centreShield1= G4ThreeVector(0,0,0);
+
+
+	//
+	// Polyethylene Shielding Container (Radiation Shield)
+	//
+	G4ThreeVector shield2InnerHL = shield1InnerHL + shield1Thick;
+	G4ThreeVector BoxOutSideShield2HL = shield2InnerHL+shield2Thick;
+
+	G4Box *boxInSideShield2 =
+			new G4Box("BoxInSideShield2", shield2InnerHL.getX(), shield2InnerHL.getY(), shield2InnerHL.getZ());
+
+	G4Box *boxOutSideShield2=
+			new G4Box("BoxOutSideShield2", BoxOutSideShield2HL.getX(), BoxOutSideShield2HL.getY(), BoxOutSideShield2HL.getZ());
+
+	// boolean logic subtraction
+
+	G4SubtractionSolid* OutMinusInBoxShield2=
+			new G4SubtractionSolid("OutMinusInBoxShield2", boxOutSideShield2, boxInSideShield2, 0, centreGlobalShield);
+
+	G4LogicalVolume *OutMinusInBoxShield2LV =
+			new G4LogicalVolume(OutMinusInBoxShield2, polyethylene, "OutMinusInBoxShield2LV", 0, 0, 0);
+			new G4PVPlacement(0, centreGlobalShield, OutMinusInBoxShield2LV, "OutMinusInBoxShield2PV", worldLV, false,0);
+
+	// Visualisation attributes of Shield2
+	G4VisAttributes * blueBox = new G4VisAttributes(G4Colour(0. ,0. ,1.));
+	blueBox -> SetVisibility(true);
+	blueBox -> SetForceWireframe(true);
+	blueBox -> SetForceAuxEdgeVisible(true);
+
+	OutMinusInBoxShield2LV-> SetVisAttributes(blueBox);
+
+
+	//
+	// Led Shielding Container (Neutron Shield)
+	//
+
+	G4ThreeVector BoxOutSideShield1HL = shield1InnerHL+shield1Thick;
+
+	G4Box *boxInSideShield1 =
+			new G4Box("BoxInSideShield1", shield1InnerHL.getX(), shield1InnerHL.getY(), shield1InnerHL.getZ());
+
+	G4Box *boxOutSideShield1=
+			new G4Box("BoxOutSideShield1", BoxOutSideShield1HL.getX(), BoxOutSideShield1HL.getY(), BoxOutSideShield1HL.getZ());
+
+	// boolean logic subtraction
+
+	G4SubtractionSolid* OutMinusInBoxShield1=
+			new G4SubtractionSolid("OutMinusInBoxShield1", boxOutSideShield1, boxInSideShield1, 0, centreGlobalShield);
+
+	G4LogicalVolume *OutMinusInBoxShield1LV =
+			new G4LogicalVolume(OutMinusInBoxShield1, led, "OutMinusInBoxShield1LV", 0, 0, 0);
+			new G4PVPlacement(0, G4ThreeVector(),OutMinusInBoxShield1LV, "OutMinusInBoxShield1PV", OutMinusInBoxShield2LV, false,0);
+
+	// Visualisation attributes of Shield1
+	G4VisAttributes * grayBox = new G4VisAttributes(G4Colour(0.5 ,0.5 ,0.5));
+	grayBox -> SetVisibility(true);
+	grayBox -> SetForceWireframe(true);
+	grayBox -> SetForceAuxEdgeVisible(true);
+
+	OutMinusInBoxShield1LV-> SetVisAttributes(grayBox);
+
+    
+    
+    
     //
     // Concrete Wall
     //
@@ -283,15 +381,8 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                                 "Wall LV",
                                                 0,0,0);
     wallLV->SetVisAttributes(G4Colour(.5,.5,.5,.5));
-    new G4PVPlacement(0,
-                      G4ThreeVector(1.5*m,0.,0.),
-                      wallLV,
-                      "Wall PV",
-                      worldLV,
-                      0,
-                      0,
-                      0);
-    
+    new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
+
   return fWorldPV;
 }
 

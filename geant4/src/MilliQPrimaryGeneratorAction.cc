@@ -91,9 +91,9 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   // on DetectorConstruction class we get world volume
   // from G4LogicalVolumeStore.
 
-	G4double xGun=23*m;//0*cm;
-	G4double yGun=0*cm;
-	G4double zGun=10*cm;
+	G4double xGun=11.9*m;//0*cm; //14.6 gets it to the other stack
+	G4double yGun=6*cm; //Goes up
+	G4double zGun=0*cm;
 	fParticleGun->SetParticlePosition(G4ThreeVector(xGun,yGun,zGun));
 	G4double xMoGun = LHEFourVectors[neventLHE][0];
 	G4double yMoGun = LHEFourVectors[neventLHE][1];
@@ -101,12 +101,12 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	G4double MoNorm = sqrt(pow(xMoGun,2)+pow(yMoGun,2)+pow(zMoGun,2));
 
 //	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(xMoGun/MoNorm,yMoGun/MoNorm,zMoGun/MoNorm));
-	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(-1+0.1*G4UniformRand(),0.1*G4UniformRand(),0.1*G4UniformRand()));
+	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(1-0.1*G4UniformRand(),0.1*G4UniformRand(),0.1*G4UniformRand()));
 
 
 	G4double energyGun=LHEFourVectors[neventLHE][3]*CLHEP::GeV;
 //	fParticleGun->SetParticleEnergy(energyGun);
-	fParticleGun->SetParticleEnergy(1*CLHEP::GeV);
+	fParticleGun->SetParticleEnergy(0.5*CLHEP::GeV);
 	fParticleGun->GeneratePrimaryVertex(anEvent);
 	neventLHE++;
 

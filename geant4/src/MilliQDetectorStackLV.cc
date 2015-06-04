@@ -66,8 +66,8 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
                                 pPmtPhotocathodeDepth, //pPmtPhotocathodeDepth
                                 pPmtHousingThickness, //pPmtHousingThickness
                                 pPmtGlassThickness, //pPmtGlassThickness
-                                pPmtHousingReflectivity,
-                                pPmtSD); //pPmtHousingReflectivity
+                                pPmtHousingReflectivity,//pPmtHousingReflectivity
+                                pPmtSD);
     
     // Detector Blocks - Parameterisation
     fDetectorBlockParameterisation
@@ -82,7 +82,11 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
                             kZAxis,
                             fDetectorBlockParameterisation->GetNumberOfBlocks(),
                             fDetectorBlockParameterisation);
-    
+
+
+    G4cout<<"The number of block parametrizations "<<fDetectorBlockParameterisation->GetNumberOfBlocks()<<G4endl;
+
+
     AdjustVolume();
     VisAttributes();
 }

@@ -72,6 +72,7 @@ void MilliQEventAction::BeginOfEventAction(const G4Event* anEvent){
   if(fPMTCollID<0)
     fPMTCollID=SDman->GetCollectionID("pmtHitCollection");
 
+
   if(fRecorder)fRecorder->RecordBeginOfEvent(anEvent);
 }
  
@@ -87,7 +88,11 @@ void MilliQEventAction::EndOfEventAction(const G4Event* anEvent){
   G4int n_trajectories = 0;
   if (trajectoryContainer) n_trajectories = trajectoryContainer->entries();
 
-  // extract the trajectories and draw them
+
+
+G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
+
+// extract the trajectories and draw them
   if (G4VVisManager::GetConcreteInstance()){
     for (G4int i=0; i<n_trajectories; i++){
       MilliQTrajectory* trj = (MilliQTrajectory*)
@@ -102,15 +107,48 @@ void MilliQEventAction::EndOfEventAction(const G4Event* anEvent){
  
   MilliQPMTHitsCollection* pmtHC = 0;
   G4HCofThisEvent* hitsCE = anEvent->GetHCofThisEvent();
- 
+
+  if (!hitsCE)
+  {
+      G4ExceptionDescription msg;
+      msg << "No hits collection of this event found." << G4endl;
+      G4Exception("MilliQEventAction::EndOfEventAction()",
+                  "B5Code001", JustWarning, msg);
+      return;
+  }
+
+
   //Get the hit collections
   if(hitsCE){
     if(fPMTCollID>=0)pmtHC = (MilliQPMTHitsCollection*)(hitsCE->GetHC(fPMTCollID));
+
   }
+
+
+  MilliQPMTHitsCollection* hcHC
+         = static_cast<MilliQPMTHitsCollection*>(hitsCE->GetHC(fPMTCollID));
+
+  // HCEnergy
+     G4int totalHadHit = 0;
+     G4double totalHadE = 0.;
+     for (G4int i=0;i<4;i++)
+     {
+         MilliQPMTHit* hit = (*hcHC)[i];
+         G4double eDep = hit->GetEdep();
+         if (eDep>0.)
+         {
+             totalHadHit++;
+             totalHadE += eDep;
+         }
+     }
+     G4cout<<"Total Energy Deposit! "<<totalHadHit<<G4endl;
+
  
   if(pmtHC){
+	  //It gets to this point :)
     G4ThreeVector reconPos(0.,0.,0.);
     G4int pmts=pmtHC->entries();
+    G4cout<<"Number of pmtHC" <<pmts<< G4endl;
     //Gather info from all PMTs
     for(G4int i=0;i<pmts;i++){
       eventInformation->IncHitCount((*pmtHC)[i]->GetPhotonCount());
@@ -134,7 +172,7 @@ void MilliQEventAction::EndOfEventAction(const G4Event* anEvent){
     pmtHC->DrawAllHits();
   }
 
-  if(fVerbose>0){
+  if(true){//fVerbose>0){
     //End of event output. later to be controlled by a verbose level
     G4cout << "\tNumber of photons that hit PMTs in this event : "
            << eventInformation->GetHitCount() << G4endl;

@@ -12,6 +12,7 @@
 #include "G4SolidStore.hh"
 #include "G4LogicalVolumeStore.hh"
 #include "G4PhysicalVolumeStore.hh"
+#include "G4VSensitiveDetector.hh"
 #include "G4LogicalBorderSurface.hh"
 #include "G4LogicalSkinSurface.hh"
 
@@ -195,7 +196,15 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
     //Photocathode Sensitive Detectors setup
     //
-    MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
+
+  /*  G4VSensitiveDetector* hodoscope1
+          = new B5HodoscopeSD(SDname="/hodoscope1");
+        SDman->AddNewDetector(hodoscope1);
+        fHodoscope1Logical->SetSensitiveDetector(hodoscope1);
+*/
+
+        G4VSensitiveDetector* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
+   // MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
     G4SDManager* sDManager = G4SDManager::GetSDMpointer();
     sDManager->AddNewDetector(pmt_SD);
     
@@ -243,14 +252,14 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                 G4Material::GetMaterial("Air"), //material
                                 "Detector Stack H", //name
                                 0, //field manager
-                                0, //sensitve detector
+								0, //sensitve detector
                                 0, //user limits
                                 true, //optimise
 
-                                G4ThreeVector(1.,20.,10.),//20.,10.), //number of blocks
+                                G4ThreeVector(1.,2.,1.),//20.,10.), //number of blocks
                                 G4ThreeVector(1.*cm,1.*cm,1.*cm), //between block spacing
 
-                                G4ThreeVector(140.*cm,10.*cm,20.*cm), //scintillator dimensions
+                                G4ThreeVector(/*140*/50.*cm,10.*cm,20.*cm), //scintillator dimensions
                                 1.*mm, //scintillator housing thickness
                                 1., //scintillator housing reflectivity
 
@@ -267,11 +276,13 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
     // Detector Stacks - Parameterisation
     MilliQDetectorStackParameterisation* fDetectorStackParameterisation
-    = new MilliQDetectorStackParameterisation(3, //n
+    = new MilliQDetectorStackParameterisation(2, //n
                                               aDetectorStackLV->GetDimensions(), //block dimensions
                                               G4ThreeVector(-1.,0.,0.), //alignment vector
 											  TotalStackStart, //start depth
 											  TotalStackEnd); //end depth
+
+
 
     // Detector Stacks - Physical Volume
     new G4PVParameterised("Detector Stack Housing Physical Volume",
@@ -280,7 +291,18 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                           kZAxis,
                           fDetectorStackParameterisation->GetNumberOfBlocks(),
                           fDetectorStackParameterisation);
+/*
 
+
+    // Detection Room - Physical Volume
+     new G4PVPlacement(0, //rotation
+     				  G4ThreeVector(), //translation
+					  aDetectorStackLV, //logical volume
+                       "Detector Stack Housing Physical Volume", //name
+					   detectionRoomLV, //mother logical volume
+                       false, //many
+                       0); //copy n
+*/
 
     G4ThreeVector stackContainerDimentions = fDetectorStackParameterisation->GetStackDimensions();
  //   detectorStacksContainerV->SetXHalfLength(stackContainerDimentions.x()/2.);
@@ -328,7 +350,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
 	G4LogicalVolume *OutMinusInBoxShield2LV =
 			new G4LogicalVolume(OutMinusInBoxShield2, polyethylene, "OutMinusInBoxShield2LV", 0, 0, 0);
-			new G4PVPlacement(0, centreGlobalShield, OutMinusInBoxShield2LV, "OutMinusInBoxShield2PV", worldLV, false,0);
+//			new G4PVPlacement(0, centreGlobalShield, OutMinusInBoxShield2LV, "OutMinusInBoxShield2PV", worldLV, false,0);
 
 	// Visualisation attributes of Shield2
 	G4VisAttributes * blueBox = new G4VisAttributes(G4Colour(0. ,0. ,1.));
@@ -358,7 +380,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
 	G4LogicalVolume *OutMinusInBoxShield1LV =
 			new G4LogicalVolume(OutMinusInBoxShield1, led, "OutMinusInBoxShield1LV", 0, 0, 0);
-			new G4PVPlacement(0, G4ThreeVector(),OutMinusInBoxShield1LV, "OutMinusInBoxShield1PV", OutMinusInBoxShield2LV, false,0);
+//			new G4PVPlacement(0, G4ThreeVector(),OutMinusInBoxShield1LV, "OutMinusInBoxShield1PV", OutMinusInBoxShield2LV, false,0);
 
 	// Visualisation attributes of Shield1
 	G4VisAttributes * grayBox = new G4VisAttributes(G4Colour(0.5 ,0.5 ,0.5));

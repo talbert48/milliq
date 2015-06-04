@@ -11,15 +11,19 @@
 #include "G4RotationMatrix.hh"
 #include "G4VPhysicalVolume.hh"
 
+
 #include "tls.hh"
 
 class G4VTouchable;
+class G4AttDef;
+class G4AttValue;
 
 class MilliQPMTHit : public G4VHit
 {
   public:
  
     MilliQPMTHit();
+    MilliQPMTHit(G4int iCol,G4int iRow);
     virtual ~MilliQPMTHit();
     MilliQPMTHit(const MilliQPMTHit &right);
 
@@ -30,6 +34,8 @@ class MilliQPMTHit : public G4VHit
     inline void operator delete(void *aHit);
  
     virtual void Draw();
+    virtual const std::map<G4String,G4AttDef>* GetAttDefs() const;
+    virtual std::vector<G4AttValue>* CreateAttValues() const;
     virtual void Print();
 
     inline void SetDrawit(G4bool b){fDrawit=b;}
@@ -44,11 +50,31 @@ class MilliQPMTHit : public G4VHit
     inline void SetPMTPhysVol(G4VPhysicalVolume* physVol){this->fPhysVol=physVol;}
     inline G4VPhysicalVolume* GetPMTPhysVol(){return fPhysVol;}
 
-    inline void SetPMTPos(G4double x,G4double y,G4double z){
-      fPos=G4ThreeVector(x,y,z);
-    }
- 
-    inline G4ThreeVector GetPMTPos(){return fPos;}
+//    inline void SetPMTPos(G4double x,G4double y,G4double z){
+ //     fPos=G4ThreeVector(x,y,z);
+
+//    }
+     inline G4ThreeVector GetPMTPos(){return fPos;}
+
+
+     //I added these:
+
+      void SetColumnID(G4int z) { fColumnID = z; }
+      G4int GetColumnID() const { return fColumnID; }
+
+      void SetRowID(G4int z) { fRowID = z; }
+      G4int GetRowID() const { return fRowID; }
+
+      void SetEdep(G4double de) { fEdep = de; }
+      void AddEdep(G4double de) { fEdep += de; }
+      G4double GetEdep() const { return fEdep; }
+
+      void SetPos(G4ThreeVector xyz) { fPos = xyz; }
+      G4ThreeVector GetPos() const { return fPos; }
+
+      void SetRot(G4RotationMatrix rmat) { fRot = rmat; }
+      G4RotationMatrix GetRot() const { return fRot; }
+
 
   private:
 
@@ -57,6 +83,12 @@ class MilliQPMTHit : public G4VHit
     G4ThreeVector fPos;
     G4VPhysicalVolume* fPhysVol;
     G4bool fDrawit;
+
+    G4int fColumnID;
+    G4int fRowID;
+    G4double fEdep;
+ //   G4ThreeVector fPos;
+    G4RotationMatrix fRot;
 
 };
 

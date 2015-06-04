@@ -129,8 +129,9 @@ void MilliQSteppingAction::UserSteppingAction(const G4Step * theStep){
       }
     }
 
-    if(fOneStepPrimaries&&thePrePV->GetName()=="scintillator")
+    if(fOneStepPrimaries&&thePrePV->GetName()=="scintillator"){
       theTrack->SetTrackStatus(fStopAndKill);
+    }
   }
 
   if(!thePostPV){//out of world

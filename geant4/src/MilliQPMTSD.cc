@@ -22,10 +22,10 @@
 
 
 MilliQPMTSD::MilliQPMTSD(G4String name)
-  : G4VSensitiveDetector(name),fPMTHitCollection(0)
+  : G4VSensitiveDetector(name),fPMTHitCollection(0), NBlocks(0)
 {
     collectionName.insert("pmtHitCollection");
-    G4cout<<"HELLO "<<G4endl;
+
 
 }
 
@@ -35,7 +35,7 @@ MilliQPMTSD::~MilliQPMTSD(){}
 
 void MilliQPMTSD::Initialize(G4HCofThisEvent* hitsCE)
 {
-	G4cout<<"HELLO "<<G4endl;
+
     fPMTHitCollection = new MilliQPMTHitsCollection(SensitiveDetectorName,
                                                     collectionName[0]);
     //Store collection with event and keep ID
@@ -46,15 +46,21 @@ void MilliQPMTSD::Initialize(G4HCofThisEvent* hitsCE)
     }
     hitsCE->AddHitsCollection( hitCID, fPMTHitCollection );
 
+    MilliQDetectorConstruction* milliqdetector = new MilliQDetectorConstruction;
+    NBlocks = milliqdetector->GetNblocksPerStack();
+    G4int NStacks = milliqdetector->GetNstacks();
+
 
     // fill calorimeter hits with zero energy deposition
-    for (G4int iColumn=0;iColumn<4;iColumn++)
-    	for (G4int iRow=0;iRow<1;iRow++)
-        	{
-            	MilliQPMTHit* hit = new MilliQPMTHit();
+    for (G4int iStack=0;iStack<NStacks;iStack++){
+    	for (G4int iBlock=0;iBlock<NBlocks;iBlock++){ // Total blocks in 1 stack
+
+    			MilliQPMTHit* hit = new MilliQPMTHit();
             	fPMTHitCollection->insert(hit);
-        	}
-	}
+        }
+    }
+}
+
 
 
 G4bool MilliQPMTSD::ProcessHits(G4Step* step,G4TouchableHistory* ){
@@ -71,32 +77,32 @@ G4bool MilliQPMTSD::ProcessHits(G4Step* step,G4TouchableHistory* ){
 	    G4TouchableHistory* touchable
 	      = (G4TouchableHistory*)(step->GetPreStepPoint()->GetTouchable());
 
-	    G4VPhysicalVolume* cellPhysical = touchable->GetVolume(3); //Block Replica (row)
-	    G4int rowNo = cellPhysical->GetCopyNo();
+	    G4VPhysicalVolume* cellPhysical = touchable->GetVolume(3); // Block Parameterization
+	    G4int blockNo = cellPhysical->GetCopyNo();
 
-	 /*   G4cout<<"Volume() "<<touchable->GetVolume()->GetName() <<G4endl;
-	    G4cout<<"Volume 0 "<<touchable->GetVolume(0)->GetName() <<G4endl;
-	    G4cout<<"Volume 1 "<<touchable->GetVolume(1)->GetName() <<G4endl;
-	    G4cout<<"Volume 2 "<<touchable->GetVolume(2)->GetName() <<G4endl;
-	    G4cout<<"Volume 3 "<<touchable->GetVolume(3)->GetName() <<G4endl;
-	    G4cout<<"Volume 4 "<<touchable->GetVolume(4)->GetName() <<G4endl;
-	    G4cout<<"Volume 5 "<<touchable->GetVolume(5)->GetName() <<G4endl;
-*/
+	    G4VPhysicalVolume* stackPhysical = touchable->GetVolume(4); //Stack Parameterization
+	    G4int stackNo = stackPhysical->GetCopyNo();
+
+	    /*   G4cout<<"Volume() "<<touchable->GetVolume()->GetName() <<G4endl;
+	   	    G4cout<<"Volume 0 "<<touchable->GetVolume(0)->GetName() <<G4endl;
+	   	    G4cout<<"Volume 1 "<<touchable->GetVolume(1)->GetName() <<G4endl;
+	   	    G4cout<<"Volume 2 "<<touchable->GetVolume(2)->GetName() <<G4endl;
+	   	    G4cout<<"Volume 3 "<<touchable->GetVolume(3)->GetName() <<G4endl;
+	   	    G4cout<<"Volume 4 "<<touchable->GetVolume(4)->GetName() <<G4endl;
+	   	    G4cout<<"Volume 5 "<<touchable->GetVolume(5)->GetName() <<G4endl;
+	   */
 
 
-	    G4VPhysicalVolume* columnPhysical = touchable->GetVolume(4); //Stack Replica (Column)
-	    G4int columnNo = columnPhysical->GetCopyNo();
-
-	    G4int hitID = 2*columnNo+rowNo;
+	    G4int hitID = stackNo*NBlocks+blockNo;
 	    MilliQPMTHit* hit = (*fPMTHitCollection)[hitID];
 
-	    G4cout<<"COPY NUMBER "<<hitID<<G4endl;
+//	    G4cout<<"Block Number "<<blockNo<<" Stack Number "<<stackNo<<" COPY NUMBER "<<hitID<<G4endl;
 
 	    // check if it is first touch
-	    if (hit->GetColumnID()<0)
+	    if (hit->GetStackID()<0)
 	    {
-	        hit->SetColumnID(columnNo);
-	        hit->SetRowID(rowNo);
+	        hit->SetStackID(stackNo);
+	        hit->SetBlockID(blockNo);
 	        G4int depth = touchable->GetHistory()->GetDepth();
 	        G4AffineTransform transform
 	          = touchable->GetHistory()->GetTransform(depth-2);
@@ -106,7 +112,7 @@ G4bool MilliQPMTSD::ProcessHits(G4Step* step,G4TouchableHistory* ){
 	    }
 	    // add energy deposition
 	    hit->AddEdep(edep);
-	    G4cout<<"ENERGY DEPOSIT" <<edep<<G4endl;
+	//    G4cout<<"ENERGY DEPOSIT ProcessHits" <<edep<<G4endl;
 
 	    return true;
 
@@ -121,7 +127,7 @@ G4bool MilliQPMTSD::ProcessHits(G4Step* step,G4TouchableHistory* ){
 G4bool MilliQPMTSD::ProcessHits_constStep(const G4Step* aStep,
                                           G4TouchableHistory*)
 {
-	G4cout<<"It got to ProcessHits_constStep, please go back and rewrite code!!!***"<<G4endl;
+//	G4cout<<"It got to ProcessHits_constStep, please go back and rewrite code!!!***"<<G4endl;
 
     //need to know if this is an optical photon
     if(aStep->GetTrack()->GetDefinition() != G4OpticalPhoton::OpticalPhotonDefinition()){
@@ -130,9 +136,22 @@ G4bool MilliQPMTSD::ProcessHits_constStep(const G4Step* aStep,
 
     //User replica number 1 since photocathode is a daughter volume
     //to the pmt which was replicated
-    G4int pmtNumber = aStep->GetPostStepPoint()->GetTouchable()->GetReplicaNumber(1);//1****
+  /*  G4int pmtNumber = aStep->GetPostStepPoint()->GetTouchable()->GetReplicaNumber(1);//1****
     G4VPhysicalVolume* physVol=
     aStep->GetPostStepPoint()->GetTouchable()->GetVolume(1);
+*/
+
+
+    G4int pmtNumberBlock = aStep->GetPostStepPoint()->GetTouchable()->GetReplicaNumber(3);//GetReplicaNumber(1);
+    G4int pmtNumberStack = aStep->GetPostStepPoint()->GetTouchable()->GetReplicaNumber(4);//GetReplicaNumber(1);
+    G4int pmtNumber = pmtNumberStack*NBlocks+pmtNumberBlock;
+
+
+    G4VPhysicalVolume* physVol=
+    aStep->GetPostStepPoint()->GetTouchable()->GetVolume(3);
+
+    G4cout<<"pmtNumberBlock "<<pmtNumberBlock<<" pmtNumberStack "<<pmtNumberStack<<" pmtNumber "<<pmtNumber<<G4endl;
+
 
     //Find the correct hit collection
     G4int n=fPMTHitCollection->entries();

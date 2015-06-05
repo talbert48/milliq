@@ -32,6 +32,7 @@
 #include "MilliQEventAction.hh"
 #include "MilliQPMTHit.hh"
 #include "MilliQUserEventInformation.hh"
+#include "MilliQDetectorConstruction.hh"
 #include "MilliQTrajectory.hh"
 #include "MilliQRecorderBase.hh"
 
@@ -39,6 +40,7 @@
 #include "G4SDManager.hh"
 #include "G4RunManager.hh"
 #include "G4Event.hh"
+#include "g4root.hh"
 #include "G4EventManager.hh"
 #include "G4TrajectoryContainer.hh"
 #include "G4Trajectory.hh"
@@ -46,6 +48,7 @@
 #include "G4ios.hh"
 #include "G4UImanager.hh"
 #include "G4SystemOfUnits.hh"
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -79,6 +82,8 @@ void MilliQEventAction::BeginOfEventAction(const G4Event* anEvent){
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void MilliQEventAction::EndOfEventAction(const G4Event* anEvent){
+
+  G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
 
   MilliQUserEventInformation* eventInformation
     =(MilliQUserEventInformation*)anEvent->GetUserInformation();
@@ -125,25 +130,13 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
   }
 
 
-  MilliQPMTHitsCollection* hcHC
-         = static_cast<MilliQPMTHitsCollection*>(hitsCE->GetHC(fPMTCollID));
+  MilliQDetectorConstruction* milliqdetector = new MilliQDetectorConstruction;
+  G4int NBlocks = milliqdetector->GetNblocksPerStack();
+  G4int NStacks = milliqdetector->GetNstacks();
 
-  // HCEnergy
-     G4int totalHadHit = 0;
-     G4double totalHadE = 0.;
-     for (G4int i=0;i<4;i++)
-     {
-         MilliQPMTHit* hit = (*hcHC)[i];
-         G4double eDep = hit->GetEdep();
-         if (eDep>0.)
-         {
-             totalHadHit++;
-             totalHadE += eDep;
-         }
-     }
-     G4cout<<"Total Energy Deposit! "<<totalHadHit<<G4endl;
 
- 
+
+  G4double totalPMTE;
   if(pmtHC){
 	  //It gets to this point :)
     G4ThreeVector reconPos(0.,0.,0.);
@@ -153,6 +146,10 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
     for(G4int i=0;i<pmts;i++){
       eventInformation->IncHitCount((*pmtHC)[i]->GetPhotonCount());
       reconPos+=(*pmtHC)[i]->GetPMTPos()*(*pmtHC)[i]->GetPhotonCount();
+
+      G4double eDep=(*pmtHC)[i]->GetEdep();
+      totalPMTE +=eDep;//Same as if we would have implemented proceedure in B5
+
       if((*pmtHC)[i]->GetPhotonCount()>=fPMTThreshold){
         eventInformation->IncPMTSAboveThreshold();
       }
@@ -171,6 +168,8 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
     }
     pmtHC->DrawAllHits();
   }
+  analysisManager->FillNtupleDColumn(1, totalPMTE);
+  G4cout<<"Total Energy Deposit from processhits_const Step "<<totalPMTE<<G4endl;
 
   if(true){//fVerbose>0){
     //End of event output. later to be controlled by a verbose level
@@ -200,6 +199,8 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
     G4RunManager::GetRunManager()->rndmSaveThisEvent();
 
   if(fRecorder)fRecorder->RecordEndOfEvent(anEvent);
+  analysisManager->AddNtupleRow();
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

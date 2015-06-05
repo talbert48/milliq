@@ -23,7 +23,7 @@ class MilliQPMTHit : public G4VHit
   public:
  
     MilliQPMTHit();
-    MilliQPMTHit(G4int iCol,G4int iRow);
+    MilliQPMTHit(G4int iCol,G4int iBlock);
     virtual ~MilliQPMTHit();
     MilliQPMTHit(const MilliQPMTHit &right);
 
@@ -59,11 +59,11 @@ class MilliQPMTHit : public G4VHit
 
      //I added these:
 
-      void SetColumnID(G4int z) { fColumnID = z; }
-      G4int GetColumnID() const { return fColumnID; }
+      void SetStackID(G4int z) { fStackID = z; }
+      G4int GetStackID() const { return fStackID; }
 
-      void SetRowID(G4int z) { fRowID = z; }
-      G4int GetRowID() const { return fRowID; }
+      void SetBlockID(G4int z) { fBlockID = z; }
+      G4int GetBlockID() const { return fBlockID; }
 
       void SetEdep(G4double de) { fEdep = de; }
       void AddEdep(G4double de) { fEdep += de; }
@@ -84,8 +84,8 @@ class MilliQPMTHit : public G4VHit
     G4VPhysicalVolume* fPhysVol;
     G4bool fDrawit;
 
-    G4int fColumnID;
-    G4int fRowID;
+    G4int fStackID;
+    G4int fBlockID;
     G4double fEdep;
  //   G4ThreeVector fPos;
     G4RotationMatrix fRot;

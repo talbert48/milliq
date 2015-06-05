@@ -37,6 +37,8 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     //Get values
     G4double GetHousingThickness(){return fD_mtl;}
     G4double GetPMTRadius(){return fOuterRadius_pmt;}
+    G4int GetNblocksPerStack(){return NBlocks.x()*NBlocks.y()*NBlocks.z();}
+    G4int GetNstacks(){return NStacks ;}
 
     void SetHousingReflectivity(G4double );
     G4double GetHousingReflectivity(){return fRefl;}
@@ -69,6 +71,8 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4double fD_mtl;
     G4double fOuterRadius_pmt;
     G4double fRefl;
+    G4double NStacks;
+    G4ThreeVector NBlocks;
 
     MilliQDetectorStack* fDetectorStack;
 

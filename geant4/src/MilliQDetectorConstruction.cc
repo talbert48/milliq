@@ -35,7 +35,7 @@
 
 
 MilliQDetectorConstruction::MilliQDetectorConstruction()
-: fScintillator_mt(NULL)
+: fScintillator_mt(NULL), NBlocks(G4ThreeVector()), NStacks(0)
 {
     fWorldPV = NULL;
 
@@ -44,6 +44,32 @@ MilliQDetectorConstruction::MilliQDetectorConstruction()
     SetDefaults();
 
     fDetectorMessenger = new MilliQDetectorMessenger(this);
+}
+
+void MilliQDetectorConstruction::SetDefaults() {
+
+  //Resets to default values
+  fD_mtl=5.*mm;
+
+  NBlocks = G4ThreeVector(1,10,5);//20.,10.
+  NStacks = 2;
+
+  fScint_x = 50.*cm;//140.*cm
+  fScint_y = 10.*cm;
+  fScint_z = 20.*cm;
+
+  fOuterRadius_pmt = 2.5*cm;
+
+  fRefl=1.0;
+
+  fDetectorStack=NULL;
+
+  G4UImanager::GetUIpointer()
+    ->ApplyCommand("/MilliQ/detector/scintYieldFactor 1.");
+
+  if(fScintillator_mt)fScintillator_mt->AddConstProperty("SCINTILLATIONYIELD",12./MeV);
+
+  G4RunManager::GetRunManager()->ReinitializeGeometry();
 }
 
 
@@ -176,7 +202,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
     //
     //World
     //
-    
+
     //World - Volume
     G4Box* worldV = new G4Box("World Volume", //name
                               50.*m, 50.*m, 50.*m); //dimentions
@@ -246,7 +272,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
     G4Box* stackHouseingV = new G4Box("Detector Stack Housing Volume" ,
                                       1.*m , 1.*m , 1.*m );//temp dimension
 
-    // Detector Stacks - Logical Volume
+    // Detector Stacks - Logical Volume   (All these parameters are defined above)
     MilliQDetectorStackLV* aDetectorStackLV
     = new MilliQDetectorStackLV(stackHouseingV, //volume
                                 G4Material::GetMaterial("Air"), //material
@@ -256,10 +282,10 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                 0, //user limits
                                 true, //optimise
 
-                                G4ThreeVector(1.,2.,1.),//20.,10.), //number of blocks
+                                NBlocks, //number of blocks
                                 G4ThreeVector(1.*cm,1.*cm,1.*cm), //between block spacing
 
-                                G4ThreeVector(/*140*/50.*cm,10.*cm,20.*cm), //scintillator dimensions
+                                G4ThreeVector(fScint_x,fScint_y,fScint_z), //scintillator dimensions
                                 1.*mm, //scintillator housing thickness
                                 1., //scintillator housing reflectivity
 
@@ -272,11 +298,11 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                 pmt_SD); //pmt sensitive detector
 
     G4double TotalStackStart = -5.*m;
-    G4double TotalStackEnd = 10.*m;
+    G4double TotalStackEnd = -2.*m;//10m****
 
     // Detector Stacks - Parameterisation
     MilliQDetectorStackParameterisation* fDetectorStackParameterisation
-    = new MilliQDetectorStackParameterisation(2, //n
+    = new MilliQDetectorStackParameterisation(NStacks, //n
                                               aDetectorStackLV->GetDimensions(), //block dimensions
                                               G4ThreeVector(-1.,0.,0.), //alignment vector
 											  TotalStackStart, //start depth
@@ -313,7 +339,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
 
 
-
+/*
     //
     //Shielding Around Experiment
     //
@@ -390,7 +416,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
 	OutMinusInBoxShield1LV-> SetVisAttributes(grayBox);
 
-    
+  */
     
     
     //
@@ -451,30 +477,6 @@ void MilliQDetectorConstruction::SetHousingThickness(G4double d_mtl) {
 
 void MilliQDetectorConstruction::SetPMTRadius(G4double outerRadius_pmt) {
   this->fOuterRadius_pmt=outerRadius_pmt;
-  G4RunManager::GetRunManager()->ReinitializeGeometry();
-}
-
-
-void MilliQDetectorConstruction::SetDefaults() {
-
-  //Resets to default values
-  fD_mtl=5.*mm;
-
-  fScint_x = 20.*cm;
-  fScint_y = 10.*cm;
-  fScint_z = 40.*cm;//140.*cm;
-
-  fOuterRadius_pmt = 2.5*cm;
-
-  fRefl=1.0;
-
-  fDetectorStack=NULL;
-
-  G4UImanager::GetUIpointer()
-    ->ApplyCommand("/MilliQ/detector/scintYieldFactor 1.");
-
-  if(fScintillator_mt)fScintillator_mt->AddConstProperty("SCINTILLATIONYIELD",12./MeV);
-
   G4RunManager::GetRunManager()->ReinitializeGeometry();
 }
 

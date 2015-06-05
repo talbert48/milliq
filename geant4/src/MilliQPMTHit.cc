@@ -21,10 +21,10 @@ G4ThreadLocal G4Allocator<MilliQPMTHit>* MilliQPMTHitAllocator=0;
 
 
 MilliQPMTHit::MilliQPMTHit()
-  : G4VHit(), fPmtNumber(-1),fPhotons(0),fPhysVol(0),fDrawit(false), fColumnID(-1), fRowID(-1), fEdep(0.), fPos(0) {}
+  : G4VHit(), fPmtNumber(-1),fPhotons(0),fPhysVol(0),fDrawit(false), fStackID(-1), fBlockID(-1), fEdep(0.), fPos(0) {}
 
-MilliQPMTHit::MilliQPMTHit(G4int iCol,G4int iRow)
-: G4VHit(), fPmtNumber(-1),fPhotons(0),fPhysVol(0),fDrawit(false), fColumnID(-1), fRowID(-1), fEdep(0.), fPos(0) {}
+MilliQPMTHit::MilliQPMTHit(G4int iCol,G4int iBlock)
+: G4VHit(), fPmtNumber(-1),fPhotons(0),fPhysVol(0),fDrawit(false), fStackID(-1), fBlockID(-1), fEdep(0.), fPos(0) {}
 
 
 
@@ -38,8 +38,8 @@ MilliQPMTHit::MilliQPMTHit(const MilliQPMTHit &right) : G4VHit()
   fPhotons=right.fPhotons;
   fPhysVol=right.fPhysVol;
   fDrawit=right.fDrawit;
-  fColumnID = right.fColumnID;
-  fRowID = right.fRowID;
+  fStackID = right.fStackID;
+  fBlockID = right.fBlockID;
   fEdep = right.fEdep;
   fPos = right.fPos;
   fRot = right.fRot;
@@ -51,8 +51,8 @@ const MilliQPMTHit& MilliQPMTHit::operator=(const MilliQPMTHit &right){
   fPhotons=right.fPhotons;
   fPhysVol=right.fPhysVol;
   fDrawit=right.fDrawit;
-  fColumnID = right.fColumnID;
-  fRowID = right.fRowID;
+  fStackID = right.fStackID;
+  fBlockID = right.fBlockID;
   fEdep = right.fEdep;
   fPos = right.fPos;
   fRot = right.fRot;
@@ -61,7 +61,7 @@ const MilliQPMTHit& MilliQPMTHit::operator=(const MilliQPMTHit &right){
 
 
 G4int MilliQPMTHit::operator==(const MilliQPMTHit &right) const{
-  return (fPmtNumber==right.fPmtNumber&&fColumnID==right.fColumnID&&fRowID==right.fRowID);
+  return (fPmtNumber==right.fPmtNumber&&fStackID==right.fStackID&&fBlockID==right.fBlockID);
 }
 
 
@@ -94,11 +94,11 @@ const std::map<G4String,G4AttDef>* MilliQPMTHit::GetAttDefs() const
         (*store)["HitType"]
           = G4AttDef("HitType","Hit Type","Physics","","G4String");
 
-        (*store)["Column"]
-          = G4AttDef("Column","Column ID","Physics","","G4int");
+        (*store)["Stack"]
+          = G4AttDef("Stack","Stack ID","Physics","","G4int");
 
-        (*store)["Row"]
-          = G4AttDef("Row","Row ID","Physics","","G4int");
+        (*store)["Block"]
+          = G4AttDef("Block","Block ID","Physics","","G4int");
 
         (*store)["Energy"]
           = G4AttDef("Energy","Energy Deposited","Physics","G4BestUnit",
@@ -120,10 +120,10 @@ std::vector<G4AttValue>* MilliQPMTHit::CreateAttValues() const
     values
       ->push_back(G4AttValue("HitType","MilliQPMTHit",""));
     values
-      ->push_back(G4AttValue("Column",G4UIcommand::ConvertToString(fColumnID),
+      ->push_back(G4AttValue("Stack",G4UIcommand::ConvertToString(fStackID),
                              ""));
     values
-      ->push_back(G4AttValue("Row",G4UIcommand::ConvertToString(fRowID),""));
+      ->push_back(G4AttValue("Block",G4UIcommand::ConvertToString(fBlockID),""));
     values
       ->push_back(G4AttValue("Energy",G4BestUnit(fEdep,"Energy"),""));
     values
@@ -136,7 +136,7 @@ std::vector<G4AttValue>* MilliQPMTHit::CreateAttValues() const
 
 void MilliQPMTHit::Print()
 {
-    G4cout << "  Cell[" << fRowID << ", " << fColumnID << "] "
+    G4cout << "  Cell[" << fBlockID << ", " << fStackID << "] "
     << fEdep/MeV << " (MeV) " << fPos << G4endl;
     G4cout << "*************HIT****************"<<G4endl;
 

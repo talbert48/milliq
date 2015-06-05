@@ -91,7 +91,7 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   // on DetectorConstruction class we get world volume
   // from G4LogicalVolumeStore.
 
-	G4double xGun=11.9*m;//0*cm; //14.6 gets it to the other stack
+	G4double xGun=18.9*m;//0*cm; //14.6 gets it to the other stack
 	G4double yGun=6*cm; //Goes up
 	G4double zGun=0*cm;
 	fParticleGun->SetParticlePosition(G4ThreeVector(xGun,yGun,zGun));

@@ -89,8 +89,10 @@ void MilliQSteppingAction::UserSteppingAction(const G4Step * theStep){
   G4OpBoundaryProcessStatus boundaryStatus=Undefined;
   static G4ThreadLocal G4OpBoundaryProcess* boundary=NULL;
 
-  //find the boundary process only once
+  //find the boundary process only once (only gets called once, not sure if this is good)
+  //Seems to behave the same when I do if(true)***
   if(!boundary){
+
     G4ProcessManager* pm
       = theStep->GetTrack()->GetDefinition()->GetProcessManager();
     G4int nprocesses = pm->GetProcessListLength();
@@ -106,7 +108,7 @@ void MilliQSteppingAction::UserSteppingAction(const G4Step * theStep){
 
   if(theTrack->GetParentID()==0){
     //This is a primary track
- 
+	  //It gets here
     G4TrackVector* fSecondary=fpSteppingManager->GetfSecondary();
     G4int tN2ndariesTot = fpSteppingManager->GetfN2ndariesAtRestDoIt()
       + fpSteppingManager->GetfN2ndariesAlongStepDoIt()
@@ -129,12 +131,15 @@ void MilliQSteppingAction::UserSteppingAction(const G4Step * theStep){
       }
     }
 
-    if(fOneStepPrimaries&&thePrePV->GetName()=="scintillator"){
+    if(fOneStepPrimaries&&thePrePV->GetName()=="Scintillator Physical Volume"){
+      //never gets here cause fonestepprimaries is set to false
+      //set true in messenger, kills particles after one step
       theTrack->SetTrackStatus(fStopAndKill);
+
     }
   }
 
-  if(!thePostPV){//out of world
+  if(!thePostPV){//out of world (works well)
     fExpectedNextStatus=Undefined;
     return;
   }
@@ -143,9 +148,12 @@ void MilliQSteppingAction::UserSteppingAction(const G4Step * theStep){
   if(particleType==G4OpticalPhoton::OpticalPhotonDefinition()){
     //Optical photon only
 
-    if(thePostPV->GetName()=="expHall")
+    if(thePostPV->GetName()=="fWorldPV"){//"expHall")
       //Kill photons entering expHall from something other than Slab
       theTrack->SetTrackStatus(fStopAndKill);
+//Doesn't get here...?
+
+    }
 
     //Was the photon absorbed by the absorption process
     if(thePostPoint->GetProcessDefinedStep()->GetProcessName()

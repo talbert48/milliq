@@ -60,7 +60,7 @@ def multi_trace_daq(run_time, directory): #takes data for given time in minutes
 	while time.time() < end_time:
 		ind = ind + 1
 		# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_trace.php
-		socket.send ('<em_cmd cmd="start_trace" engage="0" sn="{0}"> 2 1 100 </em_cmd>'.format(sn))
+		socket.send ('<em_cmd cmd="start_trace" engage="0" sn="{0}">1 100 </em_cmd>'.format(sn))
 		msg = socket.recv()
 		while True:
 			# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_cal.php

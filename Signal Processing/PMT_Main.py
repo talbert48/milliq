@@ -6,19 +6,15 @@ import PMT_AnalyzeMCA
 import numpy as np
 import matplotlib.pyplot as plt
 
-dir = ['D:\\PMT_Analysis\\Data\\June4\\mca4']
-#dir=[]
-legends = []
-for i in range(13,15):
-    dir.append('D:\\PMT_Analysis\\Data\\June4\\mca' + str(i))
-# for i in range(950,1450,50):
-#     legends.append(str(i) + ' V')
+fg=27000
+ecomp=1
+dir = ['D:\\PMT_Analysis\\Data\\June12\\run4','D:\\PMT_Analysis\\Data\\June12\\mca4']
+# dir=[]
+# for i in range(1,4):
+#     dir.append('D:\\PMT_Analysis\\Data\\June5\\mca' + str(i))
 
-#dir = ['D:\\PMT_Analysis\\Data\\June3\\mca4','D:\\PMT_Analysis\\Data\\June3\\mca5','D:\\PMT_Analysis\\Data\\June3\\mca3']
-legends = ['Background','3 mV Trigger','Trigger on LED','Bkg Subtracted']
-# legends = ['1100V LED Trigger']
-# dir=['D:\\PMT_Analysis\\Data\\June4\\mca3']
-
+# legends = ['Background','3 mV Trigger','Trigger on LED','Bkg Subtracted']
+legends = ['Traces','MCA']
 
 def analyzeTraces():
     for i in range(len(dir)):
@@ -95,15 +91,13 @@ def plotTraces():
 def analyzeSummary():
     plt.close()
     #set items for binning and plotting integration
-    nBins = 4097
-    binMax = 4096
-    x = np.arange(0,binMax,binMax/nBins)
-    bincenters = 0.5*(x[1:]+x[:-1]) * 102.103960396/160#* 12.8 / 1024 # convert from ADC to micro seconds
+    xi = np.arange(-1,4097,1)
+    bincenters = 0.5*(xi[1:]+xi[:-1]) #*1.275#* 102.103960396/160#* 12.8 / 1024 # convert from ADC to micro seconds
     
     #set items for binning and plotting mca
-    x1 = np.arange(0,4097,1)
-    mcaCenters = 0.5*(x1[1:]+x1[:-1]) #* 12.8 / 1024# convert from ADC to micro seconds
-    mcaCenters = mcaCenters * 102.103960396/160 # convert to nA
+    x1 = np.arange(0,4096,1)
+    mcaCenters = 0.5*(x1[1:]+x1[:-1])
+    mcaCenters = mcaCenters# *0.98#* 102.103960396/160 # convert to nA
     #set items for binning and plotting maximums
     x2 = np.arange(0,1100,1)
     bincentersMaxs = 0.5*(x2[1:]+x2[:-1])
@@ -118,8 +112,9 @@ def analyzeSummary():
                 dataTemp = np.load(filename)
                 
                 plt.figure('Sums')
-                y, x = np.histogram(2.05 *dataTemp[0,:], bins = x)
-                plt.plot(bincenters, y/np.amax(y))
+                y, xt = np.histogram(dataTemp[2,:] , bins = bincenters)
+                x = xi[1:-1]
+                plt.plot(x, y/np.amax(y))
                 print(y.sum())
                 # plt.figure('Maxs')
                 # y, x2 = np.histogram(dataTemp[1,:], bins = x2)
@@ -129,7 +124,7 @@ def analyzeSummary():
             if file.endswith(".lmSum.npy"):
                 filename = dir[i] + '\\' + file
                 dataTemp = np.load(filename)
-                dataTemp = dataTemp/16
+                dataTemp = dataTemp
                 
                 plt.figure('Sums')
                 y, x = np.histogram(dataTemp, bins = x1)
@@ -139,21 +134,18 @@ def analyzeSummary():
                 dataTemp = np.load(filename)
                 dataTemp = dataTemp.astype(int)
                 print(dataTemp.sum())
-                if i == 0:
-                    bkg = dataTemp
-                if i == 1:
-                    fullData = dataTemp
                 plt.figure('Sums')
-                plt.plot(mcaCenters, dataTemp)
+                plt.plot(x1, dataTemp/np.amax(dataTemp))
                 
-    fullData = fullData - bkg
-    plt.figure('Sums')
-    plt.plot(mcaCenters,fullData)
+    # fullData = fullData - bkg
+    # plt.figure('Sums')
+    # plt.plot(mcaCenters,fullData)
     #plot figures
     plt.figure('Sums')
     plt.xlabel('nA')
     plt.ylabel('Counts per 2 minutes')
     plt.title('Dark Current Histogram')
+    plt.xlim((0,500))
     plt.legend(legends)
     plt.show()
 
@@ -224,11 +216,13 @@ def plotBkgSubtraction():
     plt.xlabel('Average Current (nA)')
     plt.ylabel('Counts per 1 minute')
     plt.title('Average Current Spectrums')
+    plt.legend(legends)
     plt.ylim((0,np.amax(dataTemp)))
     plt.xlim((0,50))
     plt.show()
     
 def plotMCARates():
+    colors = ['blue', 'green', 'magenta', 'cyan'] # for plotting purposes
     x1 = np.arange(0,4097,1)
     mcaCenters = 0.5*(x1[1:]+x1[:-1]) #* 12.8 *16/ 1024# convert from ADC to micro seconds
     mcaCenters = mcaCenters * 102.103960396/160 # convert to nA
@@ -245,14 +239,16 @@ def plotMCARates():
                 dataTemp = dataTemp.astype(int)
                 print(dataTemp.sum())
                 # currents[i] = mcaCenters[np.argmax(dataTemp[0:100])]
-                currents[i] = (dataTemp[5:100] * mcaCenters[5:100]).sum()/dataTemp[5:100].sum()
-                rates[i] = dataTemp.sum() / 120
+                plt.scatter((dataTemp[11:100] * mcaCenters[11:100]).sum()/dataTemp[11:100].sum(),dataTemp.sum() / (60*45),c=colors[i])
+                # currents[i] = (dataTemp[5:100] * mcaCenters[5:100]).sum()/dataTemp[5:100].sum()
+                # rates[i] = dataTemp.sum() / (60*45)
     
     #plot figures
-    plt.scatter(currents,rates)
+    
     plt.xlabel('Average Current (nA)')
     plt.ylabel('Rate (Hz)')
     plt.title('Rate Vs. Average Current')
+    plt.legend(legends)
     plt.show()
     
 def plotMenu():

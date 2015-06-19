@@ -69,6 +69,9 @@ class MilliQPMTHit : public G4VHit
       void AddEdep(G4double de) { fEdep += de; }
       G4double GetEdep() const { return fEdep; }
 
+      void SetTime(G4double t) { fTime = t; }
+      G4double GetTime() const { return fTime; }
+
       void SetPos(G4ThreeVector xyz) { fPos = xyz; }
       G4ThreeVector GetPos() const { return fPos; }
 
@@ -87,6 +90,7 @@ class MilliQPMTHit : public G4VHit
     G4int fStackID;
     G4int fBlockID;
     G4double fEdep;
+    G4double fTime;
  //   G4ThreeVector fPos;
     G4RotationMatrix fRot;
 

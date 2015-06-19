@@ -31,6 +31,7 @@
 //
 #include "MilliQEventAction.hh"
 #include "MilliQPMTHit.hh"
+#include "MilliQScintHit.hh"
 #include "MilliQUserEventInformation.hh"
 #include "MilliQDetectorConstruction.hh"
 #include "MilliQTrajectory.hh"
@@ -48,12 +49,14 @@
 #include "G4ios.hh"
 #include "G4UImanager.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4UnitsTable.hh"
+#include "vector"
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 MilliQEventAction::MilliQEventAction(MilliQRecorderBase* r)
-  : fRecorder(r),fSaveThreshold(0),fPMTCollID(-1),fVerbose(0),
+  : fRecorder(r),fSaveThreshold(0),fScintCollID(-1),fPMTCollID(-1), fPMTAllCollID(-1), fVerbose(0),
    fPMTThreshold(1),fForcedrawphotons(false),fForcenophotons(false)
 {
   fEventMessenger = new MilliQEventMessenger(this);
@@ -74,7 +77,10 @@ void MilliQEventAction::BeginOfEventAction(const G4Event* anEvent){
   G4SDManager* SDman = G4SDManager::GetSDMpointer();
   if(fPMTCollID<0)
     fPMTCollID=SDman->GetCollectionID("pmtHitCollection");
-
+  if(fPMTAllCollID<0)
+    fPMTAllCollID=SDman->GetCollectionID("pmtAllHitCollection");
+  if(fScintCollID<0)
+    fScintCollID=SDman->GetCollectionID("scintCollection");
 
   if(fRecorder)fRecorder->RecordBeginOfEvent(anEvent);
 }
@@ -95,7 +101,10 @@ void MilliQEventAction::EndOfEventAction(const G4Event* anEvent){
 
 
 
-G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
+/*G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
+G4cout<<"fPMTAllCollID "<<fPMTAllCollID<<G4endl;
+G4cout<<"fScintCollID "<<fScintCollID<<G4endl;
+*/
 
 // extract the trajectories and draw them
   if (G4VVisManager::GetConcreteInstance()){
@@ -110,7 +119,9 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
     }
   }
  
+  MilliQScintHitsCollection* scintHC = 0;
   MilliQPMTHitsCollection* pmtHC = 0;
+  MilliQPMTHitsCollection* pmtAllHC = 0;
   G4HCofThisEvent* hitsCE = anEvent->GetHCofThisEvent();
 
   if (!hitsCE)
@@ -125,18 +136,58 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
 
   //Get the hit collections
   if(hitsCE){
+	if(fScintCollID>=0)scintHC = (MilliQScintHitsCollection*)(hitsCE->GetHC(fScintCollID));
     if(fPMTCollID>=0)pmtHC = (MilliQPMTHitsCollection*)(hitsCE->GetHC(fPMTCollID));
-
+    if(fPMTAllCollID>=0)pmtAllHC = (MilliQPMTHitsCollection*)(hitsCE->GetHC(fPMTAllCollID));
   }
 
-
+/*
   MilliQDetectorConstruction* milliqdetector = new MilliQDetectorConstruction;
   G4int NBlocks = milliqdetector->GetNblocksPerStack();
   G4int NStacks = milliqdetector->GetNstacks();
+*/
 
 
+  //Hits in scintillator
+   if(scintHC){
+     int n_hit = scintHC->entries();
+     G4ThreeVector  eWeightPos(0.);
+     G4double edep;
+     G4double edepMax=0;
 
-  G4double totalPMTE;
+     for(int i=0;i<n_hit;i++){ //gather info on hits in scintillator
+       edep=(*scintHC)[i]->GetEdep();
+       eventInformation->IncEDep(edep); //sum up the edep
+       eWeightPos += (*scintHC)[i]->GetPos()*edep;//calculate energy weighted pos
+       if(edep>edepMax){
+         edepMax=edep;//store max energy deposit
+         G4ThreeVector posMax=(*scintHC)[i]->GetPos();
+         eventInformation->SetPosMax(posMax,edep);
+       }
+     }
+     if(eventInformation->GetEDep()==0.){
+       if(fVerbose>0)G4cout<<"No hits in the scintillator this event."<<G4endl;
+     }
+     else{
+       //Finish calculation of energy weighted position
+       eWeightPos/=eventInformation->GetEDep();
+       eventInformation->SetEWeightPos(eWeightPos);
+       if(fVerbose>0){
+         G4cout << "\tEnergy weighted position of hits in MilliQ : "
+                << eWeightPos/mm << G4endl;
+       }
+     }
+
+  //   G4cout << "\tTotal energy deposition in scintillator : "
+  //          << eventInformation->GetEDep() / GeV << " (GeV)" << G4endl;
+
+   }
+
+   G4double TotScintEnergyDeposit = eventInformation->GetEDep() / GeV;
+
+   analysisManager->FillNtupleDColumn(1,0,TotScintEnergyDeposit);
+
+
   if(pmtHC){
 	  //It gets to this point :)
     G4ThreeVector reconPos(0.,0.,0.);
@@ -146,9 +197,6 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
     for(G4int i=0;i<pmts;i++){
       eventInformation->IncHitCount((*pmtHC)[i]->GetPhotonCount());
       reconPos+=(*pmtHC)[i]->GetPMTPos()*(*pmtHC)[i]->GetPhotonCount();
-
-      G4double eDep=(*pmtHC)[i]->GetEdep();
-      totalPMTE +=eDep;//Same as if we would have implemented proceedure in B5
 
       if((*pmtHC)[i]->GetPhotonCount()>=fPMTThreshold){
         eventInformation->IncPMTSAboveThreshold();
@@ -168,10 +216,65 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
     }
     pmtHC->DrawAllHits();
   }
-  analysisManager->FillNtupleDColumn(1, totalPMTE);
-  G4cout<<"Total Energy Deposit from processhits_const Step "<<totalPMTE<<G4endl;
 
-  if(true){//fVerbose>0){
+MilliQDetectorConstruction* milliqdetector = new MilliQDetectorConstruction;
+G4int NBlocks = milliqdetector->GetNblocksPerStack();
+G4int NStacks = milliqdetector->GetNstacks();
+
+std::vector<G4double> scintFirstTime(NBlocks*NStacks);//we want the first scintillator hit, and the first pmt hit
+std::vector< std::vector<G4double> >  pmtTime(NBlocks*NStacks);//we want the first scintillator hit, and the first pmt hit
+
+
+for(int x = 0; x < NStacks*NBlocks; ++x){
+	scintFirstTime[x] = 1000*s;
+}
+
+
+
+
+bool PrintStats = false;
+if(scintHC && pmtAllHC){
+
+	for(G4int j=0;j<pmtAllHC->entries();j++){
+		if( (*pmtAllHC)[j]->GetPMTNumber() > -1){ // It was hit!
+			PrintStats=true;
+
+			pmtTime[ (*pmtAllHC)[j]->GetPMTNumber() ].push_back((*pmtAllHC)[j]->GetTime() ) ;
+			for(int i=0;i<scintHC->entries();i++){ //gather info on hits in scintillator
+
+				if((*pmtAllHC)[j]->GetPMTNumber() == (*scintHC)[i]->GetCpNum()){
+
+					if(scintFirstTime[ (*scintHC)[i]->GetCpNum() ] > (*scintHC)[i]->GetTime()){
+						scintFirstTime[ (*scintHC)[i]->GetCpNum() ] = (*scintHC)[i]->GetTime() ;
+					}
+
+				}
+			}
+		}
+	}
+}
+
+
+
+
+G4int NBlocksTotal = NStacks*NBlocks;
+for(G4int i = 0; i < NBlocksTotal; i++){
+	if(scintFirstTime[i] < 900*s ){
+		for(G4int j = 0; j < pmtTime[i].size(); j++){
+			G4double timeOfFlight = pmtTime[i][j] - scintFirstTime[i];
+			if(timeOfFlight > 0){
+				analysisManager->FillNtupleDColumn(2,0, timeOfFlight);
+						analysisManager->AddNtupleRow(2);
+			}
+		}
+	}
+}
+
+
+
+
+
+  if(PrintStats){//fVerbose>0){
     //End of event output. later to be controlled by a verbose level
     G4cout << "\tNumber of photons that hit PMTs in this event : "
            << eventInformation->GetHitCount() << G4endl;
@@ -199,7 +302,7 @@ G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
     G4RunManager::GetRunManager()->rndmSaveThisEvent();
 
   if(fRecorder)fRecorder->RecordEndOfEvent(anEvent);
-  analysisManager->AddNtupleRow();
+  analysisManager->AddNtupleRow(1);
 
 }
 

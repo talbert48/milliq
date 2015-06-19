@@ -14,6 +14,7 @@ class MilliQDetectorStack;
 #include "G4RotationMatrix.hh"
 
 #include "MilliQPMTSD.hh"
+#include "MilliQScintSD.hh"
 #include "MilliQDetectorStackParameterisation.hh"
 
 #include "G4VUserDetectorConstruction.hh"
@@ -80,6 +81,7 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
 
     //Sensitive Detectors
     G4Cache<MilliQPMTSD*> fPmt_SD;
+    G4Cache<MilliQScintSD*> fScint_SD;
 
 };
 

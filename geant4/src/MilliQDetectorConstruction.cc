@@ -1,6 +1,7 @@
 
 #include "MilliQDetectorConstruction.hh"
 #include "MilliQPMTSD.hh"
+#include "MilliQScintSD.hh"
 #include "MilliQDetectorMessenger.hh"
 #include "MilliQDetectorBlockLV.hh"
 #include "MilliQDetectorStackLV.hh"
@@ -51,10 +52,10 @@ void MilliQDetectorConstruction::SetDefaults() {
   //Resets to default values
   fD_mtl=5.*mm;
 
-  NBlocks = G4ThreeVector(1,10,5);//20.,10.
-  NStacks = 2;
+  NBlocks = G4ThreeVector(1,1,1);//20.,10.
+  NStacks = 1;
 
-  fScint_x = 50.*cm;//140.*cm
+  fScint_x = 100.*cm;//140.*cm
   fScint_y = 10.*cm;
   fScint_z = 20.*cm;
 
@@ -229,12 +230,16 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
         fHodoscope1Logical->SetSensitiveDetector(hodoscope1);
 */
 
-        G4VSensitiveDetector* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
+    G4VSensitiveDetector* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
    // MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
     G4SDManager* sDManager = G4SDManager::GetSDMpointer();
     sDManager->AddNewDetector(pmt_SD);
     
-    
+    G4VSensitiveDetector* scint_SD = new MilliQScintSD("/MilliQDet/scintSD");
+    // MilliQPMTSD* scint_SD = new MilliQScintSD("/MilliQDet/pmtSD");
+    sDManager->AddNewDetector(scint_SD);
+
+
     //
     // Detection Room
     //
@@ -291,14 +296,15 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
                                 2.5*cm, //pmt radius
                                 7.*cm, //pmt height
-                                2.*cm, //pmt photocathode depth from fount of pmt
+                                2*cm, //pmt photocathode depth from fount of pmt
                                 1.*mm, //pmt housing thickness
                                 4.*mm, //pmt glass thickness
-                                1., //pmt housing reflective
-                                pmt_SD); //pmt sensitive detector
+                                1, //pmt housing reflective
+                                pmt_SD,//pmt sensitive detector
+								scint_SD); //scintillator sensitive detector
 
     G4double TotalStackStart = -5.*m;
-    G4double TotalStackEnd = -2.*m;//10m****
+    G4double TotalStackEnd = 5.*m;//10m****
 
     // Detector Stacks - Parameterisation
     MilliQDetectorStackParameterisation* fDetectorStackParameterisation

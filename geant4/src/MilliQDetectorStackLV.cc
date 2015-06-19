@@ -30,7 +30,8 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
                                          G4double                pPmtHousingThickness,
                                          G4double                pPmtGlassThickness,
                                          G4double                pPmtHousingReflectivity,
-                                         G4VSensitiveDetector*   pPmtSD)
+                                         G4VSensitiveDetector*   pPmtSD,
+										 G4VSensitiveDetector*   pScintSD)
                     :G4LogicalVolume(pSolid,
                                       pMaterial,
                                       pName,
@@ -67,7 +68,8 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
                                 pPmtHousingThickness, //pPmtHousingThickness
                                 pPmtGlassThickness, //pPmtGlassThickness
                                 pPmtHousingReflectivity,//pPmtHousingReflectivity
-                                pPmtSD);
+                                pPmtSD,
+								pScintSD);
     
     // Detector Blocks - Parameterisation
     fDetectorBlockParameterisation

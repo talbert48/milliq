@@ -48,6 +48,8 @@
 #include "G4Event.hh"
 #include "G4StepPoint.hh"
 #include "G4TrackStatus.hh"
+#include "G4SystemOfUnits.hh"
+#include "G4UnitsTable.hh"
 #include "G4VPhysicalVolume.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleTypes.hh"
@@ -194,7 +196,9 @@ void MilliQSteppingAction::UserSteppingAction(const G4Step * theStep){
         G4SDManager* SDman = G4SDManager::GetSDMpointer();
         G4String sdName="/MilliQDet/pmtSD";
         MilliQPMTSD* pmtSD = (MilliQPMTSD*)SDman->FindSensitiveDetector(sdName);
-        if(pmtSD)pmtSD->ProcessHits_constStep(theStep,NULL);
+        if(pmtSD){
+        	pmtSD->ProcessHits_constStep(theStep,NULL);
+        }
         trackInformation->AddTrackStatusFlag(hitPMT);
         break;
         }

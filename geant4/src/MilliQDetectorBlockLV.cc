@@ -32,7 +32,8 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
                                              G4double               pPmtHousingThickness,
                                              G4double               pPmtGlassThickness,
                                              G4double               pPmtHousingReflectivity,
-                                             G4VSensitiveDetector*  pPmtSD)
+                                             G4VSensitiveDetector*  pPmtSD,
+											 G4VSensitiveDetector*  pScintSD)
                     :G4LogicalVolume(pSolid,
                                      pMaterial,
                                      pName,
@@ -93,10 +94,16 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid*              pSolid,
                                      pScintillatorDimensions.x()/2.,    //half x dimension
                                      pScintillatorDimensions.y()/2.,    //half y dimension
                                      pScintillatorDimensions.z()/2.);   //half z dimension
+
+
     // Scintillator - Logical Volume
     fScintillatorLV = new G4LogicalVolume(scintillatorV,                            //volume
                                           G4Material::GetMaterial("Scintillator"),  //material
-                                          "Scintillator Logical Volume");           //name
+                                          "Scintillator Logical Volume",			//name
+										  0, 										//field manager
+		                                  pScintSD, 								//sensitive detector
+		                                  0, 										//userlimits
+		                                  true); 									//optimise
     // Scintillator - Physical Volume
     new G4PVPlacement(0,                                    //rotation
                       G4ThreeVector(0,0,0),                 //translation
@@ -245,6 +252,7 @@ void MilliQDetectorBlockLV::SurfaceProperties(G4double pScintillatorHousingRefle
     new G4OpticalSurface("HousingSurface",unified,polished,dielectric_metal);
   OpScintHousingSurface->SetMaterialPropertiesTable(scintHsngPT);
  
+
   //**Photocathode surface properties
   G4double photocath_EFF[]={1.,1.}; //Enables 'detection' of photons
   assert(sizeof(photocath_EFF) == sizeof(energy));

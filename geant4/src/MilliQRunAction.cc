@@ -26,18 +26,26 @@ MilliQRunAction::MilliQRunAction(MilliQRecorderBase* r) : fRecorder(r)
 	  analysisManager
 	    ->CreateH1("PMT","PMT # Hits", 50, 0., 50); // h1 Id = 0
 
+
 	  // Creating 2D histograms
-	//  analysisManager
-	//    ->CreateH2("Chamber1 XY","Drift Chamber 1 X vs Y",           // h2 Id = 0
-	//               50, -1000., 1000, 50, -300., 300.);
+	  //  analysisManager
+	  //    ->CreateH2("Chamber1 XY","Drift Chamber 1 X vs Y",           // h2 Id = 0
+	  //               50, -1000., 1000, 50, -300., 300.);
 
 	  // Creating ntuple
 	  //
+	  analysisManager->SetFirstNtupleId(1);
+
 	  analysisManager->CreateNtuple("MilliQ", "Hits");
-	  analysisManager->CreateNtupleIColumn("PMTHits");  // column Id = 0
-	  analysisManager->CreateNtupleDColumn("TotalEnergyDeposit"); // column Id = 1
-	  analysisManager->CreateNtupleDColumn("Time1");    // column Id = 2
+	  analysisManager->CreateNtupleDColumn("TotalEnergyDeposit"); // column Id = 0
 	  analysisManager->FinishNtuple();
+
+	  analysisManager->CreateNtuple("MilliQTime", "Time");
+	  analysisManager->CreateNtupleDColumn("TimeOfFlightScint");    // column Id = 0
+	  analysisManager->FinishNtuple();
+
+
+
 }
 
 

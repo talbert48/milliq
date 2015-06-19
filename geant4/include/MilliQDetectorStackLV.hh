@@ -39,7 +39,8 @@ public:
                         G4double                pPmtHousingThickness,
                         G4double                pPmtGlassThickness,
                         G4double                pPmtHousingReflectivity,
-                        G4VSensitiveDetector*   pPmtSD);
+                        G4VSensitiveDetector*   pPmtSD,
+						G4VSensitiveDetector*   pScintSD);
     
     G4ThreeVector GetDimensions(){return fStackDimensions;}
     

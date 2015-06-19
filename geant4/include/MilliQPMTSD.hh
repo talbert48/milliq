@@ -33,6 +33,7 @@ class MilliQPMTSD : public G4VSensitiveDetector
   private:
 
     MilliQPMTHitsCollection* fPMTHitCollection;
+    MilliQPMTHitsCollection* fPMTAllHitCollection; //Record details of all PMT hits
     G4int NBlocks;
 
 };

@@ -23,62 +23,37 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: MilliQEventAction.hh 68752 2013-04-05 10:23:47Z gcosmo $
+// $Id: MilliQScintSD.hh 68752 2013-04-05 10:23:47Z gcosmo $
 //
-/// \file optical/MilliQ/include/MilliQEventAction.hh
-/// \brief Definition of the MilliQEventAction class
 //
+#ifndef MilliQScintSD_h
+#define MilliQScintSD_h 1
 
-#ifndef MilliQEventAction_h
-#define MilliQEventAction_h 1
+#include "G4VSensitiveDetector.hh"
+#include "MilliQScintHit.hh"
 
-#include "MilliQEventMessenger.hh"
-#include "G4UserEventAction.hh"
-#include "globals.hh"
-#include "G4ThreeVector.hh"
+class G4Step;
+class G4HCofThisEvent;
 
-class G4Event;
-class MilliQRecorderBase;
-
-class MilliQEventAction : public G4UserEventAction
+class MilliQScintSD : public G4VSensitiveDetector
 {
   public:
 
-    MilliQEventAction(MilliQRecorderBase*);
-    virtual ~MilliQEventAction();
+    MilliQScintSD(G4String name);
+    virtual ~MilliQScintSD();
 
-  public:
-
-    virtual void BeginOfEventAction(const G4Event*);
-    virtual void EndOfEventAction(const G4Event*);
-
-    void SetSaveThreshold(G4int );
-
-    void SetEventVerbose(G4int v){fVerbose=v;}
-
-    void SetPMTThreshold(G4int t){fPMTThreshold=t;}
-
-    void SetForceDrawPhotons(G4bool b){fForcedrawphotons=b;}
-    void SetForceDrawNoPhotons(G4bool b){fForcenophotons=b;}
-
+    virtual void Initialize(G4HCofThisEvent* );
+    virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory* );
+    virtual void EndOfEvent(G4HCofThisEvent* );
+    virtual void clear();
+    virtual void DrawAll();
+    virtual void PrintAll();
+ 
   private:
 
-    MilliQRecorderBase* fRecorder;
-    MilliQEventMessenger* fEventMessenger;
-
-    G4int              fSaveThreshold;
-
-    G4int              fPMTCollID;
-    G4int			   fPMTAllCollID;
-    G4int              fScintCollID;
-
-    G4int              fVerbose;
-
-    G4int              fPMTThreshold;
-
-    G4bool fForcedrawphotons;
-    G4bool fForcenophotons;
-
+    MilliQScintHitsCollection* fScintCollection;
+    G4int NBlocks;
+ 
 };
 
 #endif

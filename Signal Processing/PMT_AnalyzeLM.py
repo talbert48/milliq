@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-NPoints = 1000000 # initial guess to size of data
+NPoints = 10000000 # initial guess to size of data
 bufferLength = 340
 
 def AnalyzeFile(filename):

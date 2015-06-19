@@ -60,7 +60,7 @@ def multi_trace_daq(run_time, directory): #takes data for given time in minutes
 	while time.time() < end_time:
 		ind = ind + 1
 		# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_trace.php
-		socket.send ('<em_cmd cmd="start_trace" engage="0" sn="{0}"> 2 1 100 </em_cmd>'.format(sn))
+		socket.send ('<em_cmd cmd="start_trace" engage="0" sn="{0}"> 1 100 </em_cmd>'.format(sn))
 		msg = socket.recv()
 		while True:
 			# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_cal.php
@@ -180,6 +180,7 @@ def multi_rawbuffer_lm(run_time, directory): #takes lm data for given time in mi
 					fout.write(data+'\n')
 					break
 def histo_daq(runTime, directory):
+	
 	""" Connect to MDS, boot eMorpho, acquire histogram, save data and exit """
 	IP_Address = "tcp://localhost:5507" # on the LAN: "tcp://192.168.6.1:5507"
 	context = zmq.Context()
@@ -206,8 +207,9 @@ def histo_daq(runTime, directory):
 	runTime = runTime * 60 #convert min -> sec
 	# start new MCA acquisition
 	# http://www.bridgeportinstruments.com/products/mds/mds_doc/start_mca.php
-	socket.send ('<em_cmd cmd="start_mca" engage="1"> 7 1 0 0 1 1 0 1 </em_cmd>')
+	socket.send ('<em_cmd cmd="start_mca" engage="1"> 7 1 0 0 1 1 0 1 </em_cmd>')#pulse area
 	msg = socket.recv()
+	print 'Running. . .'
 	time.sleep(runTime) # Acquire a histogram for runTime seconds
 	# http://www.bridgeportinstruments.com/products/mds/mds_doc/read_mca.php
 	socket.send ('<em_cmd cmd="read_mca" engage="0" sn="{0}"> 3 52 21 4096 </em_cmd>'.format(sn))
@@ -372,6 +374,14 @@ def printParameters():
 	print 'Trigger on the LED pulse: {0}'.format(trigger_on_off)
 	print 'Pulse rate: {0}'.format(items[3])
 	print 'Pulse width: {0}'.format(items[4])
+
+	socket.send ('<em_cmd cmd="read_cal" engage="0" sn="{0}"> 1 19 </em_cmd>'.format(sn))
+	msg = socket.recv()
+	attributes, data = parse_data(msg)
+	items = data.split()
+	print 'Impedence: {0} Ohm'.format(items[16])
+	print 'Charge Unit per MCA bin: {0} C'.format(items[21])
+	print 'Current Unit, PMT-anode current per ADC bin (ie per mV): {0} Amps per ADC bin'.format(items[20])
 	
 def convertStrFloat(s):
 	ret = 0
@@ -394,17 +404,18 @@ def main():
 	while choice != '0':
 		print '\nWhat would you like to do:'
 		print '  0: Exit'
-		print '  1: Get/Set instrument parameters'
-		print '  2: Take timed run'
-		print '  3: Turn on/off LED pulser'
-		print '  4: Show all parameters'
-		print '  5: Take timed lm mode run'
-		print '  6: Take timed lm raw mode run'
-		print '  7: Take timed energy histogram'
+		print '  1: Take timed trace run'
+		print '  2: Take timed list mode run'
+		print '  3: Take timed histogram run'
+		print '  4: Get/Set instrument parameters'		
+		print '  5: Turn on/off LED pulser'
+		print '  6: Show all parameters'		
+		print '  7: Take timed lm raw mode run'
+				
 		choice=raw_input('Select item> ')
-		if choice == '1': #change parameters
+		if choice == '4': #change parameters
 			getParameters()
-		elif choice == '2': #take timed data run
+		elif choice == '1': #take timed data run
 			length = raw_input('Length of Run: ')
 			runTime = convertStrFloat(length)
 			if runTime == 0:
@@ -417,12 +428,12 @@ def main():
 			if not os.path.exists(dataDir):
 				os.makedirs(dataDir)
 			multi_trace_daq(runTime, dataDir)
-		elif choice == '3': #Turn on/off LED pulser
+		elif choice == '5': #Turn on/off LED pulser
 			getLED()
-		elif choice == '4':#display parameters
+		elif choice == '6':#display parameters
 			printParameters()
-		elif choice == '5':#timed lm mode
-			length = raw_input('Length of Run: ')
+		elif choice == '2':#timed lm mode
+			length = raw_input('Length of Run (in minutes): ')
 			runTime = convertStrFloat(length)
 			if runTime == 0:
 				print 'Invalid Input'
@@ -434,7 +445,7 @@ def main():
 			if not os.path.exists(dataDir):
 				os.makedirs(dataDir)
 			multi_buffer_lm(runTime, dataDir)
-		elif choice == '6':#timed raw lm mode
+		elif choice == '7':#timed raw lm mode
 			length = raw_input('Length of Run (in minutes): ')
 			runTime = convertStrFloat(length)
 			if runTime == 0:
@@ -447,7 +458,7 @@ def main():
 			if not os.path.exists(dataDir):
 				os.makedirs(dataDir)
 			multi_rawbuffer_lm(runTime, dataDir)
-		elif choice == '7':#timed histogram
+		elif choice == '3':#timed histogram
 			length = raw_input('Length of Run (in minutes): ')
 			runTime = convertStrFloat(length)
 			if runTime == 0:

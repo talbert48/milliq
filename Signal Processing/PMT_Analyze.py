@@ -7,26 +7,23 @@ NPoints = 1024
 def AnalyzeFile(filename,type):
     print('Analyzing ' + filename)
     data = ReadData(filename)
-    sums = np.zeros(NTraces)
-    maxs = np.zeros(NTraces)
-    Tail = np.zeros(NTraces)
+    sums = 0
+    maxs = 0
+    Tail = 0
     outData = np.zeros((3,NTraces))
     for i in range(NTraces):
-        #data[i,:] = data[i,:] - np.amin(data[i,200:])
-        #data[i,:] = data[i,:] - Offset(data[i,200:])
-        # if np.amax(data[i,:]) < 7: # zero out garbage events
-        #     data[i,np.arange(0,NPoints)]=0
-        #     continue
+        data[i,:] = data[i,:] - np.amin(data[i,300:])
+        data[i,:] = data[i,:] - Offset(data[i,300:])
         if type == 0:
-           # sums[i] = data[i,:].sum()
-           sums[i] = data[i,0:320].sum() * 16807 / (2**18)
+           sums[i] = data[i,100:260].sum() * 16807 / (2**13)
         else:
-            sums[i] = data[i,90:250].sum()     
-        maxs[i] = np.amax(data[i,:])
-        Tail[i] = data[i,110:250].sum();
-        outData[0,i] = sums[i]
-        outData[1,i] = maxs[i]
-        outData[2,i] = Tail[i]/sums[i]
+            sums = data[i,100:260].sum()
+            data[i,data[i,:] < 0] = 0
+            Tail = data[i,100:260].sum()
+        maxs = np.amax(data[i,:])
+        outData[0,i] = sums
+        outData[1,i] = maxs
+        outData[2,i] = Tail
     return outData
         
     
@@ -38,9 +35,7 @@ def ReadData(filename):
         if temp == ['']:
             break      
         for j in range(NPoints):
-            data[i,j] = (float(temp[j+4]) - 114.5) * 32
-            if data[i,j] < 0:
-                data[i,j] = 0                
+            data[i,j] = (float(temp[j+4]) - 67)             
     f.close()
     return data
     
@@ -55,8 +50,9 @@ def plotEvent(filename):
     data = ReadData(filename)
     plt.ion()
     for i in range(NTraces):
-        data[i,:] = data[i,:] - np.amin(data[i,200:])
-        data[i,:] = data[i,:] - Offset(data[i,200:])
+        data[i,:] = data[i,:] - np.amin(data[i,300:])
+        data[i,:] = data[i,:] - Offset(data[i,300:])
+        print(data[i,100:260].sum())
         x = np.linspace(0.0,12.8, num = NPoints)
         plt.figure()
         plt.plot(x,data[i,:])
@@ -68,3 +64,8 @@ def plotEvent(filename):
             return True #exit
         plt.close()
     return False
+    
+
+    
+    
+    

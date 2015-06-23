@@ -25,10 +25,9 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
                                          G4double                pScintillatorHousingReflectivity,
                                          
                                          G4double                pPmtRadius,
-                                         G4double                pPmtHeight,
+                                         G4double                pPmtPhotocathodeRadius,
+                                         G4double                pPmtPhotocathodeHeight,
                                          G4double                pPmtPhotocathodeDepth,
-                                         G4double                pPmtHousingThickness,
-                                         G4double                pPmtGlassThickness,
                                          G4double                pPmtHousingReflectivity,
                                          G4VSensitiveDetector*   pPmtSD,
 										 G4VSensitiveDetector*   pScintSD)
@@ -62,11 +61,10 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
                                 pScintillatorHousingThickness, //pScintillatorHousingThickness
                                 pScintillatorHousingReflectivity, //pScintillatorHousingReflectivity
 
-                                pPmtRadius, //pPmtRadius
-                                pPmtHeight, //pPmtHeight
-                                pPmtPhotocathodeDepth, //pPmtPhotocathodeDepth
-                                pPmtHousingThickness, //pPmtHousingThickness
-                                pPmtGlassThickness, //pPmtGlassThickness
+								pPmtRadius, //pPmtRadius
+								pPmtPhotocathodeRadius, //pPmtHeight
+								pPmtPhotocathodeHeight, //pPmtPhotocathodeDepth
+								pPmtPhotocathodeDepth, //pPmtHousingThickness
                                 pPmtHousingReflectivity,//pPmtHousingReflectivity
                                 pPmtSD,
 								pScintSD);

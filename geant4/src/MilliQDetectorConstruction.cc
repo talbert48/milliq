@@ -55,11 +55,23 @@ void MilliQDetectorConstruction::SetDefaults() {
   NBlocks = G4ThreeVector(1,1,1);//20.,10.
   NStacks = 1;
 
-  fScint_x = 100.*cm;//140.*cm
+  fBetweenBlockSpacing = G4ThreeVector(1.*cm,1.*cm,1.*cm);
+
+  fScint_x = 10.*cm;//140.*cm
   fScint_y = 10.*cm;
   fScint_z = 20.*cm;
 
   fOuterRadius_pmt = 2.5*cm;
+
+  fScintHouseThick = 1.*cm; //scintillator housing thickness (and Glass Radius Height)
+  fScintillatorHouseRefl = 1.; //scintillator housing reflectivity
+
+  fPmtRad = 2.5*cm; //pmt radius
+  fPmtPhotoRad = 2.5*cm; //pmt Photocathode radius
+  fPmtPhotoHeight = 0.25*cm; //pmt photocathode height
+  fPmtPhotoDepth = 0.*cm; //pmt photocathode depth from front of pmt
+  fPmtHouseRefl = 1.; //pmt housing reflective
+
 
   fRefl=1.0;
 
@@ -224,19 +236,11 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
     //Photocathode Sensitive Detectors setup
     //
 
-  /*  G4VSensitiveDetector* hodoscope1
-          = new B5HodoscopeSD(SDname="/hodoscope1");
-        SDman->AddNewDetector(hodoscope1);
-        fHodoscope1Logical->SetSensitiveDetector(hodoscope1);
-*/
-
     G4VSensitiveDetector* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
-   // MilliQPMTSD* pmt_SD = new MilliQPMTSD("/MilliQDet/pmtSD");
     G4SDManager* sDManager = G4SDManager::GetSDMpointer();
     sDManager->AddNewDetector(pmt_SD);
     
     G4VSensitiveDetector* scint_SD = new MilliQScintSD("/MilliQDet/scintSD");
-    // MilliQPMTSD* scint_SD = new MilliQScintSD("/MilliQDet/pmtSD");
     sDManager->AddNewDetector(scint_SD);
 
 
@@ -267,8 +271,6 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
 
 
-
-
     //
     // Detector Stacks
     //
@@ -288,23 +290,22 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                 true, //optimise
 
                                 NBlocks, //number of blocks
-                                G4ThreeVector(1.*cm,1.*cm,1.*cm), //between block spacing
+								fBetweenBlockSpacing, //between block spacing
 
                                 G4ThreeVector(fScint_x,fScint_y,fScint_z), //scintillator dimensions
-                                1.*mm, //scintillator housing thickness
-                                1., //scintillator housing reflectivity
+								fScintHouseThick, //scintillator housing thickness (and Glass Radius Height)
+								fScintillatorHouseRefl, //scintillator housing reflectivity
 
-                                2.5*cm, //pmt radius
-                                7.*cm, //pmt height
-                                2*cm, //pmt photocathode depth from fount of pmt
-                                1.*mm, //pmt housing thickness
-                                4.*mm, //pmt glass thickness
-                                1, //pmt housing reflective
+								fPmtRad, //pmt radius
+								fPmtPhotoRad, //pmt Photocathode radius
+								fPmtPhotoHeight, //pmt photocathode height
+								fPmtPhotoDepth, //pmt photocathode depth from front of pmt
+								fPmtHouseRefl, //pmt housing reflective
                                 pmt_SD,//pmt sensitive detector
 								scint_SD); //scintillator sensitive detector
 
-    G4double TotalStackStart = -5.*m;
-    G4double TotalStackEnd = 5.*m;//10m****
+    G4double TotalStackStart = -5./1.*m;
+    G4double TotalStackEnd = 10./1.*m;
 
     // Detector Stacks - Parameterisation
     MilliQDetectorStackParameterisation* fDetectorStackParameterisation
@@ -323,112 +324,11 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                           kZAxis,
                           fDetectorStackParameterisation->GetNumberOfBlocks(),
                           fDetectorStackParameterisation);
-/*
 
-
-    // Detection Room - Physical Volume
-     new G4PVPlacement(0, //rotation
-     				  G4ThreeVector(), //translation
-					  aDetectorStackLV, //logical volume
-                       "Detector Stack Housing Physical Volume", //name
-					   detectionRoomLV, //mother logical volume
-                       false, //many
-                       0); //copy n
-*/
-
-    G4ThreeVector stackContainerDimentions = fDetectorStackParameterisation->GetStackDimensions();
- //   detectorStacksContainerV->SetXHalfLength(stackContainerDimentions.x()/2.);
- //   detectorStacksContainerV->SetYHalfLength(stackContainerDimentions.y()/2.);
- //   detectorStacksContainerV->SetZHalfLength(stackContainerDimentions.z()/2.);
-
-
-
-
-
-/*
-    //
-    //Shielding Around Experiment
-    //
-
-    G4ThreeVector SingleStackDimension = aDetectorStackLV->GetDimensions();
-	// The shield is an open box of a certain thickness
-	//Define shielding thickness
-	G4ThreeVector shield1Thick = G4ThreeVector(10.0*cm,10.0*cm,10.0*cm);
-	G4ThreeVector shield2Thick = G4ThreeVector(10.0*cm,10.0*cm,10.0*cm);
-	//Define led shielding inner half length(polyethylene butted around led)
-	G4ThreeVector shield1InnerHL= G4ThreeVector(TotalStackStart+TotalStackEnd+70*cm,SingleStackDimension.y(),SingleStackDimension.z());
-	//Define global center for shielding
-	G4ThreeVector centreGlobalShield = G4ThreeVector(15.0*m,0,0);
-	//Define center location of led shielding (relative to global center)
-	G4ThreeVector centreShield1= G4ThreeVector(0,0,0);
-
-
-	//
-	// Polyethylene Shielding Container (Radiation Shield)
-	//
-	G4ThreeVector shield2InnerHL = shield1InnerHL + shield1Thick;
-	G4ThreeVector BoxOutSideShield2HL = shield2InnerHL+shield2Thick;
-
-	G4Box *boxInSideShield2 =
-			new G4Box("BoxInSideShield2", shield2InnerHL.getX(), shield2InnerHL.getY(), shield2InnerHL.getZ());
-
-	G4Box *boxOutSideShield2=
-			new G4Box("BoxOutSideShield2", BoxOutSideShield2HL.getX(), BoxOutSideShield2HL.getY(), BoxOutSideShield2HL.getZ());
-
-	// boolean logic subtraction
-
-	G4SubtractionSolid* OutMinusInBoxShield2=
-			new G4SubtractionSolid("OutMinusInBoxShield2", boxOutSideShield2, boxInSideShield2, 0, centreGlobalShield);
-
-	G4LogicalVolume *OutMinusInBoxShield2LV =
-			new G4LogicalVolume(OutMinusInBoxShield2, polyethylene, "OutMinusInBoxShield2LV", 0, 0, 0);
-//			new G4PVPlacement(0, centreGlobalShield, OutMinusInBoxShield2LV, "OutMinusInBoxShield2PV", worldLV, false,0);
-
-	// Visualisation attributes of Shield2
-	G4VisAttributes * blueBox = new G4VisAttributes(G4Colour(0. ,0. ,1.));
-	blueBox -> SetVisibility(true);
-	blueBox -> SetForceWireframe(true);
-	blueBox -> SetForceAuxEdgeVisible(true);
-
-	OutMinusInBoxShield2LV-> SetVisAttributes(blueBox);
-
-
-	//
-	// Led Shielding Container (Neutron Shield)
-	//
-
-	G4ThreeVector BoxOutSideShield1HL = shield1InnerHL+shield1Thick;
-
-	G4Box *boxInSideShield1 =
-			new G4Box("BoxInSideShield1", shield1InnerHL.getX(), shield1InnerHL.getY(), shield1InnerHL.getZ());
-
-	G4Box *boxOutSideShield1=
-			new G4Box("BoxOutSideShield1", BoxOutSideShield1HL.getX(), BoxOutSideShield1HL.getY(), BoxOutSideShield1HL.getZ());
-
-	// boolean logic subtraction
-
-	G4SubtractionSolid* OutMinusInBoxShield1=
-			new G4SubtractionSolid("OutMinusInBoxShield1", boxOutSideShield1, boxInSideShield1, 0, centreGlobalShield);
-
-	G4LogicalVolume *OutMinusInBoxShield1LV =
-			new G4LogicalVolume(OutMinusInBoxShield1, led, "OutMinusInBoxShield1LV", 0, 0, 0);
-//			new G4PVPlacement(0, G4ThreeVector(),OutMinusInBoxShield1LV, "OutMinusInBoxShield1PV", OutMinusInBoxShield2LV, false,0);
-
-	// Visualisation attributes of Shield1
-	G4VisAttributes * grayBox = new G4VisAttributes(G4Colour(0.5 ,0.5 ,0.5));
-	grayBox -> SetVisibility(true);
-	grayBox -> SetForceWireframe(true);
-	grayBox -> SetForceAuxEdgeVisible(true);
-
-	OutMinusInBoxShield1LV-> SetVisAttributes(grayBox);
-
-  */
-    
-    
     //
     // Concrete Wall
     //
-    
+
     G4Box* wallV = new G4Box("Wall V",.5*m,10.*m,15.*m);
     G4LogicalVolume* wallLV = new G4LogicalVolume(wallV,
                                                 fConcreteMaterial,
@@ -437,7 +337,95 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
     wallLV->SetVisAttributes(G4Colour(.5,.5,.5,.5));
     new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
 
+ //   ConstructShield(worldLV, TotalStackStart,TotalStackEnd, NBlocks, NStacks, fScint_x, fScint_y, fScint_z);
+
+
   return fWorldPV;
+}
+
+void MilliQDetectorConstruction::ConstructShield(G4LogicalVolume* dworldLV, G4double dTotalStackStart, G4double dTotalStackEnd, G4ThreeVector dNBlocks, G4int dNStacks, G4double dScint_x, G4double dScint_y, G4double dScint_z)
+{
+
+
+	    //
+	    //Shielding Around Experiment
+	    //
+
+		// The shield is an open box of a certain thickness
+		//Define shielding thickness
+		G4ThreeVector shield1Thick = G4ThreeVector(10.0*cm,10.0*cm,10.0*cm);
+		G4ThreeVector shield2Thick = G4ThreeVector(10.0*cm,10.0*cm,10.0*cm);
+		//Define led shielding inner half length(polyethylene butted around led)
+		G4double xShield = dTotalStackEnd-dTotalStackStart+2.*cm;
+		G4double yShield = dNBlocks.y()*dScint_y+2.*cm;
+		G4double zShield = dNBlocks.z()*dScint_z+2.*cm;
+		G4ThreeVector shield1InnerHL = G4ThreeVector(xShield,yShield,zShield);
+		//Define global center for shielding
+		G4ThreeVector centreGlobalShield = G4ThreeVector(15.0*m,0,0);
+		//Define center location of led shielding (relative to global center)
+		G4ThreeVector centreShield1= G4ThreeVector(0,0,0);
+
+
+		//
+		// Polyethylene Shielding Container (Radiation Shield)
+		//
+		G4ThreeVector shield2InnerHL = shield1InnerHL + shield1Thick;
+		G4ThreeVector BoxOutSideShield2HL = shield2InnerHL+shield2Thick;
+
+		G4Box *boxInSideShield2 =
+				new G4Box("BoxInSideShield2", shield2InnerHL.getX(), shield2InnerHL.getY(), shield2InnerHL.getZ());
+
+		G4Box *boxOutSideShield2=
+				new G4Box("BoxOutSideShield2", BoxOutSideShield2HL.getX(), BoxOutSideShield2HL.getY(), BoxOutSideShield2HL.getZ());
+
+		// boolean logic subtraction
+
+		G4SubtractionSolid* OutMinusInBoxShield2=
+				new G4SubtractionSolid("OutMinusInBoxShield2", boxOutSideShield2, boxInSideShield2, 0, centreGlobalShield);
+
+		G4LogicalVolume *OutMinusInBoxShield2LV =
+				new G4LogicalVolume(OutMinusInBoxShield2, polyethylene, "OutMinusInBoxShield2LV", 0, 0, 0);
+				new G4PVPlacement(0, centreGlobalShield, OutMinusInBoxShield2LV, "OutMinusInBoxShield2PV", dworldLV, false,0);
+
+		// Visualisation attributes of Shield2
+		G4VisAttributes * blueBox = new G4VisAttributes(G4Colour(0. ,0. ,1.));
+		blueBox -> SetVisibility(true);
+		blueBox -> SetForceWireframe(true);
+		blueBox -> SetForceAuxEdgeVisible(true);
+
+		OutMinusInBoxShield2LV-> SetVisAttributes(blueBox);
+
+
+		//
+		// Led Shielding Container (Neutron Shield)
+		//
+
+		G4ThreeVector BoxOutSideShield1HL = shield1InnerHL+shield1Thick;
+
+		G4Box *boxInSideShield1 =
+				new G4Box("BoxInSideShield1", shield1InnerHL.getX(), shield1InnerHL.getY(), shield1InnerHL.getZ());
+
+		G4Box *boxOutSideShield1=
+				new G4Box("BoxOutSideShield1", BoxOutSideShield1HL.getX(), BoxOutSideShield1HL.getY(), BoxOutSideShield1HL.getZ());
+
+		// boolean logic subtraction
+
+		G4SubtractionSolid* OutMinusInBoxShield1=
+				new G4SubtractionSolid("OutMinusInBoxShield1", boxOutSideShield1, boxInSideShield1, 0, centreGlobalShield);
+
+		G4LogicalVolume *OutMinusInBoxShield1LV =
+				new G4LogicalVolume(OutMinusInBoxShield1, led, "OutMinusInBoxShield1LV", 0, 0, 0);
+				new G4PVPlacement(0, G4ThreeVector(),OutMinusInBoxShield1LV, "OutMinusInBoxShield1PV", OutMinusInBoxShield2LV, false,0);
+
+		// Visualisation attributes of Shield1
+		G4VisAttributes * grayBox = new G4VisAttributes(G4Colour(0.5 ,0.5 ,0.5));
+		grayBox -> SetVisibility(true);
+		grayBox -> SetForceWireframe(true);
+		grayBox -> SetForceAuxEdgeVisible(true);
+
+		OutMinusInBoxShield1LV-> SetVisAttributes(grayBox);
+
+
 }
 
 

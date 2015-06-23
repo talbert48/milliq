@@ -12,7 +12,7 @@
 
 void histogram(){
  
-	TFile *fMilliQ = new TFile("MilliQ.root");//"/home/qftsm/Work/GeantDevExamples/BuildExamples/MilliQBuild/MilliQ.root");
+	TFile *fMilliQ = new TFile("/home/qftsm/Work/GeantDevExamples/BuildExamples/MilliQBuild/MilliQ.root");
 	TTree *t1 = (TTree*)fMilliQ->Get("MilliQ");
 	TTree *t2 = (TTree*)fMilliQ->Get("MilliQTime");	
 
@@ -23,7 +23,7 @@ void histogram(){
 
 	// two histograms
 	TH1F *htotalenergydepo   = new TH1F("htotalenergydepo","Total Energy Deposit in Scintillators",100,0,0.6);
-	TH1F *htimeofflightscint = new TH1F("htimeofflightscint","Time of Flight in Scintillator",100,1,5);
+	TH1F *htimeofflightscint = new TH1F("htimeofflightscint","Time of Flight in Scintillator",100,0,10);
 
 	// all entries and fill the histograms
 	Int_t nentries_t1 = (Int_t)t1->GetEntries();

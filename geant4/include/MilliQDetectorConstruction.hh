@@ -29,6 +29,7 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
 
     virtual G4VPhysicalVolume* Construct();
     virtual void ConstructSDandField();
+    void ConstructShield(G4LogicalVolume*, G4double, G4double, G4ThreeVector, G4int, G4double, G4double, G4double);
 
     //Functions to modify the geometry
     void SetHousingThickness(G4double );
@@ -70,10 +71,18 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4double fScint_y;
     G4double fScint_z;
     G4double fD_mtl;
+    G4double fScintHouseThick;
+    G4double fScintillatorHouseRefl;
+    G4double fPmtRad;
+    G4double fPmtPhotoRad;
+    G4double fPmtPhotoHeight;
+    G4double fPmtPhotoDepth;
+    G4double fPmtHouseRefl;
     G4double fOuterRadius_pmt;
     G4double fRefl;
     G4double NStacks;
     G4ThreeVector NBlocks;
+    G4ThreeVector fBetweenBlockSpacing;
 
     MilliQDetectorStack* fDetectorStack;
 

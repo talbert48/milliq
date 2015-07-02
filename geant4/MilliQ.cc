@@ -10,6 +10,8 @@
 
 #include "MilliQPhysicsList.hh"
 #include "MilliQDetectorConstruction.hh"
+#include "G4PhysListFactory.hh"
+#include "G4VModularPhysicsList.hh"
 
 #include "MilliQActionInitialization.hh"
 
@@ -33,7 +35,9 @@ int main(int argc, char** argv)
     #endif
 
     runManager->SetUserInitialization(new MilliQDetectorConstruction());
+
     runManager->SetUserInitialization(new MilliQPhysicsList());
+
 
     MilliQRecorderBase* recorder = NULL; //No recording is done in this example
 

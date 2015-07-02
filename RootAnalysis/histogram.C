@@ -22,8 +22,12 @@ void histogram(){
 	t2->SetBranchAddress("TimeOfFlightScint", &TimeOfFlightScint);
 
 	// two histograms
-	TH1F *htotalenergydepo   = new TH1F("htotalenergydepo","Total Energy Deposit in Scintillators",100,0,0.6);
+	TH1F *htotalenergydepo   = new TH1F("htotalenergydepo","Total Energy Deposit in Scintillators",100,0,1.5);
 	TH1F *htimeofflightscint = new TH1F("htimeofflightscint","Time of Flight in Scintillator",100,0,10);
+	htimeofflightscint -> GetXaxis() -> SetTitle("Time (ns)");
+//	htimeofflightscint -> GetYaxis() -> SetTitle("N");
+	htotalenergydepo -> GetXaxis() -> SetTitle("Energy (GeV)");
+	htotalenergydepo -> GetYaxis() -> SetTitle("N");
 
 	// all entries and fill the histograms
 	Int_t nentries_t1 = (Int_t)t1->GetEntries();

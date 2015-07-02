@@ -101,12 +101,29 @@ void MilliQSteppingAction::UserSteppingAction(const G4Step * theStep){
     G4ProcessVector* pv = pm->GetProcessList();
     G4int i;
     for( i=0;i<nprocesses;i++){
-      if((*pv)[i]->GetProcessName()=="OpBoundary"){
+
+       if((*pv)[i]->GetProcessName()=="OpBoundary"){
         boundary = (G4OpBoundaryProcess*)(*pv)[i];
         break;
       }
     }
   }
+
+
+  if(false){
+
+     G4ProcessManager* pm
+       = theStep->GetTrack()->GetDefinition()->GetProcessManager();
+     G4int nprocesses = pm->GetProcessListLength();
+     G4ProcessVector* pv = pm->GetProcessList();
+     G4int i;
+     for( i=0;i<nprocesses;i++){
+
+    	 if((*pv)[i]->GetProcessName()!="hIoni"&&(*pv)[i]->GetProcessName()!="StepLimiter"&&(*pv)[i]->GetProcessName()!="Transportation")
+    	   		G4cout<< "Stepping Action Process Name: "<<(*pv)[i]->GetProcessName()<<G4endl;
+       }
+
+   }
 
   if(theTrack->GetParentID()==0){
     //This is a primary track

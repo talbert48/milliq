@@ -32,6 +32,10 @@
 /// \brief Implementation of the MilliQPrimaryGeneratorAction class
 
 #include "MilliQPrimaryGeneratorAction.hh"
+#include "MilliQMonopole.hh"
+#include "MilliQMonopolePhysics.hh"
+
+
 
 #include "G4LogicalVolumeStore.hh"
 #include "G4LogicalVolume.hh"
@@ -58,20 +62,14 @@ bool MilliQPrimaryGeneratorAction::__initLHEFourVectors = MilliQPrimaryGenerator
 MilliQPrimaryGeneratorAction::MilliQPrimaryGeneratorAction()
  : G4VUserPrimaryGeneratorAction()
 {
-	fParticleGun = new G4ParticleGun(G4Electron::Definition());
-/*
-	 G4int nofParticles = 1;
-	  fParticleGun = new G4ParticleGun(nofParticles);
+//	fParticleGun = new G4ParticleGun(G4Electron::Definition());
 
-	  // default particle kinematic
+	MilliQMonopolePhysics* MonopoleProperties = new MilliQMonopolePhysics();
+	G4double fmass = MonopoleProperties->GetMass();
+	G4double fmagcharge = MonopoleProperties->GetMagQ();
+	G4double felcharge  = MonopoleProperties->GetElQ();
+	fParticleGun = new G4ParticleGun(MilliQMonopole::MonopoleDefinition(fmass, fmagcharge, felcharge));
 
-	  G4ParticleDefinition* particleDefinition
-	    = G4ParticleTable::GetParticleTable()->FindParticle("proton");
-
-	  fParticleGun->SetParticleDefinition(particleDefinition);
-	  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
-	  fParticleGun->SetParticleEnergy(3.0*GeV);
-*/
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -91,7 +89,7 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   // on DetectorConstruction class we get world volume
   // from G4LogicalVolumeStore.
 
-	G4double xGun=19.4*m;//0*cm; //14.6 gets it to the other stack
+	G4double xGun=-0.4*m;//0*cm; //14.6 gets it to the other stack
 	G4double yGun=-1*cm; //Goes up
 	G4double zGun=0*cm;
 	fParticleGun->SetParticlePosition(G4ThreeVector(xGun,yGun,zGun));
@@ -104,7 +102,7 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(1-0.1*G4UniformRand(),0*G4UniformRand(),0.1*G4UniformRand()));
 
 
-	G4double energyGun=LHEFourVectors[neventLHE][3]*CLHEP::GeV;
+//	G4double energyGun=LHEFourVectors[neventLHE][3]*CLHEP::GeV;
 //	fParticleGun->SetParticleEnergy(energyGun);
 	fParticleGun->SetParticleEnergy(0.5*CLHEP::GeV);
 	fParticleGun->GeneratePrimaryVertex(anEvent);

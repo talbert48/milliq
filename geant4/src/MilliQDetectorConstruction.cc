@@ -218,7 +218,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
 
     //World - Volume
     G4Box* worldV = new G4Box("World Volume", //name
-                              50.*m, 50.*m, 50.*m); //dimentions
+                              50./10.*m, 50./10.*m, 50./10.*m); //dimentions
     //World - Logical Volume
     G4LogicalVolume* worldLV = new G4LogicalVolume(worldV,
                                                    G4Material::GetMaterial("Air"),
@@ -250,7 +250,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
     
     // Detection Room - Volume
     G4Box* detectionRoomV = new G4Box("Detection Room Volume",  //name
-                                      10.*m, 20.*m, 20.*m); //temp dimentions
+                                      10./10.*m, 20./10.*m, 20./10.*m); //temp dimentions
     
     // Detection Room - Logical Volume
     G4LogicalVolume* detectionRoomLV
@@ -258,7 +258,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                           G4Material::GetMaterial("Air"), //material
                           "Detection Room Logical Volume"); //name
     
-    G4ThreeVector DetectionRoomTrans = G4ThreeVector(15.*m,0.*m,0.*m);
+    G4ThreeVector DetectionRoomTrans = G4ThreeVector(3./10.*m,0.*m,0.*m);
 
     // Detection Room - Physical Volume
     new G4PVPlacement(0, //rotation
@@ -304,8 +304,12 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                 pmt_SD,//pmt sensitive detector
 								scint_SD); //scintillator sensitive detector
 
-    G4double TotalStackStart = -5./1.*m;
+    G4double TotalStackStart = 0./1.*m;
     G4double TotalStackEnd = 10./1.*m;
+//    G4double TotalStackStart = 0./1.*m;
+//    G4double TotalStackEnd = 0./1.*m;
+
+
 
     // Detector Stacks - Parameterisation
     MilliQDetectorStackParameterisation* fDetectorStackParameterisation
@@ -335,7 +339,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
                                                 "Wall LV",
                                                 0,0,0);
     wallLV->SetVisAttributes(G4Colour(.5,.5,.5,.5));
-    new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
+ //   new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
 
  //   ConstructShield(worldLV, TotalStackStart,TotalStackEnd, NBlocks, NStacks, fScint_x, fScint_y, fScint_z);
 

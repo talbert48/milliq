@@ -99,7 +99,7 @@ MilliQMonopole* MilliQMonopole::MonopoleDefinition(G4double mass, G4double mChar
        "monopole",         mass,       0.0*MeV,       eplus*eCharge, 
                 0,               0,             0,          
                 0,               0,             0,             
-          "boson",               0,             0,           0,
+          "fermion",               0,             0,           0,
              true,            -1.0,             0);
     
     

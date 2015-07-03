@@ -23,46 +23,48 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: MilliQDetectorMessenger.hh 77486 2013-11-25 10:14:16Z gcosmo $
+/// \file exoticphysics/monopole/include/MilliQMonopoleFieldMessenger.hh
+/// \brief Definition of the MilliQMonopoleFieldMessenger class
 //
-/// \file optical/MilliQ/include/MilliQDetectorMessenger.hh
-/// \brief Definition of the MilliQDetectorMessenger class
+// $Id: MilliQMonopoleFieldMessenger.hh 68036 2013-03-13 14:13:45Z gcosmo $
 //
-//
-#ifndef MilliQDetectorMessenger_h
-#define MilliQDetectorMessenger_h 1
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#include "G4UImessenger.hh"
+// =======================================================================
+// Created:  15 Jun 2010, B. Bozsogi
+// =======================================================================
+
+#ifndef MilliQMonopoleFieldMessenger_h
+#define MilliQMonopoleFieldMessenger_h
+
 #include "globals.hh"
+#include "G4UImessenger.hh"
 
-class MilliQDetectorConstruction;
+class MilliQMonopoleFieldSetup;
 class G4UIdirectory;
 class G4UIcmdWithADoubleAndUnit;
-class G4UIcmdWith3VectorAndUnit;
-class G4UIcmdWithAnInteger;
-class G4UIcommand;
-class G4UIcmdWithABool;
-class G4UIcmdWithADouble;
 
-class MilliQDetectorMessenger: public G4UImessenger
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+class MilliQMonopoleFieldMessenger: public G4UImessenger
 {
-  public:
-
-    MilliQDetectorMessenger(MilliQDetectorConstruction*);
-    virtual ~MilliQDetectorMessenger();
- 
-    virtual void SetNewValue(G4UIcommand*, G4String);
- 
-  private:
-
-    MilliQDetectorConstruction*     fMilliQDetector;
-    G4UIdirectory*               fDetectorDir;
-    G4UIdirectory*               fVolumesDir;
-    G4UIcmdWithABool*            fMilliQCmd;
-    G4UIcommand*                 fDefaultsCmd;
-    G4UIcmdWithADouble*          fMainScintYield;
-//    G4UIcmdWithADoubleAndUnit* fStepSizeCmd;
-//    G4UIcmdWithADoubleAndUnit* fMagFieldCmd;
+public:
+  
+  MilliQMonopoleFieldMessenger(MilliQMonopoleFieldSetup* );
+  ~MilliQMonopoleFieldMessenger();
+    
+  virtual void SetNewValue(G4UIcommand*, G4String);
+    
+private:
+  
+  MilliQMonopoleFieldSetup*  fField;
+    
+  G4UIdirectory*             fFieldDir;
+  G4UIcmdWithADoubleAndUnit* fSetFieldCmd;
 };
 
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
 #endif
+

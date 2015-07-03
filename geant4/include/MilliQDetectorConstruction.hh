@@ -7,6 +7,9 @@ class G4VPhysicalVolume;
 class G4Box;
 class G4Tubs;
 class MilliQDetectorStack;
+class G4UniformMagField;
+class G4GlobalMagFieldMessenger;
+class MilliQMonopoleFieldSetup;
 
 #include "G4Material.hh"
 #include "MilliQDetectorMessenger.hh"
@@ -17,8 +20,11 @@ class MilliQDetectorStack;
 #include "MilliQScintSD.hh"
 #include "MilliQDetectorStackParameterisation.hh"
 
+
+
 #include "G4VUserDetectorConstruction.hh"
 #include "G4Cache.hh"
+#include "globals.hh"
 
 class MilliQDetectorConstruction : public G4VUserDetectorConstruction
 {
@@ -32,6 +38,7 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     void ConstructShield(G4LogicalVolume*, G4double, G4double, G4ThreeVector, G4int, G4double, G4double, G4double);
 
     //Functions to modify the geometry
+    void SetMagField(G4double);
     void SetHousingThickness(G4double );
     void SetPMTRadius(G4double );
     void SetDefaults();
@@ -84,7 +91,11 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4ThreeVector NBlocks;
     G4ThreeVector fBetweenBlockSpacing;
 
+    static G4ThreadLocal G4GlobalMagFieldMessenger*  fMagFieldMessenger;
+
+    G4UniformMagField*    fMagField;
     MilliQDetectorStack* fDetectorStack;
+    MilliQMonopoleFieldSetup* fMonFieldSetup;
 
     G4MaterialPropertiesTable* fScintillator_mt;
 

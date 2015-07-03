@@ -75,7 +75,7 @@ MilliQMonopolePhysics::MilliQMonopolePhysics(const G4String& nam)
   fMagCharge = 0.0;
   //  fMagCharge = -1.0;
   //  fElCharge  = -50.0;
-  fElCharge  = 0.1;
+  fElCharge  = -1.0;
   fMonopoleMass = 0.5*GeV;
   fMessenger = new MilliQMonopolePhysicsMessenger(this);
   SetPhysicsType(bUnknown);
@@ -115,7 +115,7 @@ void MilliQMonopolePhysics::ConstructProcess()
    G4int nbin = G4lrint(10*std::log10(emax/emin));
 
 
- 	G4cout<<" G4MonopolePhysics: It launched G4hIonisation!!"<<G4endl;
+ 	G4cout<<" MilliQMonopolePhysics: It launched G4hIonisation!!"<<G4endl;
 
  	G4hIonisation* hhioni = new G4hIonisation();
      hhioni->SetDEDXBinning(nbin);

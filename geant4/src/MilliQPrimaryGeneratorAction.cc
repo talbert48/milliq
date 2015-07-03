@@ -62,7 +62,7 @@ bool MilliQPrimaryGeneratorAction::__initLHEFourVectors = MilliQPrimaryGenerator
 MilliQPrimaryGeneratorAction::MilliQPrimaryGeneratorAction()
  : G4VUserPrimaryGeneratorAction()
 {
-//	fParticleGun = new G4ParticleGun(G4Electron::Definition());
+	//fParticleGun = new G4ParticleGun(G4Electron::Definition());
 
 	MilliQMonopolePhysics* MonopoleProperties = new MilliQMonopolePhysics();
 	G4double fmass = MonopoleProperties->GetMass();
@@ -90,7 +90,7 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   // from G4LogicalVolumeStore.
 
 	G4double xGun=-0.4*m;//0*cm; //14.6 gets it to the other stack
-	G4double yGun=-1*cm; //Goes up
+	G4double yGun=-2*cm; //Goes up
 	G4double zGun=0*cm;
 	fParticleGun->SetParticlePosition(G4ThreeVector(xGun,yGun,zGun));
 	G4double xMoGun = LHEFourVectors[neventLHE][0];
@@ -104,7 +104,7 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 //	G4double energyGun=LHEFourVectors[neventLHE][3]*CLHEP::GeV;
 //	fParticleGun->SetParticleEnergy(energyGun);
-	fParticleGun->SetParticleEnergy(0.5*CLHEP::GeV);
+	fParticleGun->SetParticleEnergy(1.*CLHEP::GeV);
 	fParticleGun->GeneratePrimaryVertex(anEvent);
 	neventLHE++;
 

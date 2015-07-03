@@ -38,6 +38,21 @@ MilliQDetectorMessenger::MilliQDetectorMessenger(MilliQDetectorConstruction* det
   fMainScintYield->SetGuidance("Specified in photons/MeV");
   fMainScintYield->AvailableForStates(G4State_PreInit,G4State_Idle);
   fMainScintYield->SetToBeBroadcasted(false);
+/*
+  fStepSizeCmd = new G4UIcmdWithADoubleAndUnit("/testex/det/setStepSize",this);
+  fStepSizeCmd->SetGuidance("Set maxStepSize in the absorber");
+  fStepSizeCmd->SetParameterName("StepSize",false);
+  fStepSizeCmd->SetRange("StepSize>0.");
+  fStepSizeCmd->SetUnitCategory("Length");
+  fStepSizeCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  fMagFieldCmd = new G4UIcmdWithADoubleAndUnit("/testex/det/setField",this);
+  fMagFieldCmd->SetGuidance("Define magnetic field.");
+  fMagFieldCmd->SetGuidance("Magnetic field will be in Z direction.");
+  fMagFieldCmd->SetParameterName("Bz",false);
+  fMagFieldCmd->SetUnitCategory("Magnetic flux density");
+  fMagFieldCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+*/
 }
 
 

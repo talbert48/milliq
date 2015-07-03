@@ -34,13 +34,25 @@
 #include "G4SystemOfUnits.hh"
 #include "G4NistManager.hh"
 
+#include "MilliQMonopoleFieldSetup.hh"
+#include "G4FieldManager.hh"
+#include "G4TransportationManager.hh"
+#include "G4UniformMagField.hh"
+#include "G4GlobalMagFieldMessenger.hh"
+#include "G4AutoDelete.hh"
+#include "G4UserLimits.hh"
+
+G4ThreadLocal
+G4GlobalMagFieldMessenger* MilliQDetectorConstruction::fMagFieldMessenger = 0;
 
 MilliQDetectorConstruction::MilliQDetectorConstruction()
-: fScintillator_mt(NULL), NBlocks(G4ThreeVector()), NStacks(0)
+: fScintillator_mt(NULL), NBlocks(G4ThreeVector()), NStacks(0), fMagField(0)
 {
     fWorldPV = NULL;
 
     fScintillatorMaterial = fAluminiumMaterial = fAirMaterial = fVacuumMaterial = fGlassMaterial = NULL;
+
+    fMonFieldSetup = MilliQMonopoleFieldSetup::GetMonopoleFieldSetup();
 
     SetDefaults();
 
@@ -342,7 +354,8 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector()
  //   new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
 
  //   ConstructShield(worldLV, TotalStackStart,TotalStackEnd, NBlocks, NStacks, fScint_x, fScint_y, fScint_z);
-
+  worldLV->SetUserLimits(new G4UserLimits(0.2*mm));
+  SetMagField(2.*tesla);
 
   return fWorldPV;
 }
@@ -432,6 +445,29 @@ void MilliQDetectorConstruction::ConstructShield(G4LogicalVolume* dworldLV, G4do
 
 }
 
+void MilliQDetectorConstruction::SetMagField(G4double fieldValue)
+{
+  fMonFieldSetup->SetMagField(fieldValue);
+
+  //apply a global uniform magnetic field along Z axis
+  G4FieldManager * fieldMgr =
+    G4TransportationManager::GetTransportationManager()->GetFieldManager();
+
+  if (fMagField) { delete fMagField; }        //delete the existing magn field
+
+  if (fieldValue != 0.)                        // create a new one if non nul
+    {
+      fMagField = new G4UniformMagField(G4ThreeVector(0., 0., fieldValue));
+      fieldMgr->SetDetectorField(fMagField);
+      fieldMgr->CreateChordFinder(fMagField);
+    }
+   else
+    {
+      fMagField = 0;
+      fieldMgr->SetDetectorField(fMagField);
+    }
+
+}
 
 void MilliQDetectorConstruction::ConstructSDandField()
 {

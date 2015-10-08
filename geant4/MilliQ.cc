@@ -47,9 +47,10 @@ int main(int argc, char** argv)
         G4VisManager* visManager = new G4VisExecutive("Quiet");
     #endif
 
-    runManager->Initialize();
 
+    runManager->Initialize();
     G4UImanager* UImanager = G4UImanager::GetUIpointer();
+
 
     if(argc==1){
         #ifdef G4UI_USE

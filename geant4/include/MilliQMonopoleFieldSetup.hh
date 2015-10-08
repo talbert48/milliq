@@ -51,6 +51,7 @@
 
 #include "G4MagneticField.hh"
 #include "G4UniformMagField.hh"
+#include "G4LogicalVolume.hh"
 
 class G4FieldManager;
 class G4ChordFinder;
@@ -67,14 +68,15 @@ public:
   void InitialiseAll();    //  Set parameters and call method below
   void SetMagField(G4double fieldValue);
   void SetStepperAndChordFinder(G4int val);
+  G4FieldManager* GetLocalFieldManager() { return fFieldManager;}
 
   static MilliQMonopoleFieldSetup* GetMonopoleFieldSetup();
-
+  MilliQMonopoleFieldSetup();
   ~MilliQMonopoleFieldSetup() ;
   
 private:
 
-  MilliQMonopoleFieldSetup();
+
 
   G4FieldManager*         GetGlobalFieldManager() ;   // static 
 
@@ -88,6 +90,7 @@ private:
   G4MagIntegratorStepper* fMonopoleStepper ;
 
   G4double                fMinStep ;
+
 
   static MilliQMonopoleFieldSetup*  fMonopoleFieldSetup;
   MilliQMonopoleFieldMessenger*     fMonopoleFieldMessenger;

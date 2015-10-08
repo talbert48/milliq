@@ -29,7 +29,7 @@ void MilliQDetectorBlockParameterisation::ComputeTransformation(const G4int pId,
     origin.setX( blockIdPosition.x() * individualBlockVolume.x() );
     origin.setY( blockIdPosition.y() * individualBlockVolume.y() );
     origin.setZ( blockIdPosition.z() * individualBlockVolume.z() );
-    
+
     pPV->SetTranslation(origin);
     pPV->SetRotation(0);
 }
@@ -39,8 +39,9 @@ void MilliQDetectorBlockParameterisation::GetIdDimensionsFromId(G4int           
                                                         G4ThreeVector&  pIdDimensions) const
 {
     pIdDimensions.setX( 0. );
-    pIdDimensions.setY( (pId-pIdDimensions.z())/(G4int)fN.z() );
     pIdDimensions.setZ( (pId % (G4int)fN.z()) );
+    pIdDimensions.setY( (pId-pIdDimensions.z())/(G4int)fN.z() );
+
 }
 
 

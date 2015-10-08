@@ -23,44 +23,46 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: MilliQSteppingAction.hh 68752 2013-04-05 10:23:47Z gcosmo $
+/// \file exoticphysics/monopole/include/MilliQRunActionMessenger.hh
+/// \brief Definition of the MilliQRunActionMessenger class
 //
-/// \file optical/MilliQ/include/MilliQSteppingAction.hh
-/// \brief Definition of the MilliQSteppingAction class
+// $Id: MilliQRunActionMessenger.hh 68036 2013-03-13 14:13:45Z gcosmo $
 //
-#ifndef MilliQSteppingAction_H
-#define MilliQSteppingACtion_H 1
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+#ifndef MilliQRunActionMessenger_h
+#define MilliQRunActionMessenger_h 1
 
 #include "globals.hh"
-#include "G4UserSteppingAction.hh"
+#include "G4UImessenger.hh"
 
-#include "G4OpBoundaryProcess.hh"
+class MilliQRunAction;
+class G4UIdirectory;
+class G4UIcmdWithADouble;
+class G4UIcmdWithAnInteger;
 
-class MilliQRecorderBase;
-class MilliQEventAction;
-class MilliQDetectorConstruction;
-class MilliQTrackingAction;
-class MilliQSteppingMessenger;
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-class MilliQSteppingAction : public G4UserSteppingAction
+class MilliQRunActionMessenger: public G4UImessenger
 {
-  public:
-
-    MilliQSteppingAction(MilliQRecorderBase*);
-    virtual ~MilliQSteppingAction();
-    virtual void UserSteppingAction(const G4Step*);
-
-    void SetOneStepPrimaries(G4bool b){fOneStepPrimaries=b;}
-    G4bool GetOneStepPrimaries(){return fOneStepPrimaries;}
- 
-  private:
-
-    MilliQRecorderBase* fRecorder;
-    G4bool fOneStepPrimaries;
-    MilliQSteppingMessenger* fSteppingMessenger;
-    MilliQDetectorConstruction* milliqdetector;
-
-    G4OpBoundaryProcessStatus fExpectedNextStatus;
+public:
+  
+  MilliQRunActionMessenger(MilliQRunAction* );
+  ~MilliQRunActionMessenger();
+    
+  virtual void SetNewValue(G4UIcommand*, G4String);
+    
+private:
+  
+  MilliQRunAction*             fMilliQRunAction;
+    
+  G4UIdirectory*         fActDir;
+//  G4UIcmdWithADouble*    fBinSizeCmd;
+  G4UIcmdWithAnInteger*  fVerboseCmd;
 };
 
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
 #endif
+

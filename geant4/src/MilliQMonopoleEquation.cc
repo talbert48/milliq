@@ -146,7 +146,7 @@ MilliQMonopoleEquation::EvaluateRhsGivenB(const G4double y[],
   //               << G4endl;
 
   dydx[6] = 0.;//not used
-   
+//   G4cout<<"It got here in equations"<<G4endl;
   // Lab Time of flight
   dydx[7] = inverse_velocity;
   return;

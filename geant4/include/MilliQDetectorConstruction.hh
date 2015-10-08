@@ -9,12 +9,14 @@ class G4Tubs;
 class MilliQDetectorStack;
 class G4UniformMagField;
 class G4GlobalMagFieldMessenger;
-class MilliQMonopoleFieldSetup;
+//class MilliQMonopoleFieldSetup;
 
+#include "G4Cache.hh"
 #include "G4Material.hh"
 #include "MilliQDetectorMessenger.hh"
 #include "G4VisAttributes.hh"
 #include "G4RotationMatrix.hh"
+#include "MilliQMonopoleFieldSetup.hh"
 
 #include "MilliQPMTSD.hh"
 #include "MilliQScintSD.hh"
@@ -34,8 +36,12 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     virtual ~MilliQDetectorConstruction(){};
 
     virtual G4VPhysicalVolume* Construct();
+
     virtual void ConstructSDandField();
     void ConstructShield(G4LogicalVolume*, G4double, G4double, G4ThreeVector, G4int, G4double, G4double, G4double);
+
+    void ConstructCheckGeometry();
+
 
     //Functions to modify the geometry
     void SetMagField(G4double);
@@ -48,20 +54,27 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4double GetPMTRadius(){return fOuterRadius_pmt;}
     G4int GetNblocksPerStack(){return NBlocks.x()*NBlocks.y()*NBlocks.z();}
     G4int GetNstacks(){return NStacks ;}
+    G4int GetAlternateGeometry(){return fAlternate;}
+    inline const G4Material* GetScintMaterial() {return fScintillatorMaterial;};
 
     void SetHousingReflectivity(G4double );
     G4double GetHousingReflectivity(){return fRefl;}
 
     void SetMainScintYield(G4double );
+    void DefineMaterials();
 
   private:
 
-    void DefineMaterials();
+
     G4VPhysicalVolume* ConstructDetector();
 
     MilliQDetectorMessenger* fDetectorMessenger;
 
+
     G4VPhysicalVolume* fWorldPV;
+    G4VPhysicalVolume* fWorldPVCheckPhysics;
+    G4LogicalVolume* worldLV;
+    G4LogicalVolume* fMagneticVolume;
 
     //Materials & Elements
     G4Material* fScintillatorMaterial;
@@ -90,12 +103,14 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4double NStacks;
     G4ThreeVector NBlocks;
     G4ThreeVector fBetweenBlockSpacing;
-
+    G4int fAlternate;
     static G4ThreadLocal G4GlobalMagFieldMessenger*  fMagFieldMessenger;
 
     G4UniformMagField*    fMagField;
     MilliQDetectorStack* fDetectorStack;
     MilliQMonopoleFieldSetup* fMonFieldSetup;
+
+    G4Cache<MilliQMonopoleFieldSetup*>    fEmFieldSetup;
 
     G4MaterialPropertiesTable* fScintillator_mt;
 

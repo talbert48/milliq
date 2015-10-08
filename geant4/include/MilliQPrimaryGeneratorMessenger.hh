@@ -23,44 +23,42 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: MilliQSteppingAction.hh 68752 2013-04-05 10:23:47Z gcosmo $
+/// \file field/field03/include/MilliQPrimaryGeneratorMessenger.hh
+/// \brief Definition of the MilliQPrimaryGeneratorMessenger class
 //
-/// \file optical/MilliQ/include/MilliQSteppingAction.hh
-/// \brief Definition of the MilliQSteppingAction class
 //
-#ifndef MilliQSteppingAction_H
-#define MilliQSteppingACtion_H 1
+// $Id: MilliQPrimaryGeneratorMessenger.hh 76602 2013-11-13 08:33:35Z gcosmo $
+//
+//
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#include "globals.hh"
-#include "G4UserSteppingAction.hh"
+#ifndef MilliQPrimaryGeneratorMessenger_h
+#define MilliQPrimaryGeneratorMessenger_h 1
 
-#include "G4OpBoundaryProcess.hh"
+#include "G4UImessenger.hh"
 
-class MilliQRecorderBase;
-class MilliQEventAction;
-class MilliQDetectorConstruction;
-class MilliQTrackingAction;
-class MilliQSteppingMessenger;
+class MilliQPrimaryGeneratorAction;
+class G4UIcmdWithAString;
+class G4UIcmdWithADoubleAndUnit;
 
-class MilliQSteppingAction : public G4UserSteppingAction
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+class MilliQPrimaryGeneratorMessenger: public G4UImessenger
 {
   public:
-
-    MilliQSteppingAction(MilliQRecorderBase*);
-    virtual ~MilliQSteppingAction();
-    virtual void UserSteppingAction(const G4Step*);
-
-    void SetOneStepPrimaries(G4bool b){fOneStepPrimaries=b;}
-    G4bool GetOneStepPrimaries(){return fOneStepPrimaries;}
+    MilliQPrimaryGeneratorMessenger(MilliQPrimaryGeneratorAction*);
+    virtual ~MilliQPrimaryGeneratorMessenger();
  
+    virtual void SetNewValue(G4UIcommand*, G4String);
+
   private:
-
-    MilliQRecorderBase* fRecorder;
-    G4bool fOneStepPrimaries;
-    MilliQSteppingMessenger* fSteppingMessenger;
-    MilliQDetectorConstruction* milliqdetector;
-
-    G4OpBoundaryProcessStatus fExpectedNextStatus;
+    MilliQPrimaryGeneratorAction* fAction;
+    G4UIcmdWithAString*        fRndmCmd;
+    G4UIcmdWithADoubleAndUnit* fSetXVertexCmd;
+    G4UIcmdWithADoubleAndUnit* fSetYVertexCmd;
+    G4UIcmdWithADoubleAndUnit* fSetZVertexCmd;
+    G4UIcmdWithADoubleAndUnit* fSetCalibEnergyCmd;
 };
 
 #endif

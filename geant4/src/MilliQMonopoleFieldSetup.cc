@@ -67,6 +67,7 @@
 
 #include "G4SystemOfUnits.hh"
 
+
 MilliQMonopoleFieldSetup* MilliQMonopoleFieldSetup::fMonopoleFieldSetup=0;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -90,6 +91,7 @@ MilliQMonopoleFieldSetup::MilliQMonopoleFieldSetup()
 
 MilliQMonopoleFieldSetup* MilliQMonopoleFieldSetup::GetMonopoleFieldSetup()
 {
+
    if (0 == fMonopoleFieldSetup)
    {
      static MilliQMonopoleFieldSetup theInstance;
@@ -108,6 +110,7 @@ MilliQMonopoleFieldSetup::~MilliQMonopoleFieldSetup()
   if(fChordFinder)   delete fChordFinder;
   if(fStepper)       delete fStepper;
   if(fMonopoleStepper)  delete fMonopoleStepper;
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -134,18 +137,19 @@ void MilliQMonopoleFieldSetup::SetMagField(G4double fieldValue)
 void
 MilliQMonopoleFieldSetup::InitialiseAll()
 {
-  fFieldManager = G4TransportationManager::GetTransportationManager()
+  fFieldManager = /*new G4FieldManager();*/G4TransportationManager::GetTransportationManager()
                                           ->GetFieldManager();
 
   fEquation = new G4Mag_UsualEqRhs(fMagneticField); 
   fMonopoleEquation = new MilliQMonopoleEquation(fMagneticField);
  
-  fMinStep     = 0.01*mm ; // minimal step of 1 mm is default
-                                        
+  fMinStep     = 1.*mm ; // minimal step of 1 mm is default
+                         G4cout<<"It got here fminstep!!" <<G4endl;
   fMonopoleStepper = new G4ClassicalRK4( fMonopoleEquation, 8 ); // for time information..
-  fStepper = new G4ClassicalRK4( fEquation );                                         
-                                         
-  SetStepperAndChordFinder(0);
+  fStepper = new G4ClassicalRK4( fEquation );
+
+
+  SetStepperAndChordFinder(1);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -169,6 +173,8 @@ void MilliQMonopoleFieldSetup::SetStepperAndChordFinder(G4int val)
     }   
   
     fFieldManager->SetChordFinder( fChordFinder );
+    fFieldManager->SetMaximumEpsilonStep(1.1*mm);
+    //   fFieldManager->SetDeltaOneStep( 0.5e-3 * mm );
   }
 }
 

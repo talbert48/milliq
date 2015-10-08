@@ -41,8 +41,10 @@ MilliQPhysicsList::MilliQPhysicsList() : G4VModularPhysicsList()
     // Radioactive decay
     RegisterPhysics(new G4RadioactiveDecayPhysics());
 
+    MilliQMonopolePhysics* MonopolePhys = new MilliQMonopolePhysics();
     //Monopole Physics
-    RegisterPhysics( new MilliQMonopolePhysics() );
+    RegisterPhysics( MonopolePhys );
+
     //These are the processes contained in the FTFP_BERT PhysList contained in the monopole.cc example
     G4int ver = 0;
     // EM physics

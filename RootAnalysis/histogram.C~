@@ -16,11 +16,16 @@ void histogram(){
 	TTree *t1 = (TTree*)fMilliQ->Get("MilliQ");
 	TTree *t2 = (TTree*)fMilliQ->Get("MilliQTime");	
 
+	TTree *t4 = (TTree*)fMilliQ->Get("MilliQRadius");
 
 	Double_t TotalEnergyDeposit;
 	Double_t TimeOfFlightScint;
+	Double_t x0, y0, z0;
 	t1->SetBranchAddress("TotalEnergyDeposit",&TotalEnergyDeposit);
 	t2->SetBranchAddress("TimeOfFlightScint", &TimeOfFlightScint);
+	t4->SetBranchAddress("CoordinateX",&x0);
+        t4->SetBranchAddress("CoordinateX",&y0);
+        t4->SetBranchAddress("CoordinateX",&z0);
 
 	// two histograms
 	TH1F *htotalenergydepo   = new TH1F("htotalenergydepo","Total Energy Deposit in Scintillators",100,0,1.5);

@@ -38,9 +38,11 @@
 #include "sstream"
 #include "vector"
 #include "globals.hh"
+#include "G4ParticleGun.hh"
 
 class G4ParticleGun;
 class G4Event;
+class MilliQPrimaryGeneratorMessenger;
 
 /// The primary generator action class with particle gum.
 ///
@@ -56,58 +58,33 @@ class MilliQPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     virtual ~MilliQPrimaryGeneratorAction();
 
     virtual void GeneratePrimaries(G4Event* );
+    void GetLHEFourVectors();
+    void SetRndmFlag(G4String val) { fRndmFlag = val; }
+    void SetXVertex(G4double x);
+    void SetYVertex(G4double y);
+    void SetZVertex(G4double z);
+    void SetCalibEnergy(G4double e);
+
+    static G4String GetPrimaryName();
 
     G4ParticleGun* GetParticleGun() {return fParticleGun;}
-    static G4int neventLHE;
-    static std::vector<std::vector<G4double> > LHEFourVectors;
-
 
     // Set methods
     void SetRandomFlag(G4bool );
 
+    static G4int neventLHE;
+
   private:
     G4ParticleGun*          fParticleGun; // G4 particle gun
+    std::vector<std::vector<G4double> > LHEFourVectors;
 
+    MilliQPrimaryGeneratorMessenger* fGunMessenger; //messenger of this class
+    G4String                      fRndmFlag;     //flag for random impact point
 
-    static bool __initLHEFourVectors;
-    static bool initLHEFourVectors(){ // Doing this ignores the first 2 entries of the LHE file, but well...
+    static G4ParticleDefinition* fgPrimaryParticle;
+    G4double fXVertex, fYVertex, fZVertex, fEnergy;
+    G4bool fVertexDefined, fCalibDefined;
 
-
-        std::ifstream infile;
-        infile.open("/home/qftsm/Work/GeantDevExamples/B2/B2a/LHEFile/outputpositive.dat" );
-        G4String line;
-        while( std::getline( infile, line ) ) {
-
-        	std::istringstream iss( line );
-
-            std::getline( infile, line );
-
-
-            G4double px, py, pz, e;
-
-            while( std::getline( infile, line ) ) {
-
-            	iss.clear();
-                iss.str( line );
-
-                if( !( iss >> px >> py >> pz >> e  ) )
-                	break;
-
-                std::vector<G4double> table;
-                table.push_back(px);
-                table.push_back(py);
-                table.push_back(pz);
-                table.push_back(e);
-                LHEFourVectors.push_back(table);
-
-             }
-
-         }
-
-
-    	return true;
-
-    }
 
 
 
@@ -116,46 +93,3 @@ class MilliQPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #endif
-
-
-/*
-#ifndef MilliQPrimaryGeneratorAction_h
-#define MilliQPrimaryGeneratorAction_h 1
-
-#include <iostream>
-#include <vector>
-#include <stdio.h>
-#include <fstream>
-#include <string>
-
-#include "globals.hh"
-#include "G4VUserPrimaryGeneratorAction.hh"
-
-class G4ParticleGun;
-class G4Event;
-
-class MilliQPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
-{
-  public:
-
-    MilliQPrimaryGeneratorAction();
-    virtual ~MilliQPrimaryGeneratorAction();
-    virtual void GeneratePrimaries(G4Event* anEvent);
-
-  private:
-
-    G4ParticleGun* fParticleGun;
-    
-    std::vector<G4double*> fKnownData;
-    std::string fKnownDataFilePath;
-    G4bool* fKnownDataOn;
-    G4int fKnownDataSize;
-    
-    G4int fKnownDataInterator;
-    
-    void GenerateKnownCMSParticles();
-    
-};
-
-#endif
-*/

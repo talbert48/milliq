@@ -34,10 +34,12 @@
 #include "MilliQTrackingAction.hh"
 #include "MilliQTrajectory.hh"
 #include "MilliQPMTSD.hh"
+#include "MilliQDetectorConstruction.hh"
 #include "MilliQUserTrackInformation.hh"
 #include "MilliQUserEventInformation.hh"
 #include "MilliQSteppingMessenger.hh"
 #include "MilliQRecorderBase.hh"
+#include "MilliQRunAction.hh"
 
 #include "G4SteppingManager.hh"
 #include "G4SDManager.hh"
@@ -52,13 +54,16 @@
 #include "G4UnitsTable.hh"
 #include "G4VPhysicalVolume.hh"
 #include "G4ParticleDefinition.hh"
+#include "g4root.hh"
 #include "G4ParticleTypes.hh"
+#include "G4Electron.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 MilliQSteppingAction::MilliQSteppingAction(MilliQRecorderBase* r)
   : fRecorder(r),fOneStepPrimaries(false)
 {
+  milliqdetector = new MilliQDetectorConstruction;
   fSteppingMessenger = new MilliQSteppingMessenger(this);
 
   fExpectedNextStatus = Undefined;
@@ -85,11 +90,31 @@ void MilliQSteppingAction::UserSteppingAction(const G4Step * theStep){
   G4StepPoint* thePrePoint = theStep->GetPreStepPoint();
   G4VPhysicalVolume* thePrePV = thePrePoint->GetPhysicalVolume();
 
+
   G4StepPoint* thePostPoint = theStep->GetPostStepPoint();
   G4VPhysicalVolume* thePostPV = thePostPoint->GetPhysicalVolume();
 
   G4OpBoundaryProcessStatus boundaryStatus=Undefined;
   static G4ThreadLocal G4OpBoundaryProcess* boundary=NULL;
+
+  bool IsRadius=true;
+  if(milliqdetector->GetAlternateGeometry()!=1)
+	  IsRadius=false;
+  if(theTrack->GetParentID()!=0)
+	  IsRadius=false;
+
+  if (IsRadius) {
+	  G4cout<<"It got to the alternate geometry"<<G4endl;
+	  G4AnalysisManager* analysisManager = G4AnalysisManager::Instance();
+	  G4ThreeVector coord = thePrePoint->GetPosition();
+	  for(G4int ii =0; ii<3; ii++)
+		  analysisManager->FillNtupleDColumn(4,ii,coord[ii]);
+	  analysisManager->AddNtupleRow(4);
+
+	}
+
+
+
 
   //find the boundary process only once (only gets called once, not sure if this is good)
   //Seems to behave the same when I do if(true)***

@@ -3,7 +3,7 @@
 
 //
 // ********************************************************************
-// * License and Disclaimer                                           *
+// * License and Disclaimer                                          *
 // *                                                                  *
 // * The  Geant4 software  is  copyright of the Copyright Holders  of *
 // * the Geant4 Collaboration.  It is provided  under  the terms  and *
@@ -32,11 +32,12 @@
 /// \brief Implementation of the MilliQPrimaryGeneratorAction class
 
 #include "MilliQPrimaryGeneratorAction.hh"
+#include "MilliQPrimaryGeneratorMessenger.hh"
 #include "MilliQMonopole.hh"
 #include "MilliQMonopolePhysics.hh"
 
 
-
+#include "G4PhysicalConstants.hh"
 #include "G4LogicalVolumeStore.hh"
 #include "G4LogicalVolume.hh"
 #include "G4Box.hh"
@@ -44,6 +45,12 @@
 #include "G4Event.hh"
 #include "vector"
 #include <math.h>
+#include "G4LorentzVector.hh"
+#include "fstream"
+#include "iostream"
+#include "sstream"
+#include "vector"
+#include "globals.hh"
 #include "G4ParticleGun.hh"
 
 #include "G4ParticleTable.hh"
@@ -56,19 +63,48 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 G4int MilliQPrimaryGeneratorAction::neventLHE=0;
-std::vector<std::vector<G4double> > MilliQPrimaryGeneratorAction::LHEFourVectors;
-bool MilliQPrimaryGeneratorAction::__initLHEFourVectors = MilliQPrimaryGeneratorAction::initLHEFourVectors();
 
 MilliQPrimaryGeneratorAction::MilliQPrimaryGeneratorAction()
- : G4VUserPrimaryGeneratorAction()
+ : G4VUserPrimaryGeneratorAction(),
+fParticleGun(0),
+fGunMessenger(0),
+fRndmFlag("off"),
+fXVertex(0.),
+fYVertex(0.),
+fZVertex(0.),
+fEnergy(0.),
+fCalibDefined(false),
+fVertexDefined(false)
 {
-	//fParticleGun = new G4ParticleGun(G4Electron::Definition());
-
 	MilliQMonopolePhysics* MonopoleProperties = new MilliQMonopolePhysics();
-	G4double fmass = MonopoleProperties->GetMass();
-	G4double fmagcharge = MonopoleProperties->GetMagQ();
-	G4double felcharge  = MonopoleProperties->GetElQ();
-	fParticleGun = new G4ParticleGun(MilliQMonopole::MonopoleDefinition(fmass, fmagcharge, felcharge));
+
+      G4int n_particle = 1;
+	  fParticleGun = new G4ParticleGun(n_particle);
+
+	  // create a messenger for this class
+	  fGunMessenger = new MilliQPrimaryGeneratorMessenger(this);
+
+	  // default particle kinematic
+
+	  G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
+		  G4String particleName;
+
+//	  G4ParticleDefinition* particle
+//	    = particleTable->FindParticle(particleName="monopole");
+
+	//  fParticleGun->SetParticleDefinition(particle);
+
+//	  fgPrimaryParticle = particle;
+
+	  fParticleGun->SetParticleMomentumDirection(G4ThreeVector(1.,0.,0.));
+
+	  fXVertex = -990.* cm;
+	  fYVertex = 0.;
+	  fZVertex=0.;
+	  fEnergy=10.*GeV;
+	  fParticleGun->SetParticlePosition(G4ThreeVector(fXVertex,fYVertex,fZVertex));
+	  fParticleGun->SetParticleEnergy(fEnergy);
+
 
 }
 
@@ -77,58 +113,170 @@ MilliQPrimaryGeneratorAction::MilliQPrimaryGeneratorAction()
 MilliQPrimaryGeneratorAction::~MilliQPrimaryGeneratorAction()
 {
   delete fParticleGun;
+  delete fGunMessenger;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
-  // This function is called at the begining of event
-
-  // In order to avoid dependence of PrimaryGeneratorAction
-  // on DetectorConstruction class we get world volume
-  // from G4LogicalVolumeStore.
-
-	G4double xGun=-0.4*m;//0*cm; //14.6 gets it to the other stack
-	G4double yGun=-2*cm; //Goes up
-	G4double zGun=0*cm;
-	fParticleGun->SetParticlePosition(G4ThreeVector(xGun,yGun,zGun));
-	G4double xMoGun = LHEFourVectors[neventLHE][0];
-	G4double yMoGun = LHEFourVectors[neventLHE][1];
-	G4double zMoGun = LHEFourVectors[neventLHE][2];
-	G4double MoNorm = sqrt(pow(xMoGun,2)+pow(yMoGun,2)+pow(zMoGun,2));
-
-//	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(xMoGun/MoNorm,yMoGun/MoNorm,zMoGun/MoNorm));
-	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(1-0.1*G4UniformRand(),0*G4UniformRand(),0.1*G4UniformRand()));
 
 
-//	G4double energyGun=LHEFourVectors[neventLHE][3]*CLHEP::GeV;
-//	fParticleGun->SetParticleEnergy(energyGun);
-	fParticleGun->SetParticleEnergy(1.*CLHEP::GeV);
+//	 fgPrimaryParticle = fParticleGun->GetParticleDefinition();
+G4cout<<"The PDG Charge "<<fParticleGun->GetParticleDefinition()->GetPDGCharge()<<G4endl;
+	  G4double x0,y0,z0, xMo,yMo,zMo, En, MoNorm;
+	  if (fVertexDefined)
+	  {
+	    x0 = fXVertex;
+	    y0 = fYVertex;
+	    z0 = fZVertex;
+	    En = fEnergy;
+		  xMo = 1.;
+		  yMo = -0.1+0.2*G4UniformRand();
+		  zMo = 0.;
+
+	  }
+	  else
+	  {
+		En = 10.*GeV;
+	    x0 = 40000. * mm;
+	    y0 = 100*G4UniformRand();
+	    z0 = 1000*G4UniformRand();
+		  xMo = -1.;
+		  yMo = -0.1+0.2*G4UniformRand();
+		  zMo = 0.;
+	  }
+
+/*	  GetLHEFourVectors();
+
+	  if(fCalibDefined){
+		  En = fEnergy;
+		  xMo = 1.;
+		  yMo = 0.;
+		  zMo = 0.;
+	  }
+	  else{
+		  xMo = LHEFourVectors[neventLHE][0];
+		  yMo = LHEFourVectors[neventLHE][1];
+		  zMo = LHEFourVectors[neventLHE][2];
+		  En =LHEFourVectors[neventLHE][3]*CLHEP::GeV;
+	  }
+	*/  MoNorm = sqrt(pow(xMo,2)+pow(yMo,2)+pow(zMo,2));
+
+
+	  G4double r0,phi0;
+	  if (fRndmFlag == "on")
+	  {
+	     r0 = (-40.*mm);
+	     phi0 = twopi*G4UniformRand();
+	     x0 = -1000*mm+r0*std::cos(phi0);
+	     y0 = -10*mm+r0*std::sin(phi0);
+	   }
+
+
+
+	G4cout<<"xMoGun "<<xMo<<G4endl;
+	G4cout<<"nevent "<<neventLHE<<G4endl;
+
+	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(xMo/MoNorm,yMo/MoNorm,zMo/MoNorm));
+//	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(1-0.1*G4UniformRand(),0*G4UniformRand(),0.1*G4UniformRand()));
+
+	fParticleGun->SetParticleEnergy(En);
+    fParticleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 	fParticleGun->GeneratePrimaryVertex(anEvent);
 	neventLHE++;
 
-	/*
-	G4double worldZHalfLength = 0;
-	  G4LogicalVolume* worldLV
-	    = G4LogicalVolumeStore::GetInstance()->GetVolume("World");
-	  G4Box* worldBox = NULL;
-	  if ( worldLV ) worldBox = dynamic_cast<G4Box*>(worldLV->GetSolid());
-	  if ( worldBox ) worldZHalfLength = worldBox->GetZHalfLength();
-	  else  {
-	    G4cerr << "World volume of box not found." << G4endl;
-	    G4cerr << "Perhaps you have changed geometry." << G4endl;
-	    G4cerr << "The gun will be place in the center." << G4endl;
-	  }
-
-	  fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., -worldZHalfLength));
-
-	  fParticleGun->GeneratePrimaryVertex(anEvent);
-
-*/
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+G4String MilliQPrimaryGeneratorAction::GetPrimaryName()
+{
+   return fgPrimaryParticle->GetParticleName();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void MilliQPrimaryGeneratorAction::SetXVertex(G4double x)
+{
+  fVertexDefined = true;
+  fXVertex = x;
+  G4cout << " X coordinate of the primary vertex = " << fXVertex/mm <<
+            " mm." << G4endl;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void MilliQPrimaryGeneratorAction::SetYVertex(G4double y)
+{
+  fVertexDefined = true;
+  fYVertex = y;
+  G4cout << " Y coordinate of the primary vertex = " << fYVertex/mm <<
+            " mm." << G4endl;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void MilliQPrimaryGeneratorAction::SetZVertex(G4double z)
+{
+  fVertexDefined = true;
+  fZVertex = z;
+  G4cout << " Z coordinate of the primary vertex = " << fZVertex/mm <<
+            " mm." << G4endl;
+}
+
+void MilliQPrimaryGeneratorAction::SetCalibEnergy(G4double e)
+{
+  fCalibDefined = true;
+  fEnergy= e;
+  G4cout << " Energy of the primary vertex = " << fEnergy/GeV <<
+            " GeV." << G4endl;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void MilliQPrimaryGeneratorAction::GetLHEFourVectors()
+{
+    std::ifstream infile;
+    infile.open("../../milliq/geant4/outputpositive.dat" );
+    G4String line;
+    while( std::getline( infile, line ) ) {
+
+    	std::istringstream iss( line );
+
+        std::getline( infile, line );
+
+
+        G4double px, py, pz, e;
+
+        while( std::getline( infile, line ) ) {
+
+        	iss.clear();
+            iss.str( line );
+
+            if( !( iss >> px >> py >> pz >> e  ) )
+            	break;
+
+            std::vector<G4double> table;
+            table.push_back(px);
+            table.push_back(py);
+            table.push_back(pz);
+            table.push_back(e);
+            LHEFourVectors.push_back(table);
+
+        }
+    }
+
+}
+
+
+
+
+
 
 
 /*

@@ -73,10 +73,8 @@ MilliQMonopolePhysics::MilliQMonopolePhysics(const G4String& nam)
     fMessenger(0), fMpl(0)
 {
   fMagCharge = 0.0;
-  //  fMagCharge = -1.0;
-  //  fElCharge  = -50.0;
-  fElCharge  = -1.0;
-  fMonopoleMass = 0.5*GeV;
+  fElCharge  = 0.001;
+  fMonopoleMass = 100.0*GeV;
   fMessenger = new MilliQMonopolePhysicsMessenger(this);
   SetPhysicsType(bUnknown);
 }
@@ -147,7 +145,7 @@ void MilliQMonopolePhysics::SetElectricCharge(G4double val)
 
 void MilliQMonopolePhysics::SetMonopoleMass(G4double mass)
 {
-  fMonopoleMass = mass;
+  fMonopoleMass = 100.0*GeV;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

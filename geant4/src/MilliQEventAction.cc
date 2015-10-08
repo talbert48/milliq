@@ -37,7 +37,6 @@
 #include "MilliQTrajectory.hh"
 #include "MilliQRecorderBase.hh"
 
-#include "G4EventManager.hh"
 #include "G4SDManager.hh"
 #include "G4RunManager.hh"
 #include "G4Event.hh"

@@ -67,38 +67,51 @@ void MilliQDetectorConstruction::SetDefaults() {
 	//Resets to default values
 	fD_mtl = 5. * mm;
 
-	if(fAlternate == 2){//Corresponds to David Stuarts Geometry
+	if(fAlternate == 2){//Corresponds to David Stuart's Geometry
 		NBlocks = G4ThreeVector(1., 32., 16.); //1. 20.,10.
 		NStacks = 1;
 		fBetweenBlockSpacing = G4ThreeVector(0. * m, 0. * m, 0. * m);
+//		fLightGuideLength=1*mm;
 		fScint_x = 50. * mm;
 		fScint_y = 2. * mm;
 		fScint_z = 2 * mm;
 		fOffset = G4ThreeVector(0.*m, 0.*m, 0.*m);
 		fOuterRadius_pmt = 0.564*mm;
 		fScintHouseThick = 0.15 * mm; //scintillator housing thickness (and Glass Radius Height)
-//		fScintillatorHouseRefl = 1.; //scintillator housing reflectivity
 		fPmtRad = 0.564*mm; //pmt radius
 		fPmtPhotoRad = 0.564* mm; //pmt Photocathode radius
+
+//		fScintillatorHouseRefl = 1.; //scintillator housing reflectivity
 //		fPmtPhotoHeight = 0.25 * cm; //pmt photocathode height
 //		fPmtPhotoDepth = 0. * cm; //pmt photocathode depth from front of pmt
 //		fPmtHouseRefl = 1.; //pmt housing reflective
 	}
 
+	/*
+
+	 bars, 3 inches,
+	4.6cm=diameter active area of photocathode
+	r329 hamamatsu
+	rectangle to square, 46mm, 30 degree angle, 10cm in length
+	2.5cm over 10 cm
+	*/
 	else{
+		//References: http://www.hamamatsu.com/jp/en/R329-02.html
+
 		NBlocks = G4ThreeVector(1., 8., 8.); //1. 20.,10.
 		NStacks = 3;
 		fBetweenBlockSpacing = G4ThreeVector(0.1 * m, 0. * m, 0. * m);
 		fScint_x = 0.9 * m;
-		fScint_y = 0.125 * m;
-		fScint_z = 0.125 * m;
+		fScint_y = 10.*cm;
+		fScint_z = 5.*cm;
 		fOffset = G4ThreeVector(0.*m, 0.1*m, 0.1*m);
-		fOuterRadius_pmt = 2.5 * cm;
+		fLightGuideLength=10.*cm;//Needs to be smaller than fScint_x
+		fOuterRadius_pmt = 2.3 * cm;
 		fScintHouseThick = 1. * cm; //scintillator housing thickness (and Glass Radius Height)
 		fScintillatorHouseRefl = 1.; //scintillator housing reflectivity
-		fPmtRad = 2.5 * cm; //pmt radius
-		fPmtPhotoRad = 2.5 * cm; //pmt Photocathode radius
-		fPmtPhotoHeight = 0.25 * cm; //pmt photocathode height
+		fPmtRad = 2.3 * cm; //pmt radius
+		fPmtPhotoRad = 2.3 * cm; //pmt Photocathode radius
+		fPmtPhotoHeight = 0.23 * cm; //pmt photocathode height
 		fPmtPhotoDepth = 0. * cm; //pmt photocathode depth from front of pmt
 		fPmtHouseRefl = 1.; //pmt housing reflective
 	}
@@ -110,7 +123,7 @@ void MilliQDetectorConstruction::SetDefaults() {
 	//Define shielding thickness
 	shield1Thick = G4ThreeVector(10.0 * cm, 10.0 * cm, 10.0 * cm);
 	shield2Thick = G4ThreeVector(10.0 * cm, 10.0 * cm, 10.0 * cm);
-	detShieldGap = G4ThreeVector(0.1 * m, 0.1 * m, 0.1 * m); //Make sure to put it bigger than the offset!
+	detShieldGap = G4ThreeVector(1. * cm, 1.* cm, 1.* cm); //Make sure to put it bigger than the offset!
 
 //	G4UImanager::GetUIpointer()->ApplyCommand(
 //			"/MilliQ/detector/scintYieldFactor 1.");
@@ -174,19 +187,6 @@ void MilliQDetectorConstruction::DefineMaterials() {
 	//Material properties tables
 	//
 
-/*
- * http://www.hamamatsu.com/jp/en/R329-02.html
-need spectrum, p2 of bicron
-420nm photons, single pmt efficiency at 420nm
-tell it which spectrum to emit,
-420nm put in spectrum
-PMT
-5cm x 10 cm bars, 3 inches,
-4.6cm=diameter active area of photocathode
-r329 hamamatsu
-rectangle to square, 46mm, 30 degree angle, 10cm in length
-2.5cm over 10 cm
-*/
 
 	// To see what all these settings do,
 	// see source/processes/electromagnetic/xrays/src/G4Scintillation.cc
@@ -386,10 +386,13 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 	//
 	//World
 	//
+	G4double worldVx=8.*m;
+	G4double worldVy=8.*m;
+	G4double worldVz=8.*m;
 
 	//World - Volume
 	G4Box* worldV = new G4Box("World Volume", //name
-			8. * m, 8. * m, 8. * m); //dimentions
+			worldVx, worldVy, worldVz); //dimentions
 	//World - Logical Volume
 	worldLV = new G4LogicalVolume(worldV, G4Material::GetMaterial("Air"),
 			"World Logical Volume", 0, 0, 0);
@@ -424,7 +427,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 
 	// Detection Room - Volume
 	G4Box* detectionRoomV = new G4Box("Detection Room Volume",  //name
-			7. * m, 7. * m, 7. * m); //temp dimentions
+			worldVx*0.95, worldVy*0.95, worldVz*0.95); //temp dimentions
 
 	// Detection Room - Logical Volume
 	G4LogicalVolume* detectionRoomLV = new G4LogicalVolume(detectionRoomV, //volume
@@ -465,6 +468,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 
 			G4ThreeVector(fScint_x, fScint_y, fScint_z), //scintillator dimensions
 			fScintHouseThick, //scintillator housing thickness (and Glass Radius Height)
+			fLightGuideLength, //light guide inside scintillator
 			fScintillatorHouseRefl, //scintillator housing reflectivity
 
 			fPmtRad, //pmt radius
@@ -495,19 +499,20 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 			fDetectorStackParameterisation->GetNumberOfBlocks(),
 			fDetectorStackParameterisation);
 
-	//
-	// Concrete Wall
-	//
-	/*
-	 G4Box* wallV = new G4Box("Wall V", .5/2 * m, 10./2 * m, 15./2 * m);
-	 G4LogicalVolume* wallLV = new G4LogicalVolume(wallV, fConcreteMaterial,
-	 "Wall LV", 0, 0, 0);
-	 wallLV->SetVisAttributes(G4Colour(.5, .5, .5, .5));
-	 new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
-	 */
-
-	ConstructShield(worldLV, TotalStackStart, TotalStackEnd);
-	worldLV->SetUserLimits(new G4UserLimits(0.2 * mm));
+	if(fAlternate == 2){
+		//
+		// Concrete Wall
+		//
+		G4Box* wallV = new G4Box("Wall V", 1.5 * m, worldVy*0.95, worldVz*0.95);
+		G4LogicalVolume* wallLV = new G4LogicalVolume(wallV, fConcreteMaterial,
+				"Wall LV", 0, 0, 0);
+		wallLV->SetVisAttributes(G4Colour(.5, .5, .5, .5));
+		new G4PVPlacement(0, G4ThreeVector(-1.5*m,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
+	}
+	else if (fAlternate ==3){
+		ConstructShield(worldLV, TotalStackStart, TotalStackEnd);
+	}
+		worldLV->SetUserLimits(new G4UserLimits(0.2 * mm));
 
 	return fWorldPV;
 
@@ -555,7 +560,7 @@ void MilliQDetectorConstruction::ConstructShield(G4LogicalVolume* dworldLV,
 	//Define led shielding inner half length(polyethylene butted around led)
 	G4int nOffsets = 2;
 	G4double xShield =
-			(dTotalStackEnd - dTotalStackStart + 2 * detShieldGap.x()) * 0.5;
+			(2*fScintHouseThick+dTotalStackEnd - dTotalStackStart + 2 * detShieldGap.x()) * 0.5;
 	G4double yShield = (NBlocks.y() * fScint_y
 			+ fBetweenBlockSpacing.y() * (NBlocks.y() - 1)
 			+ 2 * detShieldGap.y() + fOffset.y()*nOffsets) * 0.5 + shield1Thick.y();
@@ -569,7 +574,7 @@ void MilliQDetectorConstruction::ConstructShield(G4LogicalVolume* dworldLV,
 
 	//Define global center for shielding
 	G4ThreeVector centreGlobalShield = G4ThreeVector(
-			dTotalStackStart + (dTotalStackEnd - dTotalStackStart)*0.5, 0 , 0 );
+			fScintHouseThick+dTotalStackStart + (dTotalStackEnd - dTotalStackStart)*0.5, 0 , 0 );
 
 	//
 	// Polyethylene Shielding Container (Radiation Shield)

@@ -7,7 +7,7 @@
 # Set direction from target to camera.
 /vis/viewer/set/viewpointVector 1 1.5 1.1
 /vis/scene/add/scale   # Simple scale line
-/vis/scene/add/axes    # Simple axes: x=red, y=green, z=blue.
+/vis/scene/add/axes    # Simple axes: x=red, y=green, z=blue
 
 
 # Create an empty scene and add the detector geometry to it

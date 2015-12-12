@@ -31,6 +31,7 @@ public:
                         
                         G4ThreeVector           pScintillatorDimensions,
                         G4double                pScintillatorHousingThickness,
+						G4double				pLightGuideLength,
                         G4double                pScintillatorHousingReflectivity,
                         
                         G4double                pPmtRadius,

@@ -22,6 +22,7 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
                                          
                                          G4ThreeVector           pScintillatorDimensions,
                                          G4double                pScintillatorHousingThickness,
+										 G4double				 pLightGuideLength,
                                          G4double                pScintillatorHousingReflectivity,
                                          
                                          G4double                pPmtRadius,
@@ -59,6 +60,7 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
 
                                 pScintillatorDimensions, //pScintillatorDimensions
                                 pScintillatorHousingThickness, //pScintillatorHousingThickness
+								pLightGuideLength,
                                 pScintillatorHousingReflectivity, //pScintillatorHousingReflectivity
 
 								pPmtRadius, //pPmtRadius

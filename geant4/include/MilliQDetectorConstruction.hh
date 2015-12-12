@@ -94,6 +94,7 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4double fScint_z;
     G4double fD_mtl;
     G4double fScintHouseThick;
+    G4double fLightGuideLength;
     G4double fScintillatorHouseRefl;
     G4double fPmtRad;
     G4double fPmtPhotoRad;

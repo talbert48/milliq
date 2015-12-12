@@ -46,12 +46,12 @@ G4ThreadLocal
 G4GlobalMagFieldMessenger* MilliQDetectorConstruction::fMagFieldMessenger = 0;
 
 MilliQDetectorConstruction::MilliQDetectorConstruction() :
-		fScintillator_mt(NULL), NBlocks(G4ThreeVector()), NStacks(0), fAlternate(0), fMagField(
-				0) {
+		fScintillator_mt(NULL), NBlocks(G4ThreeVector()), NStacks(0), fAlternate(
+				0), fMagField(0) {
 	fWorldPV = NULL;
-	fWorldPVCheckPhysics=NULL;
+	fWorldPVCheckPhysics = NULL;
 	worldLV = NULL;
-	fMagneticVolume=NULL;
+	fMagneticVolume = NULL;
 
 	fScintillatorMaterial = fAluminiumMaterial = fAirMaterial =
 			fVacuumMaterial = fGlassMaterial = NULL;
@@ -67,35 +67,53 @@ void MilliQDetectorConstruction::SetDefaults() {
 	//Resets to default values
 	fD_mtl = 5. * mm;
 
-	NBlocks = G4ThreeVector(1., 8., 8.); //1. 20.,10.
-	NStacks = 3;
+	if(fAlternate == 2){//Corresponds to David Stuarts Geometry
+		NBlocks = G4ThreeVector(1., 32., 16.); //1. 20.,10.
+		NStacks = 1;
+		fBetweenBlockSpacing = G4ThreeVector(0. * m, 0. * m, 0. * m);
+		fScint_x = 50. * mm;
+		fScint_y = 2. * mm;
+		fScint_z = 2 * mm;
+		fOffset = G4ThreeVector(0.*m, 0.*m, 0.*m);
+		fOuterRadius_pmt = 0.564*mm;
+		fScintHouseThick = 0.15 * mm; //scintillator housing thickness (and Glass Radius Height)
+//		fScintillatorHouseRefl = 1.; //scintillator housing reflectivity
+		fPmtRad = 0.564*mm; //pmt radius
+		fPmtPhotoRad = 0.564* mm; //pmt Photocathode radius
+//		fPmtPhotoHeight = 0.25 * cm; //pmt photocathode height
+//		fPmtPhotoDepth = 0. * cm; //pmt photocathode depth from front of pmt
+//		fPmtHouseRefl = 1.; //pmt housing reflective
+	}
 
-	fBetweenBlockSpacing = G4ThreeVector(10. * cm, 0. * cm, 0. * cm);
-
-	fScint_x = 0.14 * m; //140.*cm
-	fScint_y = 0.1 * m;
-	fScint_z = 0.1 * m;
-
-	fOuterRadius_pmt = 2.5 * cm;
-
-	fScintHouseThick = 1. * cm; //scintillator housing thickness (and Glass Radius Height)
-	fScintillatorHouseRefl = 1.; //scintillator housing reflectivity
-
-	fPmtRad = 2.5 * cm; //pmt radius
-	fPmtPhotoRad = 2.5 * cm; //pmt Photocathode radius
-	fPmtPhotoHeight = 0.25 * cm; //pmt photocathode height
-	fPmtPhotoDepth = 0. * cm; //pmt photocathode depth from front of pmt
-	fPmtHouseRefl = 1.; //pmt housing reflective
+	else{
+		NBlocks = G4ThreeVector(1., 8., 8.); //1. 20.,10.
+		NStacks = 3;
+		fBetweenBlockSpacing = G4ThreeVector(0.1 * m, 0. * m, 0. * m);
+		fScint_x = 0.9 * m;
+		fScint_y = 0.125 * m;
+		fScint_z = 0.125 * m;
+		fOffset = G4ThreeVector(0.*m, 0.1*m, 0.1*m);
+		fOuterRadius_pmt = 2.5 * cm;
+		fScintHouseThick = 1. * cm; //scintillator housing thickness (and Glass Radius Height)
+		fScintillatorHouseRefl = 1.; //scintillator housing reflectivity
+		fPmtRad = 2.5 * cm; //pmt radius
+		fPmtPhotoRad = 2.5 * cm; //pmt Photocathode radius
+		fPmtPhotoHeight = 0.25 * cm; //pmt photocathode height
+		fPmtPhotoDepth = 0. * cm; //pmt photocathode depth from front of pmt
+		fPmtHouseRefl = 1.; //pmt housing reflective
+	}
 
 	fRefl = 1.0;
 
 	fDetectorStack = NULL;
 
-	G4UImanager::GetUIpointer()->ApplyCommand(
-			"/MilliQ/detector/scintYieldFactor 1.");
+	//Define shielding thickness
+	shield1Thick = G4ThreeVector(10.0 * cm, 10.0 * cm, 10.0 * cm);
+	shield2Thick = G4ThreeVector(10.0 * cm, 10.0 * cm, 10.0 * cm);
+	detShieldGap = G4ThreeVector(0.1 * m, 0.1 * m, 0.1 * m); //Make sure to put it bigger than the offset!
 
-	if (fScintillator_mt)
-		fScintillator_mt->AddConstProperty("SCINTILLATIONYIELD", 12. / MeV);
+//	G4UImanager::GetUIpointer()->ApplyCommand(
+//			"/MilliQ/detector/scintYieldFactor 1.");
 
 	G4RunManager::GetRunManager()->ReinitializeGeometry();
 }
@@ -115,13 +133,6 @@ void MilliQDetectorConstruction::DefineMaterials() {
 	//
 	// Materials
 	//
-
-	//Scintillator
-	fScintillatorMaterial = new G4Material("Scintillator", //name
-			2.25*g/cm3,//3.020 * g / cm3, //density
-			1);//2); //n elements
-	fScintillatorMaterial->AddElement(fC, 1);
-//	fScintillatorMaterial->AddElement(fH, 11);
 
 	//Aluminum
 	fAluminiumMaterial = new G4Material("Aluminium", //name
@@ -163,38 +174,63 @@ void MilliQDetectorConstruction::DefineMaterials() {
 	//Material properties tables
 	//
 
-	G4double MilliQ_Energy[] = { 7.0 * eV, 7.07 * eV, 7.14 * eV };
-	const G4int MilliQnum = sizeof(MilliQ_Energy) / sizeof(G4double);
+/*
+ * http://www.hamamatsu.com/jp/en/R329-02.html
+need spectrum, p2 of bicron
+420nm photons, single pmt efficiency at 420nm
+tell it which spectrum to emit,
+420nm put in spectrum
+PMT
+5cm x 10 cm bars, 3 inches,
+4.6cm=diameter active area of photocathode
+r329 hamamatsu
+rectangle to square, 46mm, 30 degree angle, 10cm in length
+2.5cm over 10 cm
+*/
 
-	G4double MilliQ_SCINT[] = { 0.1, 1.0, 0.1 };
-	assert(sizeof(MilliQ_SCINT) == sizeof(MilliQ_Energy));
-	G4double MilliQ_RIND[] = { 1.59, 1.57, 1.54 };
+	// To see what all these settings do,
+	// see source/processes/electromagnetic/xrays/src/G4Scintillation.cc
+
+	//Settings for BC-408
+	//References: http://iopscience.iop.org/article/10.1088/1674-1137/34/7/011/pdf
+	//References: http://www.phys.ufl.edu/courses/phy4803L/group_I/muon/bicron_bc400-416.pdf
+	fScintillatorMaterial = new G4Material("Scintillator", //name
+			1.032*g/cm3,//density
+				2); //n elements
+	fScintillatorMaterial->AddElement(fC, 9);
+	fScintillatorMaterial->AddElement(fH, 10);
+	//Emission Spectrum energies:
+	G4double MilliQ_Energy[] = {2.53*eV, 2.58*eV, 2.64*eV, 2.70*eV, 2.76*eV, 2.79*eV, 2.82*eV, 2.88*eV, 2.95*eV, 2.98*eV, 3.02*eV, 3.10*eV, 3.18*eV};
+	const G4int MilliQnum = sizeof(MilliQ_Energy) / sizeof(G4double);
+	G4double MilliQ_Fast_SCINT[] = {0.1, 0.15, 0.25, 0.4, 0.55, 0.62, 0.83, 1., 0.83, 0.6, 0.4, 0.2, 0.1};//Relative light output for the emission spectrum
+	assert(sizeof(MilliQ_Fast_SCINT) == sizeof(MilliQ_Energy));
+	G4double MilliQ_RIND[] = {1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58}; //{ 1.59, 1.57, 1.54 };
 	assert(sizeof(MilliQ_RIND) == sizeof(MilliQ_Energy));
-	G4double MilliQ_ABSL[] = { 35. * cm, 35. * cm, 35. * cm };
+	G4double MilliQ_ABSL[] = { 210. * cm, 210. * cm, 210.*cm, 210.*cm, 210.*cm, 210.*cm, 210.*cm, 210.*cm, 210.*cm, 210.*cm, 210.*cm, 210.*cm, 210.*cm };
 	assert(sizeof(MilliQ_ABSL) == sizeof(MilliQ_Energy));
 	fScintillator_mt = new G4MaterialPropertiesTable();
-	fScintillator_mt->AddProperty("FASTCOMPONENT", MilliQ_Energy, MilliQ_SCINT,
-			MilliQnum);
-	fScintillator_mt->AddProperty("SLOWCOMPONENT", MilliQ_Energy, MilliQ_SCINT,
-			MilliQnum);
+	fScintillator_mt->AddProperty("FASTCOMPONENT", MilliQ_Energy, MilliQ_Fast_SCINT,
+			MilliQnum);//I think is setting the max emission to be 430nm (need to check)
+//	fScintillator_mt->AddProperty("SLOWCOMPONENT", MilliQ_Energy, MilliQ_Slow_SCINT,
+//			MilliQnum);
 	fScintillator_mt->AddProperty("RINDEX", MilliQ_Energy, MilliQ_RIND,
 			MilliQnum);
 	fScintillator_mt->AddProperty("ABSLENGTH", MilliQ_Energy, MilliQ_ABSL,
 			MilliQnum);
-	fScintillator_mt->AddConstProperty("SCINTILLATIONYIELD", 12. / MeV);
+	fScintillator_mt->AddConstProperty("SCINTILLATIONYIELD", 0.64*17400. / MeV); //64% of Anthracene
 	fScintillator_mt->AddConstProperty("RESOLUTIONSCALE", 1.0);
-	fScintillator_mt->AddConstProperty("FASTTIMECONSTANT", 20. * ns);
-	fScintillator_mt->AddConstProperty("SLOWTIMECONSTANT", 45. * ns);
+	fScintillator_mt->AddConstProperty("FASTTIMECONSTANT", 2.1 * ns);//This is decay time
+	fScintillator_mt->AddConstProperty("FASTSCINTILLATIONRISETIME", 0.9*ns);//Need to set setFiniteRiseTime true in messenger!!
+	//	fScintillator_mt->AddConstProperty("SLOWTIMECONSTANT", 0. * ns); //45
 	fScintillator_mt->AddConstProperty("YIELDRATIO", 1.0);
 	fScintillatorMaterial->SetMaterialPropertiesTable(fScintillator_mt);
+	// Set the Birks Constant
+	fScintillatorMaterial->GetIonisation()->SetBirksConstant(0.111 * mm / MeV);
 
-	// Set the Birks Constant for the scintillator
-
-	fScintillatorMaterial->GetIonisation()->SetBirksConstant(0.126 * mm / MeV);
-
-	G4double glass_RIND[] = { 1.49, 1.49, 1.49 };
+	//Unmodified from default LXE
+	G4double glass_RIND[] = { 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49 };
 	assert(sizeof(glass_RIND) == sizeof(MilliQ_Energy));
-	G4double glass_AbsLength[] = { 420. * cm, 420. * cm, 420. * cm };
+	G4double glass_AbsLength[] = { 420. * cm, 420. * cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm };
 	assert(sizeof(glass_AbsLength) == sizeof(MilliQ_Energy));
 	G4MaterialPropertiesTable *glass_mt = new G4MaterialPropertiesTable();
 	glass_mt->AddProperty("ABSLENGTH", MilliQ_Energy, glass_AbsLength,
@@ -202,15 +238,129 @@ void MilliQDetectorConstruction::DefineMaterials() {
 	glass_mt->AddProperty("RINDEX", MilliQ_Energy, glass_RIND, MilliQnum);
 	fGlassMaterial->SetMaterialPropertiesTable(glass_mt);
 
-	G4double vacuum_Energy[] = { 2.0 * eV, 7.0 * eV, 7.14 * eV };
-	const G4int vacnum = sizeof(vacuum_Energy) / sizeof(G4double);
-	G4double vacuum_RIND[] = { 1., 1., 1. };
-	assert(sizeof(vacuum_RIND) == sizeof(vacuum_Energy));
+//	G4double vacuum_Energy[] = { 2.0 * eV, 7.0 * eV, 7.14 * eV };
+//	const G4int vacnum = sizeof(vacuum_Energy) / sizeof(G4double);
+	G4double vacuum_RIND[] = { 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1. };
+	assert(sizeof(vacuum_RIND) == sizeof(MilliQ_Energy));
 	G4MaterialPropertiesTable *vacuum_mt = new G4MaterialPropertiesTable();
-	vacuum_mt->AddProperty("RINDEX", vacuum_Energy, vacuum_RIND, vacnum);
+	vacuum_mt->AddProperty("RINDEX", MilliQ_Energy, vacuum_RIND, MilliQnum);
 	fVacuumMaterial->SetMaterialPropertiesTable(vacuum_mt);
 	fAirMaterial->SetMaterialPropertiesTable(vacuum_mt); //Give air the same rindex
 }
+
+void MilliQDetectorConstruction::DefineMaterialsStewart() {
+
+	G4NistManager* nist = G4NistManager::Instance();
+	nist->SetVerbose(0);
+
+	// Elements
+	//                            name          symbole number  wieght
+	G4Element* fH = new G4Element("Hydrogen", "H", 1., 1.01 * g / mole);
+	G4Element* fC = new G4Element("Carbon", "C", 6., 12.01 * g / mole);
+	G4Element* fN = new G4Element("Nitrogen", "N", 7., 14.01 * g / mole);
+	G4Element* fO = new G4Element("Oxegen", "O", 8., 16.00 * g / mole);
+
+	//
+	// Materials
+	//
+
+	//Aluminum
+	fAluminiumMaterial = new G4Material("Aluminium", //name
+			13., //number
+			26.98 * g / mole, //wieght
+			2.7 * g / cm3); //density
+
+	//Vacuum
+	fVacuumMaterial = new G4Material("Vacuum", //name
+			1., //atomic number
+			1.01 * g / mole, //weight
+			universe_mean_density, //density
+			kStateGas, //state
+			0.1 * kelvin, //tempature
+			1.e-19 * pascal); //presure
+	//Air
+	fAirMaterial = new G4Material("Air", //name
+			1.29 * mg / cm3, //density
+			2); //n elements
+	fAirMaterial->AddElement(fN, 70 * perCent); //compose of nitrogen
+	fAirMaterial->AddElement(fO, 30 * perCent); //compose of oxegen
+
+	//Glass
+	fGlassMaterial = new G4Material("Glass", //name
+			1.032 * g / cm3, //density
+			2); //n elements
+	fGlassMaterial->AddElement(fC, 91.533 * perCent); //compose of carbon
+	fGlassMaterial->AddElement(fH, 8.467 * perCent); //compose of hydrogen
+
+	//Concrete
+	fConcreteMaterial = nist->FindOrBuildMaterial("G4_CONCRETE");
+
+	//Shielding Material
+	led = G4NistManager::Instance()->FindOrBuildMaterial("G4_Pb");
+	polyethylene = G4NistManager::Instance()->FindOrBuildMaterial(
+			"G4_POLYETHYLENE");
+
+	// To see what all these settings do,
+	// see source/processes/electromagnetic/xrays/src/G4Scintillation.cc
+
+
+	//Settings for BCF-12
+	//References: http://www.crystals.saint-gobain.com/uploadedFiles/SG-Crystals/Documents/SGC%20Fibers%20Brochure.pdf
+	//References: http://arxiv.org/pdf/0911.3041.pdf
+	fScintillatorMaterial = new G4Material("Scintillator", //name
+			1.05*g/cm3,//density
+				2); //n elements
+	fScintillatorMaterial->AddElement(fC, 8);
+	fScintillatorMaterial->AddElement(fH, 8);
+	//Emission Spectrum energies:
+	G4double MilliQ_Energy[] = {2.38*eV, 2.43*eV, 2.48*eV, 2.53*eV, 2.58*eV, 2.64*eV, 2.70*eV,2.76*eV, 2.82*eV, 2.88*eV, 2.95*eV, 3.02*eV, 3.10*eV };
+	const G4int MilliQnum = sizeof(MilliQ_Energy) / sizeof(G4double);
+	G4double MilliQ_Fast_SCINT[] = {0.1, 0.2, 0.25, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1., 0.7, 0.3, 0.1};//Relative light output for the emission spectrum
+	assert(sizeof(MilliQ_Fast_SCINT) == sizeof(MilliQ_Energy));
+	G4double MilliQ_RIND[] = {1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6, 1.6};
+	assert(sizeof(MilliQ_RIND) == sizeof(MilliQ_Energy));
+	G4double MilliQ_ABSL[] = { 2.7 * m, 2.7 * m, 2.7*m, 2.7*m, 2.7*m, 2.7*m, 2.7*m, 2.7*m, 2.7*m, 2.7*m, 2.7*m, 2.7*m, 2.7*m };
+	assert(sizeof(MilliQ_ABSL) == sizeof(MilliQ_Energy));
+	fScintillator_mt = new G4MaterialPropertiesTable();
+	fScintillator_mt->AddProperty("FASTCOMPONENT", MilliQ_Energy, MilliQ_Fast_SCINT,
+		MilliQnum);//I think is setting the max emission to be 430nm (need to check)
+//	fScintillator_mt->AddProperty("SLOWCOMPONENT", MilliQ_Energy, MilliQ_Slow_SCINT,
+//			MilliQnum);
+	fScintillator_mt->AddProperty("RINDEX", MilliQ_Energy, MilliQ_RIND,
+			MilliQnum);
+	fScintillator_mt->AddProperty("ABSLENGTH", MilliQ_Energy, MilliQ_ABSL,
+			MilliQnum);
+	fScintillator_mt->AddConstProperty("SCINTILLATIONYIELD", 8000. / MeV);
+	fScintillator_mt->AddConstProperty("RESOLUTIONSCALE", 1.0);
+	fScintillator_mt->AddConstProperty("FASTTIMECONSTANT", 3.2 * ns);//This is decay time
+//	fScintillator_mt->AddCpmstProperty("FASTSCINTILLATIONRISETIME", 0.9*ns);//Need to set setFiniteRiseTime true in messenger!!
+//	fScintillator_mt->AddConstProperty("SLOWTIMECONSTANT", 0. * ns); //45
+	fScintillator_mt->AddConstProperty("YIELDRATIO", 1.0);
+	fScintillatorMaterial->SetMaterialPropertiesTable(fScintillator_mt);
+// 	Set the Birks Constant
+	fScintillatorMaterial->GetIonisation()->SetBirksConstant(0.0872 * mm / MeV);
+
+	//Unmodified from default LXE
+	G4double glass_RIND[] = { 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49, 1.49 };
+	assert(sizeof(glass_RIND) == sizeof(MilliQ_Energy));
+	G4double glass_AbsLength[] = { 420. * cm, 420. * cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm, 420.*cm };
+	assert(sizeof(glass_AbsLength) == sizeof(MilliQ_Energy));
+	G4MaterialPropertiesTable *glass_mt = new G4MaterialPropertiesTable();
+	glass_mt->AddProperty("ABSLENGTH", MilliQ_Energy, glass_AbsLength,
+			MilliQnum);
+	glass_mt->AddProperty("RINDEX", MilliQ_Energy, glass_RIND, MilliQnum);
+	fGlassMaterial->SetMaterialPropertiesTable(glass_mt);
+
+//	G4double vacuum_Energy[] = { 2.0 * eV, 7.0 * eV, 7.14 * eV };
+//	const G4int vacnum = sizeof(vacuum_Energy) / sizeof(G4double);
+	G4double vacuum_RIND[] = { 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1. };
+	assert(sizeof(vacuum_RIND) == sizeof(MilliQ_Energy));
+	G4MaterialPropertiesTable *vacuum_mt = new G4MaterialPropertiesTable();
+	vacuum_mt->AddProperty("RINDEX", MilliQ_Energy, vacuum_RIND, MilliQnum);
+	fVacuumMaterial->SetMaterialPropertiesTable(vacuum_mt);
+	fAirMaterial->SetMaterialPropertiesTable(vacuum_mt); //Give air the same rindex
+}
+
 
 G4VPhysicalVolume* MilliQDetectorConstruction::Construct() {
 
@@ -223,12 +373,14 @@ G4VPhysicalVolume* MilliQDetectorConstruction::Construct() {
 		G4LogicalBorderSurface::CleanSurfaceTable();
 	}
 
-	DefineMaterials();
+	if(fAlternate == 2){
+		DefineMaterialsStewart();
+	}
+	else{
+		DefineMaterials();
+	}
 	return ConstructDetector();
 }
-
-
-
 
 G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 	//
@@ -237,17 +389,16 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 
 	//World - Volume
 	G4Box* worldV = new G4Box("World Volume", //name
-			20. / 1. * m, 20. / 1. * m, 20. / 1. * m); //dimentions
+			8. * m, 8. * m, 8. * m); //dimentions
 	//World - Logical Volume
-	worldLV = new G4LogicalVolume(worldV,
-			G4Material::GetMaterial("Air"), "World Logical Volume", 0, 0, 0);
+	worldLV = new G4LogicalVolume(worldV, G4Material::GetMaterial("Air"),
+			"World Logical Volume", 0, 0, 0);
 	//World - Physical Volume
 	fWorldPV = new G4PVPlacement(0, //rotation
 			G4ThreeVector(), //translation
 			worldLV, //logical volume
 			"World Physical Volume", //name
 			0, false, 0);
-
 
 	if (fAlternate == 1) {
 
@@ -273,15 +424,14 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 
 	// Detection Room - Volume
 	G4Box* detectionRoomV = new G4Box("Detection Room Volume",  //name
-			20. / 1. * m, 20. / 1. * m, 20. / 1. * m); //temp dimentions
+			7. * m, 7. * m, 7. * m); //temp dimentions
 
 	// Detection Room - Logical Volume
 	G4LogicalVolume* detectionRoomLV = new G4LogicalVolume(detectionRoomV, //volume
 			G4Material::GetMaterial("Air"), //material
 			"Detection Room Logical Volume"); //name
 
-	G4ThreeVector DetectionRoomTrans = G4ThreeVector(3. * m, 0. * m,
-			0. * m);
+	G4ThreeVector DetectionRoomTrans = G4ThreeVector(0. * m, 0. * m, 0. * m);
 
 	// Detection Room - Physical Volume
 	new G4PVPlacement(0, //rotation
@@ -325,16 +475,17 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 			pmt_SD, //pmt sensitive detector
 			scint_SD); //scintillator sensitive detector
 
-	G4double TotalStackStart = 0. / 1. * m;
-	G4double TotalStackEnd = 2.6 / 1. * m;
-//    G4double TotalStackStart = 0./1.*m;
-//    G4double TotalStackEnd = 0./1.*m;
+	G4double TotalStackStart = shield1Thick.x() + shield2Thick.x()
+			+ detShieldGap.x();
+	G4double TotalStackEnd = TotalStackStart + fScint_x * NStacks
+			+ fBetweenBlockSpacing.x() * (NStacks - 1);
 
 	// Detector Stacks - Parameterisation
 	MilliQDetectorStackParameterisation* fDetectorStackParameterisation =
 			new MilliQDetectorStackParameterisation(NStacks, //n
 					aDetectorStackLV->GetDimensions(), //block dimensions
 					G4ThreeVector(1., 0., 0.), //alignment vector
+					fOffset, //offset to remove background
 					TotalStackStart, //start depth
 					TotalStackEnd); //end depth
 
@@ -347,25 +498,24 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 	//
 	// Concrete Wall
 	//
+	/*
+	 G4Box* wallV = new G4Box("Wall V", .5/2 * m, 10./2 * m, 15./2 * m);
+	 G4LogicalVolume* wallLV = new G4LogicalVolume(wallV, fConcreteMaterial,
+	 "Wall LV", 0, 0, 0);
+	 wallLV->SetVisAttributes(G4Colour(.5, .5, .5, .5));
+	 new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
+	 */
 
-	G4Box* wallV = new G4Box("Wall V", .5/2 * m, 10./2 * m, 15./2 * m);
-	G4LogicalVolume* wallLV = new G4LogicalVolume(wallV, fConcreteMaterial,
-			"Wall LV", 0, 0, 0);
-	wallLV->SetVisAttributes(G4Colour(.5, .5, .5, .5));
-	   new G4PVPlacement(0, G4ThreeVector(0.,0.,0.), wallLV, "Wall PV", worldLV, 0, 0, 0);
-
-	ConstructShield(worldLV, TotalStackStart,TotalStackEnd, NBlocks, NStacks, fScint_x, fScint_y, fScint_z);
+	ConstructShield(worldLV, TotalStackStart, TotalStackEnd);
 	worldLV->SetUserLimits(new G4UserLimits(0.2 * mm));
 
 	return fWorldPV;
 
 }
 
-
-void MilliQDetectorConstruction::ConstructCheckGeometry(){
-	G4cout
-			<< "This current mode checks DEDX and the radius of curvature "
-					"for various charges and masses of the monopole " << G4endl;
+void MilliQDetectorConstruction::ConstructCheckGeometry() {
+	G4cout << "This current mode checks DEDX and the radius of curvature "
+			"for various charges and masses of the monopole " << G4endl;
 
 	fWorldPVCheckPhysics = new G4PVPlacement(0, //rotation
 			G4ThreeVector(), //translation
@@ -373,58 +523,61 @@ void MilliQDetectorConstruction::ConstructCheckGeometry(){
 			"World Physical Volume", //name
 			0, false, 0);
 
-/*	// BendingRoom - Volume
-	G4Box* bendingRoomV = new G4Box("Bending Room Volume",  //name
-			10. / 10. * m, 20. / 10. * m, 20. / 10. * m); //temp dimentions
+	/*	// BendingRoom - Volume
+	 G4Box* bendingRoomV = new G4Box("Bending Room Volume",  //name
+	 10. / 10. * m, 20. / 10. * m, 20. / 10. * m); //temp dimentions
 
-	// Bending Room - Logical Volume
-	fMagneticVolume = new G4LogicalVolume(bendingRoomV, //volume
-			G4Material::GetMaterial("Air"), //material
-			"Bending Room Logical Volume"); //name
+	 // Bending Room - Logical Volume
+	 fMagneticVolume = new G4LogicalVolume(bendingRoomV, //volume
+	 G4Material::GetMaterial("Air"), //material
+	 "Bending Room Logical Volume"); //name
 
-	// Bending Room - Physical Volume
-	new G4PVPlacement(0, //rotation
-			G4ThreeVector(), //translation
-			fMagneticVolume, //logical volume
-			"Detection Room Physical Volume", //name
-			worldLV, //mother logical volume
-			false, //many
-			0); //copy n
-*/
+	 // Bending Room - Physical Volume
+	 new G4PVPlacement(0, //rotation
+	 G4ThreeVector(), //translation
+	 fMagneticVolume, //logical volume
+	 "Detection Room Physical Volume", //name
+	 worldLV, //mother logical volume
+	 false, //many
+	 0); //copy n
+	 */
 	//SetMagField(3.* tesla);
-
 }
 
 void MilliQDetectorConstruction::ConstructShield(G4LogicalVolume* dworldLV,
-		G4double dTotalStackStart, G4double dTotalStackEnd,
-		G4ThreeVector dNBlocks, G4int dNStacks, G4double dScint_x,
-		G4double dScint_y, G4double dScint_z) {
+		G4double dTotalStackStart, G4double dTotalStackEnd) {
 
 	//
 	//Shielding Around Experiment
 	//
 
 	// The shield is an open box of a certain thickness
-	//Define shielding thickness
-	G4ThreeVector shield1Thick = G4ThreeVector(10.0 * cm, 10.0 * cm, 10.0 * cm);
-	G4ThreeVector shield2Thick = G4ThreeVector(10.0 * cm, 10.0 * cm, 10.0 * cm);
 	//Define led shielding inner half length(polyethylene butted around led)
-	G4double xShield = (dTotalStackEnd - dTotalStackStart)/2.5;
-	G4double yShield = (dNBlocks.y() * dScint_y + 2. * cm)*0.6;
-	G4double zShield = (dNBlocks.z() * dScint_z + 2. * cm)*0.6;
+	G4int nOffsets = 2;
+	G4double xShield =
+			(dTotalStackEnd - dTotalStackStart + 2 * detShieldGap.x()) * 0.5;
+	G4double yShield = (NBlocks.y() * fScint_y
+			+ fBetweenBlockSpacing.y() * (NBlocks.y() - 1)
+			+ 2 * detShieldGap.y() + fOffset.y()*nOffsets) * 0.5 + shield1Thick.y();
+	G4double zShield = (NBlocks.z() * fScint_z
+			+ fBetweenBlockSpacing.z() * (NBlocks.z() - 1)
+			+ 2 * detShieldGap.z() + fOffset.z()*nOffsets) * 0.5 + shield1Thick.z();
+
 	G4ThreeVector shield1InnerHL = G4ThreeVector(xShield, yShield, zShield);
-	//Define global center for shielding
-	G4ThreeVector centreGlobalShield = G4ThreeVector(4.0 * m, 0, 0);
 	//Define center location of led shielding (relative to global center)
 	G4ThreeVector centreShield1 = G4ThreeVector(0, 0, 0);
+
+	//Define global center for shielding
+	G4ThreeVector centreGlobalShield = G4ThreeVector(
+			dTotalStackStart + (dTotalStackEnd - dTotalStackStart)*0.5, 0 , 0 );
 
 	//
 	// Polyethylene Shielding Container (Radiation Shield)
 	//
-	G4ThreeVector shield2InnerHL = shield1InnerHL + 2*shield1Thick;
-	G4ThreeVector BoxOutSideShield2HL = shield2InnerHL+shield2Thick;
+	G4ThreeVector shield2InnerHL = shield1InnerHL + shield1Thick;
+	G4ThreeVector BoxOutSideShield2HL = shield2InnerHL + shield2Thick;
 
-G4Box *boxInSideShield2 = new G4Box("BoxInSideShield2",
+	G4Box *boxInSideShield2 = new G4Box("BoxInSideShield2",
 			shield2InnerHL.getX(), shield2InnerHL.getY(),
 			shield2InnerHL.getZ());
 
@@ -443,12 +596,6 @@ G4Box *boxInSideShield2 = new G4Box("BoxInSideShield2",
 			0);
 	new G4PVPlacement(0, centreGlobalShield, OutMinusInBoxShield2LV,
 			"OutMinusInBoxShield2PV", dworldLV, false, 0);
-
-	// Visualisation attributes of Shield2
-//	G4VisAttributes * blueBox = new G4VisAttributes(G4Colour(0., 0., 1.));
-//	blueBox->SetVisibility(true);
-//	blueBox->SetForceWireframe(true);
-//	blueBox->SetForceAuxEdgeVisible(true);
 
 	OutMinusInBoxShield2LV->SetVisAttributes(G4Colour(0., 0., 1.)); //Blue
 
@@ -479,9 +626,6 @@ G4Box *boxInSideShield2 = new G4Box("BoxInSideShield2",
 
 	// Visualisation attributes of Shield1
 	G4VisAttributes * grayBox = new G4VisAttributes(G4Colour(0.5, 0.5, 0.5));
-//	grayBox->SetVisibility(true);
-//	grayBox->SetForceWireframe(true);
-//	grayBox->SetForceAuxEdgeVisible(true);
 
 	OutMinusInBoxShield1LV->SetVisAttributes(grayBox);
 
@@ -489,44 +633,43 @@ G4Box *boxInSideShield2 = new G4Box("BoxInSideShield2",
 
 void MilliQDetectorConstruction::SetMagField(G4double fieldValue) {
 
-
 	fMonFieldSetup->SetMagField(fieldValue);
 
-/*	if (!fEmFieldSetup.Get()) {
-	    MilliQMonopoleFieldSetup* emFieldSetup = new MilliQMonopoleFieldSetup();
+	/*	if (!fEmFieldSetup.Get()) {
+	 MilliQMonopoleFieldSetup* emFieldSetup = new MilliQMonopoleFieldSetup();
 
-	    fEmFieldSetup.Put(emFieldSetup);
-	    G4AutoDelete::Register(emFieldSetup); //Kernel will delete the messenger
-	  }
-	  // Set local field manager and local field in radiator and its daughters:
-	  G4bool allLocal = true;
-	  fMagneticVolume->SetFieldManager(fEmFieldSetup.Get()->GetLocalFieldManager(),
-	                                  allLocal );
-*/
-/*
-	  //apply a global uniform magnetic field along Z axis
-	  G4FieldManager * fieldMgr =
-	    G4TransportationManager::GetTransportationManager()->GetFieldManager();
+	 fEmFieldSetup.Put(emFieldSetup);
+	 G4AutoDelete::Register(emFieldSetup); //Kernel will delete the messenger
+	 }
+	 // Set local field manager and local field in radiator and its daughters:
+	 G4bool allLocal = true;
+	 fMagneticVolume->SetFieldManager(fEmFieldSetup.Get()->GetLocalFieldManager(),
+	 allLocal );
+	 */
+	/*
+	 //apply a global uniform magnetic field along Z axis
+	 G4FieldManager * fieldMgr =
+	 G4TransportationManager::GetTransportationManager()->GetFieldManager();
 
-	  if (fMagField) { delete fMagField; }        //delete the existing magn field
+	 if (fMagField) { delete fMagField; }        //delete the existing magn field
 
-	  if (fieldValue != 0.)                        // create a new one if non nul
-	    {
-	      fMagField = new G4UniformMagField(G4ThreeVector(0., 0., fieldValue));
-	      fieldMgr->SetDetectorField(fMagField);
-	      fieldMgr->CreateChordFinder(fMagField);
-	    }
-	   else
-	    {
-	      fMagField = 0;
-	      fieldMgr->SetDetectorField(fMagField);
-	    }
-	    */
+	 if (fieldValue != 0.)                        // create a new one if non nul
+	 {
+	 fMagField = new G4UniformMagField(G4ThreeVector(0., 0., fieldValue));
+	 fieldMgr->SetDetectorField(fMagField);
+	 fieldMgr->CreateChordFinder(fMagField);
+	 }
+	 else
+	 {
+	 fMagField = 0;
+	 fieldMgr->SetDetectorField(fMagField);
+	 }
+	 */
 }
 
 void MilliQDetectorConstruction::ConstructSDandField() {
 
-    if (!fDetectorStack)
+	if (!fDetectorStack)
 		return;
 
 	// PMT SD
@@ -542,7 +685,6 @@ void MilliQDetectorConstruction::ConstructSDandField() {
 	 }
 	 */
 	//((MilliQDetectorBlockLV*)fDetectorStack->GetLogicalVolume()->GetDaughter(0)->GetLogicalVolume())->GetPhotocathodeLV()->SetSensitiveDetector(fPmt_SD.Get());
-
 	//for(int a=0; a<fDetectorStack->GetLogicalVolume()->GetNoDaughters(); a++){
 	//fDetectorStack->GetLogicalVolume()->GetDaughter(0)->GetLogicalVolume()->GetDaughter(1)->GetLogicalVolume()->GetDaughter(1)->GetLogicalVolume()->GetName()
 	//MilliQDetectorBlockLV* aBlockLV = (MilliQDetectorBlockLV*)fDetectorStack->GetLogicalVolume()->GetDaughter(a);

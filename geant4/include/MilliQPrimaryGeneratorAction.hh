@@ -34,6 +34,7 @@
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4LorentzVector.hh"
 #include "fstream"
+#include <list>
 #include "iostream"
 #include "sstream"
 #include "vector"
@@ -71,15 +72,19 @@ class MilliQPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 
     // Set methods
     void SetRandomFlag(G4bool );
-
     static G4int neventLHE;
+    static G4bool firstPass;
+    static std::vector<std::vector<G4double> >	vertexList;
+    static std::vector<std::vector<G4double> > momentumList;
+    static std::vector<std::vector<G4double> > qmeList;
+
 
   private:
     G4ParticleGun*          fParticleGun; // G4 particle gun
-    std::vector<std::vector<G4double> > LHEFourVectors;
 
     MilliQPrimaryGeneratorMessenger* fGunMessenger; //messenger of this class
     G4String                      fRndmFlag;     //flag for random impact point
+
 
     static G4ParticleDefinition* fgPrimaryParticle;
     G4double fXVertex, fYVertex, fZVertex, fEnergy;

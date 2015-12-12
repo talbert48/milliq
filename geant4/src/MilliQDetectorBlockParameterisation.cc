@@ -51,7 +51,7 @@ G4ThreeVector MilliQDetectorBlockParameterisation::GetStackDimensions()
     //
     G4ThreeVector stackDimensions;
     G4ThreeVector individualBlockVolume = fBlockDimensions+fGapDimensions;
-    stackDimensions.setX(fN.x() * individualBlockVolume.x());
+    stackDimensions.setX(fN.x() * fBlockDimensions.x());//individualBlockVolume.x());
     stackDimensions.setY(fN.y() * individualBlockVolume.y());
     stackDimensions.setZ(fN.z() * individualBlockVolume.z());
     

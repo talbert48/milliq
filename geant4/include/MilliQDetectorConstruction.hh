@@ -38,7 +38,7 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     virtual G4VPhysicalVolume* Construct();
 
     virtual void ConstructSDandField();
-    void ConstructShield(G4LogicalVolume*, G4double, G4double, G4ThreeVector, G4int, G4double, G4double, G4double);
+    void ConstructShield(G4LogicalVolume*, G4double, G4double);
 
     void ConstructCheckGeometry();
 
@@ -62,6 +62,8 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
 
     void SetMainScintYield(G4double );
     void DefineMaterials();
+    void DefineMaterialsStewart();
+
 
   private:
 
@@ -101,6 +103,10 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4double fOuterRadius_pmt;
     G4double fRefl;
     G4double NStacks;
+    G4ThreeVector fOffset;
+    G4ThreeVector shield1Thick;
+    G4ThreeVector shield2Thick;
+    G4ThreeVector detShieldGap;
     G4ThreeVector NBlocks;
     G4ThreeVector fBetweenBlockSpacing;
     G4int fAlternate;

@@ -373,15 +373,17 @@ void MilliQDetectorBlockLV::VisAttributes(){
     this->SetVisAttributes(G4Colour::Gray());
 }
 
-
+//Settings for BC408
 void MilliQDetectorBlockLV::SurfaceProperties(G4double pScintillatorHousingReflectivity, G4double pPmtHousingReflectivity){
-  G4double energy[] = {7.0*eV, 7.14*eV};
+
+  G4double energy[] = {2.38*eV, 2.43*eV, 2.48*eV, 2.53*eV, 2.58*eV, 2.64*eV, 2.70*eV, 2.76*eV, 2.79*eV, 2.82*eV, 2.88*eV, 2.95*eV, 2.98*eV, 3.02*eV, 3.10*eV, 3.18*eV};
   const G4int num = sizeof(energy)/sizeof(G4double);
 
+  G4double pshr = pScintillatorHousingReflectivity;
   //**Scintillator housing properties
-  G4double reflectivity[] = {pScintillatorHousingReflectivity, pScintillatorHousingReflectivity};
+  G4double reflectivity[] = {pshr,pshr,pshr,pshr, pshr, pshr, pshr, pshr, pshr, pshr, pshr, pshr, pshr, pshr, pshr, pshr};
   assert(sizeof(reflectivity) == sizeof(energy));
-  G4double efficiency[] = {0.0, 0.0};
+  G4double efficiency[] = {0.0,0.0,0.0,0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   assert(sizeof(efficiency) == sizeof(energy));
   G4MaterialPropertiesTable* scintHsngPT = new G4MaterialPropertiesTable();
   scintHsngPT->AddProperty("REFLECTIVITY", energy, reflectivity, num);
@@ -392,11 +394,11 @@ void MilliQDetectorBlockLV::SurfaceProperties(G4double pScintillatorHousingRefle
  
 
   //**Photocathode surface properties
-  G4double photocath_EFF[]={1.,1.}; //Enables 'detection' of photons
+  G4double photocath_EFF[]={1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.}; //Enables 'detection' of photons
   assert(sizeof(photocath_EFF) == sizeof(energy));
-  G4double photocath_ReR[]={1.92,1.92};
+  G4double photocath_ReR[]={1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92,1.92};
   assert(sizeof(photocath_ReR) == sizeof(energy));
-  G4double photocath_ImR[]={1.69,1.69};
+  G4double photocath_ImR[]={1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69,1.69};
   assert(sizeof(photocath_ImR) == sizeof(energy));
   G4MaterialPropertiesTable* photocath_mt = new G4MaterialPropertiesTable();
   photocath_mt->AddProperty("EFFICIENCY",energy,photocath_EFF,num);

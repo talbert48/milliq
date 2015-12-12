@@ -4,16 +4,18 @@
 MilliQDetectorStackParameterisation::MilliQDetectorStackParameterisation(G4int  pN,
                                                                          G4ThreeVector  pStackDimensions,
                                                                          G4ThreeVector  pDistributionUnitVector,
+																		 G4ThreeVector	pOffset,
                                                                          G4double       pStartDepth,
                                                                          G4double       pEndDepth)
 {
-    fStartCenterDepth = pStartDepth + (pStackDimensions.z()/2.);
+    fStartCenterDepth = pStartDepth+(pStackDimensions.x()/2.);
     fN = pN;
     
-    fDepthGap = (pEndDepth - pStartDepth - pStackDimensions.z())/pN;
+    fDepthGap = ( pEndDepth-pStartDepth-pStackDimensions.x() )/ (pN==1 ? pN : pN-1);
     
     fStackDimensions = pStackDimensions;
     fDistributionUnitVector = pDistributionUnitVector;
+    fOffset = pOffset;
 }
 
 
@@ -24,7 +26,10 @@ void MilliQDetectorStackParameterisation::ComputeTransformation(const G4int pId,
                                                                 G4VPhysicalVolume*  pPV) const
 {
     G4ThreeVector translation = (fStartCenterDepth + pId*fDepthGap)*fDistributionUnitVector;
-    
+    if(pId == 1)
+    	translation += fOffset;
+    if(pId == 2)
+    	translation += -fOffset;
     pPV->SetTranslation(translation);
     //pPV->SetRotation( new G4RotationMatrix( fDistributionUnitVector.getPhi() , fDistributionUnitVector.getTheta() , fDistributionUnitVector.getRho() ) );
 }

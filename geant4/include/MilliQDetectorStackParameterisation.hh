@@ -15,6 +15,7 @@ public:
     MilliQDetectorStackParameterisation(G4int  pN,
                                         G4ThreeVector  pStackDimensions,
                                         G4ThreeVector  pDistributionUnitVector,
+										G4ThreeVector  pOffset,
                                         G4double       pStartDepth,
                                         G4double       pEndDepth);
     
@@ -36,4 +37,5 @@ private:
     G4int fN;
     G4ThreeVector fStackDimensions;
     G4ThreeVector fDistributionUnitVector;
+    G4ThreeVector fOffset;
 };

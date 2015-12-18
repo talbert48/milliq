@@ -55,7 +55,17 @@
 #include "G4StepLimiter.hh"
 #include "G4Transportation.hh"
 //#include "MilliQMonopoleTransportation.hh"
+#include "G4GoudsmitSaundersonMscModel.hh"
 #include "G4hMultipleScattering.hh"
+//#include "G4eMultipleScattering.hh"
+#include "G4NuclearStopping.hh"
+#include "G4hCoulombScatteringModel.hh"
+#include "G4ionIonisation.hh"
+#include "G4IonCoulombScatteringModel.hh"
+#include "G4IonParametrisedLossModel.hh"
+#include "G4CoulombScattering.hh"
+//#include "G4IonIonisation.hh"
+#include "G4hBremsstrahlung.hh"
 #include "G4mplIonisation.hh"
 #include "G4mplIonisationWithDeltaModel.hh"
 #include "G4hhIonisation.hh"
@@ -73,8 +83,8 @@ MilliQMonopolePhysics::MilliQMonopolePhysics(const G4String& nam)
     fMessenger(0), fMpl(0)
 {
   fMagCharge = 0.0;
-  fElCharge  = 0.001;
-  fMonopoleMass = 100.0*GeV;
+  fElCharge  = -0.003;
+  fMonopoleMass = 0.105*GeV;
   fMessenger = new MilliQMonopolePhysicsMessenger(this);
   SetPhysicsType(bUnknown);
 }
@@ -120,10 +130,21 @@ void MilliQMonopolePhysics::ConstructProcess()
      hhioni->SetMinKinEnergy(emin);
      hhioni->SetMaxKinEnergy(emax);
      ph->RegisterProcess(hhioni, fMpl);
+     pManager->AddProcess(hhioni,-1,2,2);
 
-   ph->RegisterProcess(new G4StepLimiter(), fMpl);
+ //    G4CoulombScattering -> G4hCoulombScatteringModel, G4IonCoulombScatteringModel
+ //    G4ionIonisation->G4IonParametrisedLossModel
+ //	   G4NuclearStopping
+ //    G4hBremsstrahlung
 
-  pManager->AddProcess(hhioni,-1,2,2);
+/*   G4hMultipleScattering* msc = new G4hMultipleScattering();
+   msc->AddEmModel(0, new G4GoudsmitSaundersonMscModel());
+   pManager->AddProcess(msc, -1, 1, 1);
+   ph->RegisterProcess(msc, fMpl);
+*/
+
+    ph->RegisterProcess(new G4StepLimiter(), fMpl);
+
 
 }
 

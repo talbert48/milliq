@@ -36,6 +36,7 @@
 #include "MilliQDetectorConstruction.hh"
 #include "MilliQTrajectory.hh"
 #include "MilliQRecorderBase.hh"
+#include "MilliQAnalysis.hh"
 
 #include "G4SDManager.hh"
 #include "G4RunManager.hh"
@@ -229,15 +230,12 @@ for(int x = 0; x < NStacks*NBlocks; ++x){
 }
 
 
-
-
 bool PrintStats = false;
 if(scintHC && pmtAllHC){
 
 	for(G4int j=0;j<pmtAllHC->entries();j++){
 		if( (*pmtAllHC)[j]->GetPMTNumber() > -1){ // It was hit!
 			PrintStats=true;
-
 			pmtTime[ (*pmtAllHC)[j]->GetPMTNumber() ].push_back((*pmtAllHC)[j]->GetTime() ) ;
 			for(int i=0;i<scintHC->entries();i++){ //gather info on hits in scintillator
 
@@ -254,6 +252,7 @@ if(scintHC && pmtAllHC){
 }
 
 
+MilliQAnalysis* mcpanalysis = new MilliQAnalysis(pmtTime,NBlocks,NStacks);
 
 
 G4int NBlocksTotal = NStacks*NBlocks;

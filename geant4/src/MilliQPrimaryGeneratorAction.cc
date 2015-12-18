@@ -82,11 +82,11 @@ MilliQPrimaryGeneratorAction::MilliQPrimaryGeneratorAction() :
 	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
 	G4String particleName;
 
-//	  G4ParticleDefinition* particle
-//	    = particleTable->FindParticle(particleName="monopole");
+	  G4ParticleDefinition* particle
+	    = particleTable->FindParticle(particleName="monopole");
 
-//  fParticleGun->SetParticleDefinition(particle);
-//	  fgPrimaryParticle = particle;
+  fParticleGun->SetParticleDefinition(particle);
+	  fgPrimaryParticle = particle;
 
 	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(1., 0., 0.));
 
@@ -134,10 +134,10 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		xMo = momentumList[neventLHE][0];
 		yMo = momentumList[neventLHE][1];
 		zMo = momentumList[neventLHE][2];
-		x0 = 0*m; //vertexList[neventLHE][0]*m;
-		y0 = 0*m; //vertexList[neventLHE][1]*m;
-		z0 = 0*m; //vertexList[neventLHE][2]*m;
-		En = qmeList[neventLHE][3]*GeV;
+		x0 = 0*m;//vertexList[neventLHE][0]*m;
+		y0 = vertexList[neventLHE][1]*m;
+		z0 = vertexList[neventLHE][2]*m;
+		En = qmeList[neventLHE][2]*GeV;
 	}
 
 	MoNorm = sqrt(pow(xMo, 2) + pow(yMo, 2) + pow(zMo, 2));
@@ -149,6 +149,7 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	fParticleGun->SetParticleEnergy(En);
 	fParticleGun->SetParticlePosition(G4ThreeVector(x0, y0, z0));
 	fParticleGun->GeneratePrimaryVertex(anEvent);
+	fParticleGun->SetParticleDefinition(fgPrimaryParticle);
 	neventLHE++;
 
 }
@@ -212,7 +213,7 @@ void MilliQPrimaryGeneratorAction::GetLHEFourVectors() {
 			if (!(iss >> fq >> fm >> fx >> fy >> fz >> fpx >> fpy >> fpz))
 				break;
 
-			fe = std::sqrt(std::pow(fpx,2)+std::pow(fpy,2)+std::pow(fpz,2)+std::pow(fm,2));
+			fe = std::sqrt(std::pow(fpx,2)+std::pow(fpy,2)+std::pow(fpz,2)+std::pow(fm,2))-fm;
 
 			Tver[0]=fx;	Tver[1]=fy;	Tver[2]=fz;
 			Tmo[0]=fpx*0.001;	Tmo[1]=fpy*0.001;	Tmo[2]=fpz*0.001;

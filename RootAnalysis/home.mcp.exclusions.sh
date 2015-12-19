@@ -1,11 +1,11 @@
 #!/bin/bash
 echo hello
-HOME=/xfs1/gmagill/GeantDevExamples
+HOME=/home/qftsm/Work/GeantDevExamples
 SRC=$HOME/milliq/geant4/src
 BUILD=$HOME/BuildExamples/MilliQBuild
 ROOT=$HOME/milliq/RootAnalysis
-DATA=/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/
-RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo
+DATA=$HOME/../../Dropbox/MilliQ/PropagatingData
+RESULTS=$HOME/rootAnalysis/DataResults
 
 masses=(0.105) #1.0 10.0 100.0)
 charges=(0.01) # 0.01 0.1 1.0)

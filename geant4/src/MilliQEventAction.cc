@@ -174,7 +174,6 @@ void MilliQEventAction::EndOfEventAction(const G4Event* anEvent){
 	  //It gets to this point :)
     G4ThreeVector reconPos(0.,0.,0.);
     G4int pmts=pmtHC->entries();
-    G4cout<<"Number of pmtHC" <<pmts<< G4endl;
     //Gather info from all PMTs
     for(G4int i=0;i<pmts;i++){
       eventInformation->IncHitCount((*pmtHC)[i]->GetPhotonCount());
@@ -226,6 +225,13 @@ if(scintHC && pmtAllHC){
 	}
 }
 
+for(int i = 0; i < pmtTime.size(); i++){
+	sort(pmtTime[i].begin(),pmtTime[i].end());
+}
+for(int i = 0; i < scintTime.size(); i++){
+	sort(scintTime[i].begin(),scintTime[i].end());
+}
+
 MilliQAnalysis* mcpan = new MilliQAnalysis(pmtTime,scintTime,scintEnergy,NBlocks,NStacks);
 
 
@@ -241,8 +247,10 @@ if(mcpan->IsActive()==true){
 		analysisManager->FillNtupleDColumn( 2,i+2*NStacks, mcpan->GetTimeOfFlight()[i]/ns );
 		analysisManager->FillNtupleDColumn( 2,i+3*NStacks, mcpan->GetTotalEdep()[i]/MeV );
 
+
 		for(G4int j = 0; j < scintEnergy[pmt].size(); j++){
 			analysisManager->FillNtupleDColumn( 1,0, scintEnergy[pmt][j]/eV );
+			analysisManager->FillNtupleDColumn( 1,1, scintTime[pmt][j]/ns );
 			analysisManager->AddNtupleRow(1);
 		}
 
@@ -259,7 +267,7 @@ if(mcpan->IsActive()==true){
 
 
 
-  if(PrintStats){//fVerbose>0){
+  if(fVerbose>0){//PrintStats){
     //End of event output. later to be controlled by a verbose level
     G4cout << "\tNumber of photons that hit PMTs in this event : "
            << eventInformation->GetHitCount() << G4endl;

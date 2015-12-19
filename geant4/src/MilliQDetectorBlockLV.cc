@@ -249,8 +249,9 @@ void MilliQDetectorBlockLV::SurfaceProperties(
 
 
 	//**Photocathode surface properties
-	G4double photocath_EFF[] = { 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
-			1., 1., 1., 1. }; //Enables 'detection' of photons
+	//reference: http://www.hamamatsu.com/resources/pdf/etd/R329-02_TPMH1254E.pdf
+	G4double photocath_EFF[] = {0.12, 0.14, 0.15, 0.16, 0.18, 0.2, 0.21, 0.23, 0.24, 0.245, 0.26, 0.26, 0.27, 0.27, 0.27, 0.27};//Enables 'detection' of photons
+//	{ 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1. };
 	assert(sizeof(photocath_EFF) == sizeof(energy));
 	G4double photocath_ReR[] = { 1.92, 1.92, 1.92, 1.92, 1.92, 1.92, 1.92, 1.92,
 			1.92, 1.92, 1.92, 1.92, 1.92, 1.92, 1.92, 1.92 };

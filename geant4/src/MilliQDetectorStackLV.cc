@@ -86,7 +86,7 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
                             fDetectorBlockParameterisation);
 
 
-    G4cout<<"The number of block parametrizations "<<fDetectorBlockParameterisation->GetNumberOfBlocks()<<G4endl;
+//    G4cout<<"The number of block parametrizations "<<fDetectorBlockParameterisation->GetNumberOfBlocks()<<G4endl;
 
 
     AdjustVolume();

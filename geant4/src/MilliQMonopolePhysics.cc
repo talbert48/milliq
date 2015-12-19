@@ -123,7 +123,7 @@ void MilliQMonopolePhysics::ConstructProcess()
    G4int nbin = G4lrint(10*std::log10(emax/emin));
 
 
- 	G4cout<<" MilliQMonopolePhysics: It launched G4hIonisation!!"<<G4endl;
+ //	G4cout<<" MilliQMonopolePhysics: It launched G4hIonisation!!"<<G4endl;
 
  	G4hIonisation* hhioni = new G4hIonisation();
      hhioni->SetDEDXBinning(nbin);

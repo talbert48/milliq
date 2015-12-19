@@ -5,13 +5,17 @@
 #
 #
 # Initialize kernel
+/process/optical/scintillation/setFiniteRiseTime true
 /run/initialize
 #
-#/control/verbose 2
-#/run/verbose 2
-#/event/verbose 0
-#/tracking/verbose 1
+/control/verbose 0 #2
+/run/verbose 0 #2
+/event/verbose 0 #0
+/tracking/verbose 0 #1
+/run/particle/verbose 0
+/process/verbose 0
 #
+/process/optical/scintillation/setFiniteRiseTime true
 #
 #/gun/particle monopole
 #/gun/calibenergy 1

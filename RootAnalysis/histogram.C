@@ -19,10 +19,12 @@ void histogram(){
 	TTree *t1 = (TTree*)fMilliQ->Get("MilliQEn");
 	TTree *t2 = (TTree*)fMilliQ->Get("MilliQAll");
 
-	Double_t sEnDep0;
+	Double_t sEnDep0, sTime0;
 	Double_t pmtHitTime0, pmtHitTime1, pmtHitTime2, TOFScint0, TOFScint1, TOFScint2, TotEnDep0, TotEnDep1, TotEnDep2;
 	Int_t activePMT0, activePMT1, activePMT2, NScintPho;
 	t1->SetBranchAddress("sEnDep0",&sEnDep0);
+	t1->SetBranchAddress("sTime0",&sTime0);
+
 
 	t2->SetBranchAddress("activePMT0",&activePMT0);
         t2->SetBranchAddress("activePMT1",&activePMT1);
@@ -38,7 +40,6 @@ void histogram(){
         t2->SetBranchAddress("TotEnDep2",&TotEnDep2);
 	t2->SetBranchAddress("NScintPho",&NScintPho);
 
-
 	Int_t nentries_t1 = (Int_t)t1->GetEntries();
 	Int_t nentries_t2 = (Int_t)t2->GetEntries();
 
@@ -51,7 +52,7 @@ void histogram(){
 		printf("Sorry, but the ascii output file did not open.");
 	for (Int_t i=0; i<nentries_t1;i++){
 		t1->GetEvent(i);
-		sedep<<sEnDep0<<endl;
+		sedep<<sEnDep0<<" "<<sTime0<<endl;
 	}
 	
 	for (Int_t i=0; i<nentries_t2;i++)

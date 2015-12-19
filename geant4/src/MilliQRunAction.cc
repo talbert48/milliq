@@ -30,7 +30,7 @@ MilliQRunAction::MilliQRunAction(MilliQRecorderBase* r) :
 	fMilliQRunActionMessenger = new MilliQRunActionMessenger(this);
 
 	// Default settings
-	  analysisManager->SetVerboseLevel(1);
+	  analysisManager->SetVerboseLevel(0);
 	analysisManager->SetFileName("MilliQ");
 
 	// Book histograms, ntuple
@@ -50,6 +50,7 @@ MilliQRunAction::MilliQRunAction(MilliQRecorderBase* r) :
 
 	analysisManager->CreateNtuple("MilliQEn", "ScintHits");
 	analysisManager->CreateNtupleDColumn("sEnDep0"); // column Id = 0
+	analysisManager->CreateNtupleDColumn("sTime0"); // column Id = 1
 	analysisManager->FinishNtuple();
 
 	analysisManager->CreateNtuple("MilliQAll", "All");
@@ -163,7 +164,7 @@ G4cout<<ekin[0]<<G4endl;
 			analysisManager->AddNtupleRow(3);
 		}
 	}
-	CLHEP::HepRandom::showEngineStatus();
+//	CLHEP::HepRandom::showEngineStatus();
 
 
 /////////////////////////

@@ -98,22 +98,23 @@ void MilliQDetectorConstruction::SetDefaults() {
 	else {
 		//References: http://www.hamamatsu.com/jp/en/R329-02.html
 
-		NBlocks = G4ThreeVector(1., 4., 4.); //1. 20.,10.
+		NBlocks = G4ThreeVector(1., 20., 10.); //1. 20.,10.
 		NStacks = 3;
-		fBetweenBlockSpacing = G4ThreeVector(0.1 * m, 0. * m, 0. * m);
+		fBetweenBlockSpacing = G4ThreeVector(0.127 * m, 0. * m, 0. * m);//Length of PMT
 		fScint_x = 0.9 * m;
-		fScint_y = 25 * cm;
-		fScint_z = 25 * cm;
-		fOffset = G4ThreeVector(0. * m, 1. * cm, 1. * cm);
-		fLightGuideLength = 10. * cm; //Needs to be smaller than fScint_x
-		fPmtRad = 9.3 * cm; //pmt radius
+		fScint_y = 5 * cm;
+		fScint_z = 10 * cm;
+		fOffset = G4ThreeVector(0. * m, 0.5 * cm, 0.5 * cm);
+		fScintillatorHouseRefl = 0.925; //scintillator housing reflectivity
+		fLightGuideLength = 20. * cm; //Needs to be smaller than fScint_x
+		fPmtRad = 2.3 * cm; //pmt radius
 		fOuterRadius_pmt = fPmtRad;
 		fPmtPhotoRad = fPmtRad; //pmt Photocathode radius
-		fScintHouseThick = 2. * cm; //scintillator housing thickness (and Glass Radius Height)
-		fScintillatorHouseRefl = 0.6; //scintillator housing reflectivity
-		fPmtPhotoHeight = 0.23 * cm; //pmt photocathode height
+		fScintHouseThick = 0.1 * cm; //scintillator housing thickness (and Glass Radius Height)
+		fPmtPhotoHeight = 0.05 * cm; //pmt photocathode height
 		fPmtPhotoDepth = fPmtPhotoHeight+fScintHouseThick; //pmt photocathode depth from front of pmt
 		fPmtHouseRefl = 1.; //pmt housing reflective
+		//Reflectance of Aluminum: Bass, M., Van Stryland, E.W. (eds.) Handbook of Optics vol. 2 (2nd ed.), McGraw-Hill (1994)
 	}
 
 	fRefl = 1.0;

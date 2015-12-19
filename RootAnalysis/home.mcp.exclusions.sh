@@ -25,7 +25,7 @@ do
 #	sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' $ROOT/run.exclusions.mac	
 	sed -i '/\/run\/beamOn /c\/run\/beamOn 100' $ROOT/run.exclusions.mac
 	cd $BUILD
-	make MilliQ
+	make -w -s MilliQ
 	./MilliQ $ROOT/run.exclusions.mac
 	cd $ROOT
 	root -b -q $ROOT/histogram.C

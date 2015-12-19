@@ -119,9 +119,6 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		firstPass = false;
 	}
 
-	//  fgPrimaryParticle = fParticleGun->GetParticleDefinition();
-	G4cout << "The PDG Charge "
-			<< fParticleGun->GetParticleDefinition()->GetPDGCharge() << G4endl;
 	G4double x0, y0, z0, xMo, yMo, zMo, En, MoNorm;
 	if (fVertexDefined) {
 		x0 = fXVertex;
@@ -143,8 +140,11 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 
 	MoNorm = sqrt(pow(xMo, 2) + pow(yMo, 2) + pow(zMo, 2));
 
-	G4cout << "xMoGun " << xMo << " yMoGun " << yMo << " zMoGun " << zMo << " xGun " << x0 << " yGun " << y0 << " zGun " << z0 << G4endl;
-	G4cout << "nevent " << neventLHE << " Q " << qmeList[neventLHE][0] << " M " << qmeList[neventLHE][1] << " E "<< qmeList[neventLHE][2] << G4endl;
+	if(neventLHE % 1000 == 0)
+		G4cout <<"neventLHE "<<neventLHE<<G4endl;
+
+//	G4cout << "xMoGun " << xMo << " yMoGun " << yMo << " zMoGun " << zMo << " xGun " << x0 << " yGun " << y0 << " zGun " << z0 << G4endl;
+//	G4cout << "nevent " << neventLHE << " Q " << qmeList[neventLHE][0] << " M " << qmeList[neventLHE][1] << " E "<< qmeList[neventLHE][2] << G4endl;
 
 	fParticleGun->SetParticleMomentumDirection(	G4ThreeVector(xMo / MoNorm, yMo / MoNorm, zMo / MoNorm));
 	fParticleGun->SetParticleEnergy(En);
@@ -201,7 +201,8 @@ void MilliQPrimaryGeneratorAction::SetCalibEnergy(G4double e) {
 
 void MilliQPrimaryGeneratorAction::GetLHEFourVectors() {
     std::ifstream infile;
-    std::string pathname="/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/";
+    std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/";
+//std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/";
     std::string filename="DY.0.105GeV.0.01Q.txt";
 	infile.open(pathname.append(filename));
 	G4String line;

@@ -8,13 +8,6 @@ MilliQAnalysis::MilliQAnalysis(std::vector< std::vector<G4double> > ppmtTime, st
 		G4int pNblock, G4int pNstack):
 	fNblock(pNblock), fNstack(pNstack),fIsActive(false){
 
-	for(int i = 0; i < ppmtTime.size(); i++){
-		sort(ppmtTime[i].begin(),ppmtTime[i].end());
-	}
-	for(int i = 0; i < pscintTime.size(); i++){
-		sort(pscintTime[i].begin(),pscintTime[i].end());
-	}
-
 	fpmtTime=ppmtTime;
 	fscintTime=pscintTime;
 	fscintEn=pscintEn;

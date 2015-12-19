@@ -22,6 +22,7 @@ do
         sed -i '/  fElCharge = /c\  fElCharge = '"$charge"';' $SRC/MilliQMonopolePhysics.cc
 	sed -i '/  fMonopoleMass = /c\  fMonopoleMass = '"$mass"'*GeV;' $SRC/MilliQMonopolePhysics.cc
 	sed -i '/    std::string filename=/c\    std::string filename="'"$name"'.txt";' $SRC/MilliQPrimaryGeneratorAction.cc
+	sed -i '/    std::string pathname=/c\    std::string pathname="'"$DATA"'";' $SRC/MilliQPrimaryGeneratorAction.cc
 #	sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' $ROOT/run.exclusions.mac	
 	sed -i '/\/run\/beamOn /c\/run\/beamOn 100' $ROOT/run.exclusions.mac
 	cd $BUILD

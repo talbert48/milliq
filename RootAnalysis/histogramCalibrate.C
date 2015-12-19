@@ -1,6 +1,4 @@
-// Builds a graph with errors, displays it and saves it
- // as image. First, include some header files (within,
- // CINT these will be ignored).
+// This script is to be used if the Set Alternative Geometry = 1 is turned on
 
 #include "TCanvas.h"
 #include "TROOT.h"

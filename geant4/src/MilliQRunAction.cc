@@ -48,12 +48,24 @@ MilliQRunAction::MilliQRunAction(MilliQRecorderBase* r) :
 	//
 	analysisManager->SetFirstNtupleId(1);
 
-	analysisManager->CreateNtuple("MilliQ", "Hits");
-	analysisManager->CreateNtupleDColumn("TotalEnergyDeposit"); // column Id = 0
+	analysisManager->CreateNtuple("MilliQEn", "ScintHits");
+	analysisManager->CreateNtupleDColumn("sEnDep0"); // column Id = 0
 	analysisManager->FinishNtuple();
 
-	analysisManager->CreateNtuple("MilliQTime", "Time");
-	analysisManager->CreateNtupleDColumn("TimeOfFlightScint");  // column Id = 0
+	analysisManager->CreateNtuple("MilliQAll", "All");
+	analysisManager->CreateNtupleIColumn("activePMT0");  // column Id = 0
+	analysisManager->CreateNtupleIColumn("activePMT1");  // column Id = 1
+	analysisManager->CreateNtupleIColumn("activePMT2");  // column Id = 2
+	analysisManager->CreateNtupleDColumn("pmtHitTime0");  // column Id = 3
+	analysisManager->CreateNtupleDColumn("pmtHitTime1");  // column Id = 4
+	analysisManager->CreateNtupleDColumn("pmtHitTime2");  // column Id = 5
+	analysisManager->CreateNtupleDColumn("TOFScint0");  // column Id = 6
+	analysisManager->CreateNtupleDColumn("TOFScint1");  // column Id = 7
+	analysisManager->CreateNtupleDColumn("TOFScint2");  // column Id = 8
+	analysisManager->CreateNtupleDColumn("TotEnDep0"); // column Id = 9
+	analysisManager->CreateNtupleDColumn("TotEnDep1"); // column Id = 10
+	analysisManager->CreateNtupleDColumn("TotEnDep2"); // column Id = 11
+	analysisManager->CreateNtupleIColumn("NScintPho"); // column Id = 12
 	analysisManager->FinishNtuple();
 
 	analysisManager->CreateNtuple("MilliQDedx", "DEDX");

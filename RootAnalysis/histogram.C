@@ -1,6 +1,5 @@
-// Builds a graph with errors, displays it and saves it
- // as image. First, include some header files (within,
- // CINT these will be ignored).
+//This script is the main analysis script for the detector
+
 
 #include "TCanvas.h"
 #include "TROOT.h"
@@ -9,26 +8,69 @@
 #include "TLegend.h"
 #include "TArrow.h"
 #include "TLatex.h"
+#include <iostream>
+#include <fstream>
+#include <stdio.h>
+using namespace std;
 
 void histogram(){
  
 	TFile *fMilliQ = new TFile("../../BuildExamples/MilliQBuild/MilliQ.root");
-	TTree *t1 = (TTree*)fMilliQ->Get("MilliQ");
-	TTree *t2 = (TTree*)fMilliQ->Get("MilliQTime");	
+	TTree *t1 = (TTree*)fMilliQ->Get("MilliQEn");
+	TTree *t2 = (TTree*)fMilliQ->Get("MilliQAll");
+
+	Double_t sEnDep0;
+	Double_t pmtHitTime0, pmtHitTime1, pmtHitTime2, TOFScint0, TOFScint1, TOFScint2, TotEnDep0, TotEnDep1, TotEnDep2;
+	Int_t activePMT0, activePMT1, activePMT2, NScintPho;
+	t1->SetBranchAddress("sEnDep0",&sEnDep0);
+
+	t2->SetBranchAddress("activePMT0",&activePMT0);
+        t2->SetBranchAddress("activePMT1",&activePMT1);
+        t2->SetBranchAddress("activePMT2",&activePMT2);
+        t2->SetBranchAddress("pmtHitTime0",&pmtHitTime0);
+        t2->SetBranchAddress("pmtHitTime1",&pmtHitTime1);
+        t2->SetBranchAddress("pmtHitTime2",&pmtHitTime2);
+        t2->SetBranchAddress("TOFScint0",&TOFScint0);
+        t2->SetBranchAddress("TOFScint1",&TOFScint1);
+        t2->SetBranchAddress("TOFScint2",&TOFScint2);
+        t2->SetBranchAddress("TotEnDep0",&TotEnDep0);
+        t2->SetBranchAddress("TotEnDep1",&TotEnDep1);
+        t2->SetBranchAddress("TotEnDep2",&TotEnDep2);
+	t2->SetBranchAddress("NScintPho",&NScintPho);
 
 
-	Double_t TotalEnergyDeposit;
-	Double_t TimeOfFlightScint;
-	t1->SetBranchAddress("TotalEnergyDeposit",&TotalEnergyDeposit);
-	t2->SetBranchAddress("TimeOfFlightScint", &TimeOfFlightScint);
+	Int_t nentries_t1 = (Int_t)t1->GetEntries();
+	Int_t nentries_t2 = (Int_t)t2->GetEntries();
 
-	// two histograms
+	ofstream mcpall;
+	ofstream sedep;
+  	sedep.open ("sedep.dat");
+	mcpall.open ("mcpall.dat");
+
+  	if (sedep == NULL && mcpall == NULL)
+		printf("Sorry, but the ascii output file did not open.");
+	for (Int_t i=0; i<nentries_t1;i++){
+		t1->GetEvent(i);
+		sedep<<sEnDep0<<endl;
+	}
+	
+	for (Int_t i=0; i<nentries_t2;i++)
+	{
+		t2->GetEvent(i);
+		mcpall<<activePMT0<<" "<<activePMT1<<" "<<activePMT2<<" "<<pmtHitTime0<<" "<<pmtHitTime1<<" "<<pmtHitTime2<<" "<<TOFScint0<<" "<<TOFScint1<<" "<<TOFScint2<<" "<<TotEnDep0<<" "<<TotEnDep1<<" "<<TotEnDep2<<" "<<NScintPho<<endl;
+	}
+
+	sedep.close();
+	mcpall.close();
+
+
+
+
+
+
+/*
+	//Making Histograms in Root Directly
 	TH1F *htotalenergydepo   = new TH1F("htotalenergydepo","Total Energy Deposit in Scintillators",100,0,1.5);
-	TH1F *htimeofflightscint = new TH1F("htimeofflightscint","Time of Flight in Scintillator",100,0,10);
-	htimeofflightscint -> GetXaxis() -> SetTitle("Time (ns)");
-//	htimeofflightscint -> GetYaxis() -> SetTitle("N");
-	htotalenergydepo -> GetXaxis() -> SetTitle("Energy (GeV)");
-	htotalenergydepo -> GetYaxis() -> SetTitle("N");
 
 	// all entries and fill the histograms
 	Int_t nentries_t1 = (Int_t)t1->GetEntries();
@@ -37,33 +79,18 @@ void histogram(){
 		if(TotalEnergyDeposit>0)
 			htotalenergydepo->Fill(TotalEnergyDeposit);
 	}
-
-	Int_t nentries_t2 = (Int_t)t2->GetEntries();
-	for (Int_t i=0; i < nentries_t2; i++){
-		t2->GetEntry(i);
-		if(TimeOfFlightScint>0)
-			htimeofflightscint->Fill(TimeOfFlightScint);
-	}
-
-
 	TCanvas* mycanvas = new TCanvas();
 	mycanvas->Divide(1,1);
 	mycanvas->cd(1);
 	htotalenergydepo->Draw(); 
-	
 	mycanvas->Print("TotalEnergyDeposit.pdf");
-	
-	TCanvas* mycanvas_t2 = new TCanvas();
-	mycanvas_t2->Divide(1,1);
-	mycanvas_t2->cd(1);
-	htimeofflightscint->Draw();
-	mycanvas_t2->Print("TimeOfFlightScint.pdf");
-
+*/
 
 }
 
  #ifndef __CINT__
  int main(){
      histogram();
+return 0;
      }
  #endif

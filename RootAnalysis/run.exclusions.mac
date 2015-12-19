@@ -1,0 +1,22 @@
+# Macro file to run the simulation 
+# Can be run in batch, without graphic
+# or interactively: Idle> /control/execute run1.mac
+#
+#
+#
+# Initialize kernel
+/run/initialize
+#
+#/control/verbose 2
+#/run/verbose 2
+#/event/verbose 0
+#/tracking/verbose 1
+#
+#
+#/gun/particle monopole
+#/gun/calibenergy 1
+#/gun/xvertex -500
+# 
+#
+#
+/run/beamOn 100

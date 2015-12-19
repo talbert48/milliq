@@ -51,6 +51,7 @@
 #include "G4SystemOfUnits.hh"
 #include "G4UnitsTable.hh"
 #include "vector"
+#include <algorithm>
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -100,12 +101,6 @@ void MilliQEventAction::EndOfEventAction(const G4Event* anEvent){
   if (trajectoryContainer) n_trajectories = trajectoryContainer->entries();
 
 
-
-/*G4cout<<"fPMTCollID "<<fPMTCollID<<G4endl;
-G4cout<<"fPMTAllCollID "<<fPMTAllCollID<<G4endl;
-G4cout<<"fScintCollID "<<fScintCollID<<G4endl;
-*/
-
 // extract the trajectories and draw them
   if (G4VVisManager::GetConcreteInstance()){
     for (G4int i=0; i<n_trajectories; i++){
@@ -141,12 +136,6 @@ G4cout<<"fScintCollID "<<fScintCollID<<G4endl;
     if(fPMTAllCollID>=0)pmtAllHC = (MilliQPMTHitsCollection*)(hitsCE->GetHC(fPMTAllCollID));
   }
 
-/*
-  MilliQDetectorConstruction* milliqdetector = new MilliQDetectorConstruction;
-  G4int NBlocks = milliqdetector->GetNblocksPerStack();
-  G4int NStacks = milliqdetector->GetNstacks();
-*/
-
 
   //Hits in scintillator
    if(scintHC){
@@ -178,14 +167,7 @@ G4cout<<"fScintCollID "<<fScintCollID<<G4endl;
        }
      }
 
-  //   G4cout << "\tTotal energy deposition in scintillator : "
-  //          << eventInformation->GetEDep() / GeV << " (GeV)" << G4endl;
-
    }
-
-   G4double TotScintEnergyDeposit = eventInformation->GetEDep() / GeV;
-
-   analysisManager->FillNtupleDColumn(1,0,TotScintEnergyDeposit);
 
 
   if(pmtHC){
@@ -221,13 +203,9 @@ MilliQDetectorConstruction* milliqdetector = new MilliQDetectorConstruction;
 G4int NBlocks = milliqdetector->GetNblocksPerStack();
 G4int NStacks = milliqdetector->GetNstacks();
 
-std::vector<G4double> scintFirstTime(NBlocks*NStacks);//we want the first scintillator hit, and the first pmt hit
 std::vector< std::vector<G4double> >  pmtTime(NBlocks*NStacks);//we want the first scintillator hit, and the first pmt hit
-
-
-for(int x = 0; x < NStacks*NBlocks; ++x){
-	scintFirstTime[x] = 1000*s;
-}
+std::vector< std::vector<G4double> >  scintTime(NBlocks*NStacks);//we want the first scintillator hit, and the first pmt hit
+std::vector< std::vector<G4double> >  scintEnergy(NBlocks*NStacks);//we want the first scintillator hit, and the first pmt hit
 
 
 bool PrintStats = false;
@@ -237,36 +215,45 @@ if(scintHC && pmtAllHC){
 		if( (*pmtAllHC)[j]->GetPMTNumber() > -1){ // It was hit!
 			PrintStats=true;
 			pmtTime[ (*pmtAllHC)[j]->GetPMTNumber() ].push_back((*pmtAllHC)[j]->GetTime() ) ;
-			for(int i=0;i<scintHC->entries();i++){ //gather info on hits in scintillator
+		}
+	}
 
-				if((*pmtAllHC)[j]->GetPMTNumber() == (*scintHC)[i]->GetCpNum()){
-
-					if(scintFirstTime[ (*scintHC)[i]->GetCpNum() ] > (*scintHC)[i]->GetTime()){
-						scintFirstTime[ (*scintHC)[i]->GetCpNum() ] = (*scintHC)[i]->GetTime() ;
-					}
-
-				}
-			}
+	for(int i=0;i<scintHC->entries();i++){
+		if( (*scintHC)[i]->GetCpNum()>-1){ // It was hit!
+			scintTime[ (*scintHC)[i]->GetCpNum() ].push_back((*scintHC)[i]->GetTime() ) ;
+			scintEnergy[ (*scintHC)[i]->GetCpNum() ].push_back((*scintHC)[i]->GetEdep() ) ;
 		}
 	}
 }
 
+MilliQAnalysis* mcpan = new MilliQAnalysis(pmtTime,scintTime,scintEnergy,NBlocks,NStacks);
 
-MilliQAnalysis* mcpanalysis = new MilliQAnalysis(pmtTime,NBlocks,NStacks);
 
+if(mcpan->IsActive()==true){
 
-G4int NBlocksTotal = NStacks*NBlocks;
-for(G4int i = 0; i < NBlocksTotal; i++){
-	if(scintFirstTime[i] < 900*s ){
-		for(G4int j = 0; j < pmtTime[i].size(); j++){
-			G4double timeOfFlight = pmtTime[i][j] - scintFirstTime[i];
-			if(timeOfFlight > 0){
-				analysisManager->FillNtupleDColumn(2,0, timeOfFlight);
-						analysisManager->AddNtupleRow(2);
-			}
+	G4int pmt;
+
+	for(G4int i = 0; i < NStacks; i++){
+
+		pmt = mcpan->GetActiveEv()[i];
+		analysisManager->FillNtupleIColumn( 2,i, pmt );
+		analysisManager->FillNtupleDColumn( 2,i+NStacks, mcpan->GetPMTTimes()[i]/ns );
+		analysisManager->FillNtupleDColumn( 2,i+2*NStacks, mcpan->GetTimeOfFlight()[i]/ns );
+		analysisManager->FillNtupleDColumn( 2,i+3*NStacks, mcpan->GetTotalEdep()[i]/MeV );
+
+		for(G4int j = 0; j < scintEnergy[pmt].size(); j++){
+			analysisManager->FillNtupleDColumn( 1,0, scintEnergy[pmt][j]/eV );
+			analysisManager->AddNtupleRow(1);
 		}
+
+
 	}
+
+	analysisManager->FillNtupleIColumn( 2, 12, eventInformation->GetPhotonCount_Scint() );
+	analysisManager->AddNtupleRow(2);
+
 }
+
 
 
 

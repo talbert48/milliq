@@ -45,6 +45,7 @@
 #include "fstream"
 #include "iostream"
 #include "sstream"
+#include <string>
 #include "vector"
 #include "globals.hh"
 #include "G4ParticleGun.hh"
@@ -80,7 +81,7 @@ MilliQPrimaryGeneratorAction::MilliQPrimaryGeneratorAction() :
 	// default particle kinematic
 
 	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-	G4String particleName;
+	std::string particleName;
 
 	  G4ParticleDefinition* particle
 	    = particleTable->FindParticle(particleName="monopole");
@@ -199,8 +200,10 @@ void MilliQPrimaryGeneratorAction::SetCalibEnergy(G4double e) {
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void MilliQPrimaryGeneratorAction::GetLHEFourVectors() {
-	std::ifstream infile;
-	infile.open("/home/qftsm/Dropbox/MilliQ/PropagatingData/DY.txt");
+    std::ifstream infile;
+    std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/";
+    std::string filename="DY.0.105GeV.0.01Q.txt";
+	infile.open(pathname.append(filename));
 	G4String line;
 	G4double fe, fq, fm, fx, fy, fz, fpx, fpy, fpz;
 	std::vector<G4double> Tver(3), Tmo(3), Tqme(3);

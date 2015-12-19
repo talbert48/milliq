@@ -119,7 +119,7 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		firstPass = false;
 	}
 
-	//	 fgPrimaryParticle = fParticleGun->GetParticleDefinition();
+	//  fgPrimaryParticle = fParticleGun->GetParticleDefinition();
 	G4cout << "The PDG Charge "
 			<< fParticleGun->GetParticleDefinition()->GetPDGCharge() << G4endl;
 	G4double x0, y0, z0, xMo, yMo, zMo, En, MoNorm;

@@ -227,7 +227,7 @@ void MilliQDetectorConstruction::DefineMaterials() {
 			0.64 * 17400. / MeV); //64% of Anthracene
 	fScintillator_mt->AddConstProperty("RESOLUTIONSCALE", 1.0);
 	fScintillator_mt->AddConstProperty("FASTTIMECONSTANT", 2.1 * ns); //This is decay time
-	fScintillator_mt->AddConstProperty("FASTSCINTILLATIONRISETIME", 0.9 * ns); //Need to set setFiniteRiseTime true in messenger!!
+        fScintillator_mt->AddConstProperty("FASTSCINTILLATIONRISETIME", 0.9 * ns); //Need to set setFiniteRiseTime true in messenger!!
 	//	fScintillator_mt->AddConstProperty("SLOWTIMECONSTANT", 0. * ns); //45
 	fScintillator_mt->AddConstProperty("YIELDRATIO", 1.0);
 	fScintillatorMaterial->SetMaterialPropertiesTable(fScintillator_mt);
@@ -348,7 +348,7 @@ void MilliQDetectorConstruction::DefineMaterialsStewart() {
 	fScintillator_mt->AddConstProperty("SCINTILLATIONYIELD", 8000. / MeV);
 	fScintillator_mt->AddConstProperty("RESOLUTIONSCALE", 1.0);
 	fScintillator_mt->AddConstProperty("FASTTIMECONSTANT", 3.2 * ns); //This is decay time
-//	fScintillator_mt->AddCpmstProperty("FASTSCINTILLATIONRISETIME", 0.9*ns);//Need to set setFiniteRiseTime true in messenger!!
+//	fScintillator_mt->AddConstProperty("FASTSCINTILLATIONRISETIME", 0.9*ns);//Need to set setFiniteRiseTime true in messenger!!
 //	fScintillator_mt->AddConstProperty("SLOWTIMECONSTANT", 0. * ns); //45
 	fScintillator_mt->AddConstProperty("YIELDRATIO", 1.0);
 	fScintillatorMaterial->SetMaterialPropertiesTable(fScintillator_mt);

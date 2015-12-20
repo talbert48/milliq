@@ -249,9 +249,11 @@ if(mcpan->IsActive()==true){
 
 
 		for(unsigned int j = 0; j < scintEnergy[pmt].size(); j++){
+		if(j==0 || j == scintEnergy[pmt].size()-1){
 			analysisManager->FillNtupleDColumn( 1,0, scintEnergy[pmt][j]/eV );
 			analysisManager->FillNtupleDColumn( 1,1, scintTime[pmt][j]/ns );
 			analysisManager->AddNtupleRow(1);
+		}
 		}
 
 

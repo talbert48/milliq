@@ -28,7 +28,7 @@ void MilliQAnalysis::NearestN(){
 		}
 	}
 
-	for(G4int i=0; i < activePMT.size(); i++){
+	for(unsigned int i=0; i < activePMT.size(); i++){
 		bool recordEvent = true;
 		for(G4int j=0; j < fNstack; j++){
 			if(fpmtTime[activePMT[i]+fNblock*j].size()==0)
@@ -59,7 +59,7 @@ void MilliQAnalysis::ComputeTandE(){
 	G4int ind;
 	G4int nmedian;
 
-	for(G4int i=0; i < activeEvent.size(); i++){
+	for(unsigned int i=0; i < activeEvent.size(); i++){
 			ind = activeEvent[i];
 			G4double ensum=0;
 			nmedian = (fpmtTime[ind].size()-1)/2;
@@ -67,7 +67,7 @@ void MilliQAnalysis::ComputeTandE(){
 
 			timeOfFlight.push_back(fpmtTime[ind][nmedian]-fscintTime[ind][0]);
 
-			for(G4int k = 0; k < fscintEn[ind].size();k++){
+			for(unsigned int k = 0; k < fscintEn[ind].size();k++){
 				ensum+=fscintEn[ind][k];
 			}
 			totalEdep.push_back(ensum);

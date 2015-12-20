@@ -225,10 +225,10 @@ if(scintHC && pmtAllHC){
 	}
 }
 
-for(int i = 0; i < pmtTime.size(); i++){
+for(unsigned int i = 0; i < pmtTime.size(); i++){
 	sort(pmtTime[i].begin(),pmtTime[i].end());
 }
-for(int i = 0; i < scintTime.size(); i++){
+for(unsigned int i = 0; i < scintTime.size(); i++){
 	sort(scintTime[i].begin(),scintTime[i].end());
 }
 
@@ -248,7 +248,7 @@ if(mcpan->IsActive()==true){
 		analysisManager->FillNtupleDColumn( 2,i+3*NStacks, mcpan->GetTotalEdep()[i]/MeV );
 
 
-		for(G4int j = 0; j < scintEnergy[pmt].size(); j++){
+		for(unsigned int j = 0; j < scintEnergy[pmt].size(); j++){
 			analysisManager->FillNtupleDColumn( 1,0, scintEnergy[pmt][j]/eV );
 			analysisManager->FillNtupleDColumn( 1,1, scintTime[pmt][j]/ns );
 			analysisManager->AddNtupleRow(1);

@@ -6,32 +6,45 @@ BUILD=$HOME/BuildExamples/MilliQBuild
 ROOT=$HOME/milliq/RootAnalysis
 DATA=/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/
 RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo
+rseed=$SLURM_JOB_ID
+JOB=$BUILD/Job."$rseed"
 
 masses=(0.105) #1.0 10.0 100.0)
-charges=(0.01)
+sourcecharge=0.01
+charge=$1
 process=(DY)
+
+mkdir $JOB
+
 for mass in ${masses[*]}
 do
-for charge in ${charges[*]}
-do
+#for charge in ${charges[*]}
+#do
 for proc in ${process[*]}
 do
 	echo Mass:$j GeV Charge:$i
-	name="$proc"."$mass"GeV."$charge"Q
-	nEv=$(cat $DATA/"$name".txt | wc -l)
+	outputname="$proc"."$mass"GeV."$charge"Q
+	sourcename="$proc"."$mass"GeV."$sourcecharge"Q
+	nEv=$(cat $DATA/"$sourcename".txt | wc -l)
         sed -i '/  fElCharge = /c\  fElCharge = '"$charge"';' $SRC/MilliQMonopolePhysics.cc
 	sed -i '/  fMonopoleMass = /c\  fMonopoleMass = '"$mass"'*GeV;' $SRC/MilliQMonopolePhysics.cc
-	sed -i '/    std::string filename=/c\    std::string filename="'"$name"'.txt";' $SRC/MilliQPrimaryGeneratorAction.cc
+	sed -i '/    std::string filename=/c\    std::string filename="'"$sourcename"'.txt";' $SRC/MilliQPrimaryGeneratorAction.cc
 	sed -i '/    std::string pathname=/c\    std::string pathname="'"$DATA"'";' $SRC/MilliQPrimaryGeneratorAction.cc
-	sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' $ROOT/mcp.mac	
-#	sed -i '/\/run\/beamOn /c\/run\/beamOn 300' $ROOT/mcp.mac
 	cd $BUILD
+	cp * $JOB
+	cp -r CMakeFiles $JOB
+	cp $ROOT/mcp.mac $JOB
+	cp $ROOT/histogram.C $JOB
+	cd $JOB
+#       sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' mcp.mac
+	sed -i '/\/run\/beamOn /c\/run\/beamOn 300' mcp.mac
 	make MilliQ
-	./MilliQ $ROOT/mcp.mac
-	cd $ROOT
-	root -b -q $ROOT/histogram.C
-	mv $ROOT/mcpall.dat $RESULTS/mcpall."$name".dat 
-	mv $ROOT/sedep.dat $RESULTS/sedep."$name".dat
+	./MilliQ mcp.mac
+	root -b -q histogram.C
+	mv mcpall.dat $RESULTS/mcpall."$outputname".dat 
+	mv sedep.dat $RESULTS/sedep."$outputname".dat
+	cd ../
+#	rm -r $JOB
 done
-done
+#done
 done

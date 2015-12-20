@@ -103,10 +103,10 @@ MilliQMonopole* MilliQMonopole::MonopoleDefinition(G4double mass, G4double mChar
              true,            -1.0,             0);
     
     
-//    G4cout << "Monopole is created: m(GeV)= " << theMonopole->GetPDGMass()/GeV
-//           << " Qel= " << theMonopole->GetPDGCharge()/eplus
-//           << " Qmag= " << magCharge/eplus
-//           << G4endl;
+    G4cout << "Monopole is created: m(GeV)= " << theMonopole->GetPDGMass()/GeV
+           << " Qel= " << theMonopole->GetPDGCharge()/eplus
+           << " Qmag= " << magCharge/eplus
+           << G4endl;
   }
   return theMonopole;
 }

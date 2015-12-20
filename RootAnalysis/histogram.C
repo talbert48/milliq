@@ -15,7 +15,7 @@ using namespace std;
 
 void histogram(){
  
-	TFile *fMilliQ = new TFile("../../BuildExamples/MilliQBuild/MilliQ.root");
+	TFile *fMilliQ = new TFile("MilliQ.root");//("../../BuildExamples/MilliQBuild/MilliQ.root");
 	TTree *t1 = (TTree*)fMilliQ->Get("MilliQEn");
 	TTree *t2 = (TTree*)fMilliQ->Get("MilliQAll");
 

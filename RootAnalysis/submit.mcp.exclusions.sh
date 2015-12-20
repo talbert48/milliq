@@ -26,6 +26,7 @@ do
 	outputname="$proc"."$mass"GeV."$charge"Q
 	sourcename="$proc"."$mass"GeV."$sourcecharge"Q
 	nEv=$(cat $DATA/"$sourcename".txt | wc -l)
+#	nEv=500
 	cp $ROOT/mcp.mac $JOB
 	cp $ROOT/histogram.C $JOB
 	cp -r $HOME/milliq/geant4 $JOB
@@ -34,8 +35,7 @@ do
         sed -i '/  fMonopoleMass = /c\  fMonopoleMass = '"$mass"'*GeV;' $JOB/$SRC/MilliQMonopolePhysics.cc
         sed -i '/    std::string filename=/c\    std::string filename="'"$sourcename"'.txt";' $JOB/$SRC/MilliQPrimaryGeneratorAction.cc
         sed -i '/    std::string pathname=/c\    std::string pathname="'"$DATA"'";' $JOB/$SRC/MilliQPrimaryGeneratorAction.cc
-#        sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' mcp.mac
-	sed -i '/\/run\/beamOn /c\/run\/beamOn 100' mcp.mac
+        sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' mcp.mac
 
 	cmake -DGeant4_DIR=/xfs1/gmagill/geant4.10.02-build/lib/Geant4-10.2.0/ $JOB/geant4/
 	make MilliQ

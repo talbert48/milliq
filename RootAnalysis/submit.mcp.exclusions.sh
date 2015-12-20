@@ -36,15 +36,15 @@ do
 	cp $ROOT/mcp.mac $JOB
 	cp $ROOT/histogram.C $JOB
 	cd $JOB
-#       sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' mcp.mac
-	sed -i '/\/run\/beamOn /c\/run\/beamOn 300' mcp.mac
+        sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' mcp.mac
+#	sed -i '/\/run\/beamOn /c\/run\/beamOn 300' mcp.mac
 	make MilliQ
 	./MilliQ mcp.mac
 	root -b -q histogram.C
 	mv mcpall.dat $RESULTS/mcpall."$outputname".dat 
 	mv sedep.dat $RESULTS/sedep."$outputname".dat
 	cd ../
-#	rm -r $JOB
+	rm -r $JOB
 done
 #done
 done

@@ -1,0 +1,56 @@
+hello
+Mass: GeV Charge:
+cp: omitting directory ‘CMakeFiles’
+cp: omitting directory ‘Job.336911’
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /xfs1/gmagill/GeantDevExamples/BuildExamples/MilliQBuild
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /xfs1/gmagill/GeantDevExamples/BuildExamples/MilliQBuild
+Scanning dependencies of target MilliQ
+[  2%] Building CXX object CMakeFiles/MilliQ.dir/MilliQ.cc.o
+[  5%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQActionInitialization.cc.o
+[  7%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQAnalysis.cc.o
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQAnalysis.cc: In member function ‘void MilliQAnalysis::NearestN()’:
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQAnalysis.cc:31:19: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+  for(G4int i=0; i < activePMT.size(); i++){
+                   ^
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQAnalysis.cc: In member function ‘void MilliQAnalysis::ComputeTandE()’:
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQAnalysis.cc:62:19: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+  for(G4int i=0; i < activeEvent.size(); i++){
+                   ^
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQAnalysis.cc:70:23: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    for(G4int k = 0; k < fscintEn[ind].size();k++){
+                       ^
+[ 10%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQDetectorBlockLV.cc.o
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQDetectorBlockLV.cc:224:12: warning: unused parameter ‘pPmtHousingReflectivity’ [-Wunused-parameter]
+   G4double pPmtHousingReflectivity) {
+            ^
+[ 13%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQDetectorBlockParameterisation.cc.o
+[ 15%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQDetectorMessenger.cc.o
+[ 18%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQDetectorStackLV.cc.o
+[ 21%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQDetectorStackParameterisation.cc.o
+[ 23%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQEMPhysics.cc.o
+[ 26%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQEventMessenger.cc.o
+[ 28%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQGeneralPhysics.cc.o
+[ 31%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQMonopoleEquation.cc.o
+[ 34%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQMonopoleFieldMessenger.cc.o
+[ 36%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQMonopoleFieldSetup.cc.o
+[ 39%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQMonopolePhysics.cc.o
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQMonopolePhysics.cc: In member function ‘virtual void MilliQMonopolePhysics::ConstructProcess()’:
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQMonopolePhysics.cc:119:13: warning: unused variable ‘magn’ [-Wunused-variable]
+    G4double magn = fMpl->MagneticCharge();
+             ^
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQMonopolePhysics.cc: At global scope:
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQMonopolePhysics.cc:160:56: warning: unused parameter ‘val’ [-Wunused-parameter]
+ void MilliQMonopolePhysics::SetElectricCharge(G4double val)
+                                                        ^
+/xfs1/gmagill/GeantDevExamples/milliq/geant4/src/MilliQMonopolePhysics.cc:167:54: warning: unused parameter ‘mass’ [-Wunused-parameter]
+ void MilliQMonopolePhysics::SetMonopoleMass(G4double mass)
+                                                      ^
+[ 42%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQMonopolePhysicsMessenger.cc.o
+[ 44%] Building CXX object CMakeFiles/MilliQ.dir/src/MilliQMonopoleTransportation.cc.o
+slurmd[cerberus3]: *** JOB 336911 CANCELLED AT 2015-12-19T22:31:09 ***
+make[3]: *** Deleting file `CMakeFiles/MilliQ.dir/src/MilliQMonopoleTransportation.cc.o'
+make[3]: *** [CMakeFiles/MilliQ.dir/src/MilliQMonopoleTransportation.cc.o] Terminated

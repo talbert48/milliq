@@ -45,15 +45,15 @@ void histogram(){
 
 	ofstream mcpall;
 	ofstream sedep;
-//  	sedep.open ("sedep.dat");
+  	sedep.open ("sedep.dat");
 	mcpall.open ("mcpall.dat");
 
   	if (sedep == NULL && mcpall == NULL)
 		printf("Sorry, but the ascii output file did not open.");
-//	for (Int_t i=0; i<nentries_t1;i++){
-//		t1->GetEvent(i);
-//		sedep<<sEnDep0<<" "<<sTime0<<endl;
-//	}
+	for (Int_t i=0; i<nentries_t1;i++){
+		t1->GetEvent(i);
+		sedep<<sEnDep0<<" "<<sTime0<<endl;
+	}
 	
 	for (Int_t i=0; i<nentries_t2;i++)
 	{
@@ -61,7 +61,7 @@ void histogram(){
 		mcpall<<activePMT0<<" "<<activePMT1<<" "<<activePMT2<<" "<<pmtHitTime0<<" "<<pmtHitTime1<<" "<<pmtHitTime2<<" "<<TOFScint0<<" "<<TOFScint1<<" "<<TOFScint2<<" "<<TotEnDep0<<" "<<TotEnDep1<<" "<<TotEnDep2<<" "<<NScintPho<<endl;
 	}
 
-//	sedep.close();
+	sedep.close();
 	mcpall.close();
 
 

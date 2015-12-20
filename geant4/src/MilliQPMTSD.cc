@@ -151,7 +151,7 @@ G4bool MilliQPMTSD::ProcessHits_constStep(const G4Step* aStep,
     G4VPhysicalVolume* physVol=
     aStep->GetPostStepPoint()->GetTouchable()->GetVolume(3);
 
-    G4cout<<"pmtNumberBlock "<<pmtNumberBlock<<" pmtNumberStack "<<pmtNumberStack<<" pmtNumber "<<pmtNumber<<G4endl;
+//    G4cout<<"pmtNumberBlock "<<pmtNumberBlock<<" pmtNumberStack "<<pmtNumberStack<<" pmtNumber "<<pmtNumber<<G4endl;
 
 
     //Find the correct hit collection

@@ -8,7 +8,7 @@ DATA=/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/
 RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo
 
 masses=(0.105) #1.0 10.0 100.0)
-charges=(0.01) # 0.01 0.1 1.0)
+charges=(0.01)
 process=(DY)
 for mass in ${masses[*]}
 do
@@ -23,11 +23,11 @@ do
 	sed -i '/  fMonopoleMass = /c\  fMonopoleMass = '"$mass"'*GeV;' $SRC/MilliQMonopolePhysics.cc
 	sed -i '/    std::string filename=/c\    std::string filename="'"$name"'.txt";' $SRC/MilliQPrimaryGeneratorAction.cc
 	sed -i '/    std::string pathname=/c\    std::string pathname="'"$DATA"'";' $SRC/MilliQPrimaryGeneratorAction.cc
-#	sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' $ROOT/run.exclusions.mac	
-	sed -i '/\/run\/beamOn /c\/run\/beamOn 100' $ROOT/run.exclusions.mac
+	sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' $ROOT/mcp.mac	
+#	sed -i '/\/run\/beamOn /c\/run\/beamOn 300' $ROOT/mcp.mac
 	cd $BUILD
 	make MilliQ
-	./MilliQ $ROOT/run.exclusions.mac
+	./MilliQ $ROOT/mcp.mac
 	cd $ROOT
 	root -b -q $ROOT/histogram.C
 	mv $ROOT/mcpall.dat $RESULTS/mcpall."$name".dat 

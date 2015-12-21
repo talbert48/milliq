@@ -201,8 +201,8 @@ void MilliQPrimaryGeneratorAction::SetCalibEnergy(G4double e) {
 
 void MilliQPrimaryGeneratorAction::GetLHEFourVectors() {
     std::ifstream infile;
-    std::string pathname="/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/";
-//std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/";
+// std::string pathname="/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/";
+    std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/";
     std::string filename="DY.0.105GeV.0.01Q.txt";
 	infile.open(pathname.append(filename));
 	G4String line;

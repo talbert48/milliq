@@ -9,7 +9,7 @@ RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo
 rseed=$SLURM_JOB_ID
 JOB=$BUILD/Job."$rseed"
 
-masses=(0.105) #1.0 10.0 100.0)
+masses=(100.0) #1.0 10.0 100.0)
 sourcecharge=0.01
 sourcemass=0.105
 charge=0.01
@@ -27,8 +27,8 @@ do
 	echo Mass:$j GeV Charge:$i
 	outputname="$proc"."$mass"GeV."$charge"Q."$rise"ns
 	sourcename="$proc"."$sourcemass"GeV."$sourcecharge"Q
-#	nEv=$(cat $DATA/"$sourcename".txt | wc -l)
-	nEv=300
+	nEv=$(cat $DATA/"$sourcename".txt | wc -l)
+#	nEv=20000
 	cp $ROOT/mcp.mac $JOB
 	cp $ROOT/histogram.C $JOB
 	cp -r $HOME/milliq/geant4 $JOB

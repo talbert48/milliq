@@ -130,11 +130,11 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		zMo = 0.;
 	} else {
 		xMo = momentumList[neventLHE][0];
-		yMo = momentumList[neventLHE][1];
-		zMo = momentumList[neventLHE][2];
-		x0 = 0*m;//vertexList[neventLHE][0]*m;
-		y0 = vertexList[neventLHE][1]*m;
-		z0 = vertexList[neventLHE][2]*m;
+		yMo = momentumList[neventLHE][1]/2.;
+		zMo = momentumList[neventLHE][2]/2.;
+		x0 = 0.2*m;//vertexList[neventLHE][0]*m;
+		y0 = vertexList[neventLHE][1]*m/50.;
+		z0 = vertexList[neventLHE][2]*m/50.;
 		En = qmeList[neventLHE][2]*GeV;
 	}
 
@@ -202,8 +202,8 @@ void MilliQPrimaryGeneratorAction::SetCalibEnergy(G4double e) {
 void MilliQPrimaryGeneratorAction::GetLHEFourVectors() {
     std::ifstream infile;
 // std::string pathname="/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/";
-    std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/";
-    std::string filename="DY.0.105GeV.0.01Q.txt";
+    std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/mCP_UFO/";
+    std::string filename="100.0/0.001/hit_4_vecs.dat";
 	infile.open(pathname.append(filename));
 	G4String line;
 	G4double fe, fq, fm, fx, fy, fz, fpx, fpy, fpz;
@@ -220,8 +220,8 @@ void MilliQPrimaryGeneratorAction::GetLHEFourVectors() {
 			fe = std::sqrt(std::pow(fpx,2)+std::pow(fpy,2)+std::pow(fpz,2)+std::pow(fm,2))-fm;
 
 			Tver[0]=fx;	Tver[1]=fy;	Tver[2]=fz;
-			Tmo[0]=fpx*0.001;	Tmo[1]=fpy*0.001;	Tmo[2]=fpz*0.001;
-			Tqme[0]=fq;	Tqme[1]=fm*0.001;	Tqme[2]=fe*0.001;
+			Tmo[0]=fpx;	Tmo[1]=fpy;	Tmo[2]=fpz;
+			Tqme[0]=fq;	Tqme[1]=fm;	Tqme[2]=fe;
 			MilliQPrimaryGeneratorAction::vertexList.push_back( Tver );
 			momentumList.push_back( Tmo );
 			qmeList.push_back( Tqme );

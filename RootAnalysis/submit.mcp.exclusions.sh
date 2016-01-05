@@ -8,27 +8,24 @@ DATA=/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/
 rseed=$SLURM_JOB_ID
 JOB=$BUILD/Job."$rseed"
 
-
-
-RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo/PMTHitTime
-masses=(100.0) #1.0 10.0 100.0)
-sourcecharge=0.01
-sourcemass=0.105
-charge=0.01
-process=(DY)
+charge=$1
+mass=$2
+nEv=$3
+RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo/EffStudy
+#masses=(100.0) #1.0 10.0 100.0)
+sourcecharge=0.001
+process=(mCP_UFO)
 
 mkdir $JOB
 
-for mass in ${masses[*]}
-do
-#for charge in ${charges[*]}
+#for mass in ${masses[*]}
 #do
 for proc in ${process[*]}
 do
 	echo Mass:$j GeV Charge:$i
 	outputname="$proc"."$mass"GeV."$charge"Q
-	sourcename="$proc"."$sourcemass"GeV."$sourcecharge"Q
-	nEv=$(cat $DATA/"$sourcename".txt | wc -l)
+	sourcename="$proc"/"$mass"/"$sourcecharge"/hit_4_vecs.txt
+#	nEv=$(cat $DATA/"$sourcename".txt | wc -l)
 #	nEv=300
 	cp $ROOT/mcp.mac $JOB
 	cp $ROOT/histogram.C $JOB
@@ -36,7 +33,7 @@ do
 	cd $JOB
 	sed -i '/  fElCharge = /c\  fElCharge = '"$charge"';' $JOB/$SRC/MilliQMonopolePhysics.cc
         sed -i '/  fMonopoleMass = /c\  fMonopoleMass = '"$mass"'*GeV;' $JOB/$SRC/MilliQMonopolePhysics.cc
-        sed -i '/    std::string filename=/c\    std::string filename="'"$sourcename"'.txt";' $JOB/$SRC/MilliQPrimaryGeneratorAction.cc
+        sed -i '/    std::string filename=/c\    std::string filename="'"$sourcename"'";' $JOB/$SRC/MilliQPrimaryGeneratorAction.cc
         sed -i '/    std::string pathname=/c\    std::string pathname="'"$DATA"'";' $JOB/$SRC/MilliQPrimaryGeneratorAction.cc
         sed -i '/\/run\/beamOn /c\/run\/beamOn '"$nEv"'' mcp.mac
 
@@ -46,10 +43,11 @@ do
 	make MilliQ
 	./MilliQ mcp.mac
 	root -b -q histogram.C
-	mv mcpall.dat $RESULTS/mcpall."$outputname".dat 
-	mv sedep.dat $RESULTS/sedep."$outputname".dat
+#	mv mcpall.dat $RESULTS/mcpall."$outputname".dat 
+#	mv sedep.dat $RESULTS/sedep."$outputname".dat
+	nPass=$(cat mcpall.dat | wc -l)
+	echo $mass $charge $nEv $nPass >> $RESULTS/EffStudy.dat
 	cd ../
 	rm -r $JOB
 done
 #done
-done

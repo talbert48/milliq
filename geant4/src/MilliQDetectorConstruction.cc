@@ -103,11 +103,11 @@ void MilliQDetectorConstruction::SetDefaults() {
 		fBetweenBlockSpacing = G4ThreeVector(0.127 * m, 0. * m, 0. * m);//Length of PMT
 		fScint_x = 0.9 * m;
 		fScint_y = 5 * cm;
-		fScint_z = 5*cm;//10 * cm;
+		fScint_z = 10 * cm;
 		fOffset = G4ThreeVector(0. * m, 0.5 * cm, 0.5 * cm);
 		fScintillatorHouseRefl = 0.925; //scintillator housing reflectivity
 		fLightGuideLength = 5. * cm; //HalfLength, needs to be smaller than fScint_x
-		fPmtRad = 2.5*cm;//2.3 * cm; //pmt radius
+		fPmtRad = 2.3 * cm; //pmt radius
 		fOuterRadius_pmt = fPmtRad;
 		fPmtPhotoRad = fPmtRad; //pmt Photocathode radius
 		fScintHouseThick = 0.1 * cm; //scintillator housing thickness (and Glass Radius Height)

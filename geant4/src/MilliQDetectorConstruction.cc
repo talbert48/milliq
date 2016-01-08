@@ -105,13 +105,13 @@ void MilliQDetectorConstruction::SetDefaults() {
 		fScint_y = 5 * cm;
 		fScint_z = 10 * cm;
 		fOffset = G4ThreeVector(0. * m, 0.5 * cm, 0.5 * cm);
-		fScintillatorHouseRefl = 0.925; //scintillator housing reflectivity
+		fScintillatorHouseRefl = 1.00; //scintillator housing reflectivity
 		fLightGuideLength = 0.1 * m; //Length, needs to be smaller than fScint_x
 		fPmtPhotoRad = 2.3 * cm; //pmt radius
 		fOuterRadius_pmt = fPmtRad;
 		fScintHouseThick = 0.1 * cm; //scintillator housing thickness
 		fPmtPhotoHeight = 0.05 * cm; //pmt photocathode height
-		fLGHouseRefl = 1.; //pmt housing reflective
+		fLGHouseRefl = 1.00; //pmt housing reflective
 		//Reflectance of Aluminum: Bass, M., Van Stryland, E.W. (eds.) Handbook of Optics vol. 2 (2nd ed.), McGraw-Hill (1994)
 	}
 

@@ -53,7 +53,7 @@ MilliQDetectorConstruction::MilliQDetectorConstruction() :
 	worldLV = NULL;
 	fMagneticVolume = NULL;
 
-	fScintillatorMaterial = fAluminiumMaterial = fAirMaterial =
+	fScintillatorMaterial = fAluminiumMaterial = fAirMaterial = fGlassMaterial =
 			fVacuumMaterial = NULL;
 
 	fMonFieldSetup = MilliQMonopoleFieldSetup::GetMonopoleFieldSetup();
@@ -110,7 +110,7 @@ void MilliQDetectorConstruction::SetDefaults() {
 		fPmtPhotoRad = 2.3 * cm; //pmt radius
 		fOuterRadius_pmt = fPmtRad;
 		fScintHouseThick = 0.1 * cm; //scintillator housing thickness
-		fPmtPhotoHeight = 0.05 * cm; //pmt photocathode height
+		fPmtPhotoHeight = 0.01 * cm; //pmt photocathode height
 		fLGHouseRefl = 1.00; //pmt housing reflective
 		//Reflectance of Aluminum: Bass, M., Van Stryland, E.W. (eds.) Handbook of Optics vol. 2 (2nd ed.), McGraw-Hill (1994)
 	}
@@ -166,6 +166,12 @@ void MilliQDetectorConstruction::DefineMaterials() {
 			2); //n elements
 	fAirMaterial->AddElement(fN, 70 * perCent); //compose of nitrogen
 	fAirMaterial->AddElement(fO, 30 * perCent); //compose of oxegen
+
+	//Glass
+	fGlassMaterial = new G4Material("Glass", 1.032*g/cm3,2);
+	fGlassMaterial->AddElement(fC,91.533*perCent);
+	fGlassMaterial->AddElement(fH,8.467*perCent);
+
 
 	//Concrete
 	fConcreteMaterial = nist->FindOrBuildMaterial("G4_CONCRETE");
@@ -225,6 +231,15 @@ void MilliQDetectorConstruction::DefineMaterials() {
 	// Set the Birks Constant
 	fScintillatorMaterial->GetIonisation()->SetBirksConstant(0.111 * mm / MeV);
 
+	G4double glass_RIND[]={1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49};
+	assert(sizeof(glass_RIND) == sizeof(MilliQ_Energy));
+	G4double glass_AbsLength[]={420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm};
+	assert(sizeof(glass_AbsLength) == sizeof(MilliQ_Energy));
+	G4MaterialPropertiesTable *glass_mt = new G4MaterialPropertiesTable();
+	glass_mt->AddProperty("ABSLENGTH",MilliQ_Energy,glass_AbsLength,MilliQnum);
+	glass_mt->AddProperty("RINDEX",MilliQ_Energy,glass_RIND,MilliQnum);
+	fGlassMaterial->SetMaterialPropertiesTable(glass_mt);
+
 //	G4double vacuum_Energy[] = { 2.0 * eV, 7.0 * eV, 7.14 * eV };
 //	const G4int vacnum = sizeof(vacuum_Energy) / sizeof(G4double);
 	G4double vacuum_RIND[] = { 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.,
@@ -272,6 +287,11 @@ void MilliQDetectorConstruction::DefineMaterialsStewart() {
 			2); //n elements
 	fAirMaterial->AddElement(fN, 70 * perCent); //compose of nitrogen
 	fAirMaterial->AddElement(fO, 30 * perCent); //compose of oxegen
+
+	//Glass
+	fGlassMaterial = new G4Material("Glass", 1.032*g/cm3,2);
+	fGlassMaterial->AddElement(fC,91.533*perCent);
+	fGlassMaterial->AddElement(fH,8.467*perCent);
 
 	//Concrete
 	fConcreteMaterial = nist->FindOrBuildMaterial("G4_CONCRETE");
@@ -324,6 +344,16 @@ void MilliQDetectorConstruction::DefineMaterialsStewart() {
 	fScintillatorMaterial->SetMaterialPropertiesTable(fScintillator_mt);
 // 	Set the Birks Constant
 	fScintillatorMaterial->GetIonisation()->SetBirksConstant(0.0872 * mm / MeV);
+
+	G4double glass_RIND[]={1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49,1.49};
+	assert(sizeof(glass_RIND) == sizeof(MilliQ_Energy));
+	G4double glass_AbsLength[]={420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm,420.*cm};
+	assert(sizeof(glass_AbsLength) == sizeof(MilliQ_Energy));
+	G4MaterialPropertiesTable *glass_mt = new G4MaterialPropertiesTable();
+	glass_mt->AddProperty("ABSLENGTH",MilliQ_Energy,glass_AbsLength,MilliQnum);
+	glass_mt->AddProperty("RINDEX",MilliQ_Energy,glass_RIND,MilliQnum);
+	fGlassMaterial->SetMaterialPropertiesTable(glass_mt);
+
 
 //	G4double vacuum_Energy[] = { 2.0 * eV, 7.0 * eV, 7.14 * eV };
 //	const G4int vacnum = sizeof(vacuum_Energy) / sizeof(G4double);

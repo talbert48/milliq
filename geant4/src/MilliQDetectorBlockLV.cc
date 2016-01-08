@@ -159,6 +159,32 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid* pSolid,
 	// the "PMT Photocathode Section".
 
 
+	// PMT Glass Section - Volume
+	G4Tubs* pmtGlassSectionV = new G4Tubs(
+			"PMT Glass Section Volume", //name
+			0. * cm,                                   //inner radius
+			pPmtPhotocathodeRadius,           //outer radius
+			pPmtPhotocathodeHeight / 2.,          //half height
+			0. * deg,                                  //start angle
+			360. * deg);                               //end angle
+
+	// PMT Glass Section - Logical Volume
+	fPmtGlassSectionLV = new G4LogicalVolume(pmtGlassSectionV, //volume
+			G4Material::GetMaterial("Glass"),  //material
+			"PMT Glass Section Logical Volume" //name
+	);
+
+	// PMT Photocathode Section - Physical Volume
+	new G4PVPlacement(
+			rotm,                                            //rotation
+			G4ThreeVector(pLightGuideLength/2 - pScintillatorHousingThickness/2 + pPmtPhotocathodeHeight/2, 0,
+					0), //translation
+			fPmtGlassSectionLV,                    //logical volume
+			"PMT Glass Section Physical Volume",        //name
+			fScintillatorLGHousingLV,							//mother logical volume
+			false,                                        //many
+			0);
+
 	// PMT Photocathode Section - Volume
 	G4Tubs* pmtPhotocathodeSectionV = new G4Tubs(
 			"PMT Photocathode Section Volume", //name
@@ -179,14 +205,17 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid* pSolid,
 
 	// PMT Photocathode Section - Physical Volume
 	new G4PVPlacement(
-			rotm,                                            //rotation
-			G4ThreeVector(pLightGuideLength/2 - pScintillatorHousingThickness/2 + pPmtPhotocathodeHeight/2, 0,
-					0), //translation
+			0,                                            //rotation
+			G4ThreeVector(0, 0,	0), //translation
 			fPmtPhotocathodeSectionLV,                    //logical volume
 			"PMT Photocathode Section Physical Volume",        //name
-			fScintillatorLGHousingLV,							//mother logical volume
+			fPmtGlassSectionLV,							//mother logical volume
 			false,                                        //many
 			0);
+
+
+
+
 
 	VisAttributes();
 	SurfaceProperties(pScintillatorHousingReflectivity,
@@ -198,7 +227,7 @@ void MilliQDetectorBlockLV::VisAttributes() {
 	fScintillatorLGHousingLV->SetVisAttributes(G4Colour::Red());
 	fScintillatorLV->SetVisAttributes(G4Colour::Blue());
 	fLightGuideLV->SetVisAttributes(G4Colour::Blue()); //(0.94, 0.5, 0.5)); // Pink
-
+	fPmtGlassSectionLV->SetVisAttributes(G4Colour::Cyan());
 	//   fPmtVacuumSectionLV->SetVisAttributes(G4Colour::Brown());
 	fPmtPhotocathodeSectionLV->SetVisAttributes(G4Colour::Magenta());
 

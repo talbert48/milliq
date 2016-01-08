@@ -82,6 +82,7 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4Material* fScintillatorMaterial;
     G4Material* fAluminiumMaterial;
     G4Material* fAirMaterial;
+    G4Material* fGlassMaterial;
     G4Material* fVacuumMaterial;
     G4Material* fConcreteMaterial;
     G4Material* led;

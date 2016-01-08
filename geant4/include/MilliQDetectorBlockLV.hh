@@ -54,6 +54,7 @@ class MilliQDetectorBlockLV : public G4LogicalVolume
     G4LogicalVolume* fPmtHousingLV;
     G4LogicalVolume* fPmtGlassLV;
     G4LogicalVolume* fPmtVacuumSectionLV;
+    G4LogicalVolume* fPmtGlassSectionLV;
     G4LogicalVolume* fPmtPhotocathodeSectionLV;
 };
 

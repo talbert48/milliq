@@ -25,11 +25,9 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
 										 G4double				 pLightGuideLength,
                                          G4double                pScintillatorHousingReflectivity,
                                          
-                                         G4double                pPmtRadius,
                                          G4double                pPmtPhotocathodeRadius,
                                          G4double                pPmtPhotocathodeHeight,
-                                         G4double                pPmtPhotocathodeDepth,
-                                         G4double                pPmtHousingReflectivity,
+                                         G4double                pLGHousingReflectivity,
                                          G4VSensitiveDetector*   pPmtSD,
 										 G4VSensitiveDetector*   pScintSD)
                     :G4LogicalVolume(pSolid,
@@ -63,11 +61,9 @@ MilliQDetectorStackLV::MilliQDetectorStackLV(G4VSolid*               pSolid,
 								pLightGuideLength,
                                 pScintillatorHousingReflectivity, //pScintillatorHousingReflectivity
 
-								pPmtRadius, //pPmtRadius
 								pPmtPhotocathodeRadius, //pPmtHeight
 								pPmtPhotocathodeHeight, //pPmtPhotocathodeDepth
-								pPmtPhotocathodeDepth, //pPmtHousingThickness
-                                pPmtHousingReflectivity,//pPmtHousingReflectivity
+	                            pLGHousingReflectivity,//pLGHousingReflectivity
                                 pPmtSD,
 								pScintSD);
     

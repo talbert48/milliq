@@ -22,7 +22,7 @@
 
 /vis/scene/add/scale  # Simple scale line
 /vis/scene/add/axes -2 0 0 1 m   # Simple axes: x=red, y=green, z=blue
-
+/vis/viewer/zoom 10
 
 # Sets some default verbose
 /run/verbose 0

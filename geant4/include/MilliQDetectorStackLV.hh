@@ -34,11 +34,9 @@ public:
 						G4double				pLightGuideLength,
                         G4double                pScintillatorHousingReflectivity,
                         
-                        G4double                pPmtRadius,
                         G4double                pPmtPhotocathodeRadius,
                         G4double                pPmtPhotocathodeHeight,
-                        G4double                pPmtPhotocathodeDepth,
-                        G4double                pPmtHousingReflectivity,
+                        G4double                pLGHousingReflectivity,
                         G4VSensitiveDetector*   pPmtSD,
 						G4VSensitiveDetector*   pScintSD);
     

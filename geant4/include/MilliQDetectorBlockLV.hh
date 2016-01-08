@@ -30,11 +30,9 @@ class MilliQDetectorBlockLV : public G4LogicalVolume
 						  G4double		 pLightGuideLength,
                           G4double       pScintillatorHousingReflectivity,
                           
-                          G4double  pPmtRadius,                 //outer radius of pmt including glass, not including metal shielding or housing
-                          G4double  pPmtPhotocathodeRadius,                 //height of pmt including glass, not including metal sheilding or housing
-                          G4double  pPmtPhotocathodeHeight,      //depth from front(scinillator side) of pmt to beginning of phtocathode section, including glass
-                          G4double  pPmtPhotocathodeDepth,
-                          G4double  pPmtHousingReflectivity,
+                          G4double  pPmtPhotocathodeRadius,		// PMT radius
+                          G4double  pPmtPhotocathodeHeight,     // Height of PMT
+                          G4double  pLGHousingReflectivity,
                           G4VSensitiveDetector*   pPmtSD,
 						  G4VSensitiveDetector*   pScintSD);
 
@@ -44,11 +42,12 @@ class MilliQDetectorBlockLV : public G4LogicalVolume
   private:
     
     void VisAttributes();
-    void SurfaceProperties(G4double pScintillatorHousingReflectivity, G4double pPmtHousingReflectivity);
+    void SurfaceProperties(G4double pScintillatorHousingReflectivity, G4double pLGHousingReflectivity);
     
     G4ThreeVector    fDimensions;
     
     G4LogicalVolume* fScintillatorHousingLV;
+    G4LogicalVolume* fScintillatorLGHousingLV;
     G4LogicalVolume* fScintillatorLV;
     G4LogicalVolume* fLightGuideLV;
     

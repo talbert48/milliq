@@ -83,7 +83,6 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4Material* fAluminiumMaterial;
     G4Material* fAirMaterial;
     G4Material* fVacuumMaterial;
-    G4Material* fGlassMaterial;
     G4Material* fConcreteMaterial;
     G4Material* led;
     G4Material* polyethylene;
@@ -100,7 +99,7 @@ class MilliQDetectorConstruction : public G4VUserDetectorConstruction
     G4double fPmtPhotoRad;
     G4double fPmtPhotoHeight;
     G4double fPmtPhotoDepth;
-    G4double fPmtHouseRefl;
+    G4double fLGHouseRefl;
     G4double fOuterRadius_pmt;
     G4double fRefl;
     G4double NStacks;

@@ -134,7 +134,7 @@ void MilliQMonopolePhysics::ConstructProcess()
      ph->RegisterProcess(hhioni, fMpl);
      pManager->AddProcess(hhioni,-1,2,2);
 
-     G4double energyLimit = 1.*MeV;
+/*     G4double energyLimit = 1.*MeV;
      G4hMultipleScattering* mscmcp = new G4hMultipleScattering();
      G4UrbanMscModel* modelmcp = new G4UrbanMscModel();
 //     G4WentzelVIModel* modelmcp = new G4WentzelVIModel();
@@ -142,7 +142,7 @@ void MilliQMonopolePhysics::ConstructProcess()
      mscmcp->SetEmModel(modelmcp, 1);
      ph->RegisterProcess(mscmcp, fMpl);
      pManager->AddProcess(mscmcp,-1,1,1);
-
+*/
 
 
     ph->RegisterProcess(new G4StepLimiter(), fMpl);

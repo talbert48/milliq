@@ -46,7 +46,7 @@ do
 #	mv mcpall.dat $RESULTS/mcpall."$outputname".dat 
 #	mv sedep.dat $RESULTS/sedep."$outputname".dat
 	nPass=$(cat mcpall.dat | wc -l)
-	echo $mass $charge $nEv $nPass >> $RESULTS/EffStudy5by10refl0.98att210lgrefl1URBAN.dat
+	echo $mass $charge $nEv $nPass >> $RESULTS/EffStudy5by10refl0.98att210lgrefl1.dat
 	cd ../
 	rm -r $JOB
 done

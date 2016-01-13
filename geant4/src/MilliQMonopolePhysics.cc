@@ -63,6 +63,8 @@
 #include "G4ionIonisation.hh"
 #include "G4IonCoulombScatteringModel.hh"
 #include "G4IonParametrisedLossModel.hh"
+#include "G4WentzelVIModel.hh"
+#include "G4UrbanMscModel.hh"
 #include "G4CoulombScattering.hh"
 //#include "G4IonIonisation.hh"
 #include "G4hBremsstrahlung.hh"
@@ -132,16 +134,16 @@ void MilliQMonopolePhysics::ConstructProcess()
      ph->RegisterProcess(hhioni, fMpl);
      pManager->AddProcess(hhioni,-1,2,2);
 
- //    G4CoulombScattering -> G4hCoulombScatteringModel, G4IonCoulombScatteringModel
- //    G4ionIonisation->G4IonParametrisedLossModel
- //	   G4NuclearStopping
- //    G4hBremsstrahlung
+     G4double energyLimit = 1.*MeV;
+     G4hMultipleScattering* mscmcp = new G4hMultipleScattering();
+     G4UrbanMscModel* modelmcp = new G4UrbanMscModel();
+//     G4WentzelVIModel* modelmcp = new G4WentzelVIModel();
+     modelmcp->SetActivationLowEnergyLimit(energyLimit);
+     mscmcp->SetEmModel(modelmcp, 1);
+     ph->RegisterProcess(mscmcp, fMpl);
+     pManager->AddProcess(mscmcp,-1,1,1);
 
-/*   G4hMultipleScattering* msc = new G4hMultipleScattering();
-   msc->AddEmModel(0, new G4GoudsmitSaundersonMscModel());
-   pManager->AddProcess(msc, -1, 1, 1);
-   ph->RegisterProcess(msc, fMpl);
-*/
+
 
     ph->RegisterProcess(new G4StepLimiter(), fMpl);
 

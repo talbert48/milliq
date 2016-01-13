@@ -130,11 +130,11 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		zMo = 0.;
 	} else {
 		xMo = momentumList[neventLHE][0];
-		yMo = momentumList[neventLHE][1]/7.;
-		zMo = momentumList[neventLHE][2]/7.;
+		yMo = momentumList[neventLHE][1];
+		zMo = momentumList[neventLHE][2];
 		x0 = 0.2*m;//vertexList[neventLHE][0]*m;
-		y0 = vertexList[neventLHE][1]*m/50.;
-		z0 = vertexList[neventLHE][2]*m/50.;
+		y0 = vertexList[neventLHE][1]*m;
+		z0 = vertexList[neventLHE][2]*m;
 		En = qmeList[neventLHE][2]*GeV;
 	}
 

@@ -98,8 +98,8 @@ void MilliQDetectorConstruction::SetDefaults() {
 	else {
 		//References: http://www.hamamatsu.com/jp/en/R329-02.html
 
-		NBlocks = G4ThreeVector(1., 1., 1.); //1. 20.,10.
-		NStacks = 1;
+		NBlocks = G4ThreeVector(1., 20., 10.); //1. 20.,10.
+		NStacks = 3;
 		fBetweenBlockSpacing = G4ThreeVector(0.127 * m, 0. * m, 0. * m);//Length of PMT
 		fScint_x = 0.9 * m;
 		fScint_y = 5 * cm;

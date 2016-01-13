@@ -207,9 +207,9 @@ void MilliQDetectorConstruction::DefineMaterials() {
 	G4double MilliQ_RIND[] = { 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58,
 			1.58, 1.58, 1.58, 1.58, 1.58 }; //{ 1.59, 1.57, 1.54 };
 	assert(sizeof(MilliQ_RIND) == sizeof(MilliQ_Energy));
-	G4double MilliQ_ABSL[] = { 2100. * cm, 2100. * cm, 2100. * cm, 2100. * cm, 2100.
-			* cm, 2100. * cm, 2100. * cm, 2100. * cm, 2100. * cm, 2100. * cm, 2100.
-			* cm, 2100. * cm, 2100. * cm };
+	G4double MilliQ_ABSL[] = { 210. * cm, 210. * cm, 210. * cm, 210. * cm, 210.
+			* cm, 210. * cm, 210. * cm, 210. * cm, 210. * cm, 210. * cm, 210.
+			* cm, 210. * cm, 210. * cm };
 	assert(sizeof(MilliQ_ABSL) == sizeof(MilliQ_Energy));
 	fScintillator_mt = new G4MaterialPropertiesTable();
 	fScintillator_mt->AddProperty("FASTCOMPONENT", MilliQ_Energy,

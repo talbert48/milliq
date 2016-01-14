@@ -224,7 +224,6 @@ if(scintHC && pmtAllHC){
 		}
 	}
 }
-
 for(unsigned int i = 0; i < pmtTime.size(); i++){
 	sort(pmtTime[i].begin(),pmtTime[i].end());
 }
@@ -247,21 +246,28 @@ if(mcpan->IsActive()==true){
 		analysisManager->FillNtupleDColumn( 2,i+2*NStacks, mcpan->GetTimeOfFlight()[i]/ns );
 		analysisManager->FillNtupleDColumn( 2,i+3*NStacks, mcpan->GetTotalEdep()[i]/MeV );
 
+		for(unsigned int j = 0; j < pmtTime[pmt].size(); j++){
+			analysisManager->FillNtupleDColumn( 5+i,0,pmtTime[pmt][j]);
+			analysisManager->AddNtupleRow(5+i);
+		}
+		analysisManager->FillNtupleDColumn( 5+i,0,-1.);
+		analysisManager->AddNtupleRow(5+i);
 
-			G4double stdev;
-			G4double counter=0.;
-			G4double mean = std::accumulate(scintTime[pmt].begin(),scintTime[pmt].end(),0.0);
-			for(unsigned int j = 0; j < scintEnergy[pmt].size(); j++){
-			stdev += pow(scintTime[pmt][j] - mean,2); 
+		G4double stdev;
+		G4double counter=0.;
+		G4double mean = std::accumulate(scintTime[pmt].begin(),scintTime[pmt].end(),0.0);
+
+		for(unsigned int j = 0; j < scintEnergy[pmt].size(); j++){
+			stdev += pow(scintTime[pmt][j] - mean,2);
 			counter+=1;
-			}
+		}
 
-			analysisManager->FillNtupleDColumn( 1,0, mean );
-			analysisManager->FillNtupleDColumn(1,1, counter);
+		analysisManager->FillNtupleDColumn( 1,0, mean );
+		analysisManager->FillNtupleDColumn(1,1, counter);
 
-//			analysisManager->FillNtupleDColumn( 1,0, scintEnergy[pmt][j]/eV);
-//			analysisManager->FillNtupleDColumn( 1,1, scintTime[pmt][j]/ns );
-			analysisManager->AddNtupleRow(1);
+//		analysisManager->FillNtupleDColumn( 1,0, scintEnergy[pmt][j]/eV);
+//		analysisManager->FillNtupleDColumn( 1,1, scintTime[pmt][j]/ns );
+		analysisManager->AddNtupleRow(1);
 
 
 	}

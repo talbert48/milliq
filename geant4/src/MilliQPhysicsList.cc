@@ -65,7 +65,7 @@ MilliQPhysicsList::MilliQPhysicsList() : G4VModularPhysicsList()
     RegisterPhysics( new G4NeutronTrackingCut(ver));
 
    // EM Physics
-//    RegisterPhysics( new MilliQEMPhysics("standard EM"));
+   RegisterPhysics( new MilliQEMPhysics("standard EM"));
 
     // Muon Physics
     RegisterPhysics( new MilliQMuonPhysics("muon"));

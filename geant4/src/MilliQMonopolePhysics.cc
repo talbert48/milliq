@@ -64,6 +64,7 @@
 #include "G4IonCoulombScatteringModel.hh"
 #include "G4IonParametrisedLossModel.hh"
 #include "G4WentzelVIModel.hh"
+#include "G4hPairProduction.hh"
 #include "G4UrbanMscModel.hh"
 #include "G4CoulombScattering.hh"
 //#include "G4IonIonisation.hh"
@@ -85,8 +86,8 @@ MilliQMonopolePhysics::MilliQMonopolePhysics(const G4String& nam)
     fMessenger(0), fMpl(0)
 {
   fMagCharge = 0.0;
-  fElCharge = 0.003;
-  fMonopoleMass = 0.1*GeV;
+  fElCharge = 0.01;
+  fMonopoleMass = 100*GeV;
   fMessenger = new MilliQMonopolePhysicsMessenger(this);
   SetPhysicsType(bUnknown);
 }
@@ -125,25 +126,19 @@ void MilliQMonopolePhysics::ConstructProcess()
    G4int nbin = G4lrint(10*std::log10(emax/emin));
 
 
- //	G4cout<<" MilliQMonopolePhysics: It launched G4hIonisation!!"<<G4endl;
-
- 	G4hIonisation* hhioni = new G4hIonisation();
+   G4hIonisation* hhioni = new G4hIonisation();
      hhioni->SetDEDXBinning(nbin);
      hhioni->SetMinKinEnergy(emin);
      hhioni->SetMaxKinEnergy(emax);
      ph->RegisterProcess(hhioni, fMpl);
      pManager->AddProcess(hhioni,-1,2,2);
 
-/*     G4double energyLimit = 1.*MeV;
+     G4double energyLimit = 1.*MeV;
      G4hMultipleScattering* mscmcp = new G4hMultipleScattering();
-     G4UrbanMscModel* modelmcp = new G4UrbanMscModel();
-//     G4WentzelVIModel* modelmcp = new G4WentzelVIModel();
+     G4WentzelVIModel* modelmcp = new G4WentzelVIModel();
      modelmcp->SetActivationLowEnergyLimit(energyLimit);
      mscmcp->SetEmModel(modelmcp, 1);
      ph->RegisterProcess(mscmcp, fMpl);
-     pManager->AddProcess(mscmcp,-1,1,1);
-*/
-
 
     ph->RegisterProcess(new G4StepLimiter(), fMpl);
 

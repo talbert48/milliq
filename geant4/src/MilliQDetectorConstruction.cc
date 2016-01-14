@@ -511,7 +511,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 		wallLV->SetVisAttributes(G4Colour(.5, .5, .5, .5));
 		new G4PVPlacement(0, G4ThreeVector(-1.5 * m, 0., 0.), wallLV, "Wall PV",
 				worldLV, 0, 0, 0);
-	} else if (fAlternate == 3) {
+	} else if (fAlternate == 0) {
 		ConstructShield(worldLV, TotalStackStart, TotalStackEnd);
 	}
 	worldLV->SetUserLimits(new G4UserLimits(0.2 * mm));

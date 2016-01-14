@@ -30,21 +30,44 @@ void MilliQAnalysis::NearestN(){
 
 	for(unsigned int i=0; i < activePMT.size(); i++){
 		bool recordEvent = true;
-		for(G4int j=0; j < fNstack; j++){
-			if(fpmtTime[activePMT[i]+fNblock*j].size()==0)
+		for(G4int j=1; j < fNstack; j++){
+			if(fpmtTime[activePMT[i]+fNblock*j].size()==0){
 				recordEvent = false;
-			if(fscintTime[activePMT[i]+fNblock*j].size()==0)
-				recordEvent = false;
+				break;
+			}
 		}
 		if(recordEvent == true){
-			activeEvent.push_back( activePMT[i] );
+			for(G4int j=1; j < fNstack; j++){
+				for(G4int k = 0; k < j; k++){
+					bool tFlag = false;
+					for(G4int a = 0; a < fpmtTime[activePMT[i]+fNblock*k].size(); a++){
+						for(G4int b = 0; b < fpmtTime[activePMT[i]+fNblock*j].size(); b++){
+							if(fabs(fpmtTime[activePMT[i]+fNblock*k][a]/ns-fpmtTime[activePMT[i]+fNblock*j][b]/ns)<15/ns){
+								tFlag = true;
+								break;
+							}
+						}
+						if(tFlag == true)
+							break;
+					}
+					if(tFlag == false){
+							recordEvent = false;
+							break;
+					}
 
+				}
+				if(recordEvent == false)
+					break;
+
+			}
 		}
-
+		if(recordEvent == true)
+			activeEvent.push_back( activePMT[i] );
 	}
 
 	//If passes this, means that the same 3 scint and pmt light up!
 	if(activeEvent.size()==1){
+		G4cout<<"Recorded Event"<<G4endl;
 		for(G4int j = 1; j < fNstack; j++)
 			activeEvent.push_back(activeEvent[0]+j*fNblock);
 		fIsActive = true;

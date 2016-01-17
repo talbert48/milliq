@@ -2,7 +2,7 @@
 #ifndef MilliQAnalysis_H
 #define MilliQAnalysis_H 1
 
-
+#include <vector>
 
 class MilliQAnalysis{
   public:

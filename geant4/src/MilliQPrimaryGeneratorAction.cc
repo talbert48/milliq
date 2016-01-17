@@ -202,9 +202,9 @@ void MilliQPrimaryGeneratorAction::SetCalibEnergy(G4double e) {
 void MilliQPrimaryGeneratorAction::GetLHEFourVectors() {
     std::ifstream infile;
 // std::string pathname="/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/";
-    std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/mCP_UFO/";
+    std::string pathname="/home/magillg/Dropbox/MilliQ/PropagatingData/mCP_UFO/";
     std::string filename="100.0/0.001/hit_4_vecs.dat";
-	infile.open(pathname.append(filename));
+	infile.open(pathname.append(filename).c_str());
 	G4String line;
 	G4double fe, fq, fm, fx, fy, fz, fpx, fpy, fpz;
 	std::vector<G4double> Tver(3), Tmo(3), Tqme(3);

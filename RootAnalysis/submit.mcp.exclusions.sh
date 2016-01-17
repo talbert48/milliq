@@ -11,7 +11,7 @@ JOB=$BUILD/Job."$rseed"
 charge=$1
 mass=$2
 nEv=$3
-proc=$4
+process=$4
 RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo/FullRun
 
 cnew="$(echo $charge | sed 's/0.//')"
@@ -23,6 +23,7 @@ elif [ "$cnew" -ge "1000" ]; then
         sourcecharge=0.1
 fi
 
+echo "$charge" "$mass" "$nEv" "$process" "$sourcecharge"
 
 mkdir $JOB
 
@@ -47,13 +48,14 @@ do
 	make MilliQ
 	./MilliQ mcp.mac
 	root -b -q histogram.C
-	mv mcpall.dat $RESULTS/mcpall."$outputname".dat 
+#	cp mcpall.dat $RESULTS/mcpall."$outputname".dat 
 #	mv sedep.dat $RESULTS/sedep."$outputname".dat
-	mv pmt0time.dat $RESULTS/pmt0time."$outputname".dat
-        mv pmt1time.dat $RESULTS/pmt1time."$outputname".dat
-        mv pmt2time.dat $RESULTS/pmt2time."$outputname".dat
+#	mv pmt0time.dat $RESULTS/pmt0time."$outputname".dat
+#	mv pmt1time.dat $RESULTS/pmt1time."$outputname".dat
+#	mv pmt2time.dat $RESULTS/pmt2time."$outputname".dat
 	nPass=$(cat mcpall.dat | wc -l)
-	echo $mass $charge $nEv $nPass >> $RESULTS/Acceptances.dat
+	echo $mass $charge $nEv $nPass >> $RESULTS/Acceptances."$proc".Fit.dat
 	cd ../
 	rm -r $JOB
+	rm $ROOT/slurm-"$rseed".out
 done

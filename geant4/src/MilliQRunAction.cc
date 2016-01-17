@@ -80,15 +80,15 @@ MilliQRunAction::MilliQRunAction(MilliQRecorderBase* r) :
 	analysisManager->CreateNtupleDColumn("CoordinateZ");//column Id = 2
 	analysisManager->FinishNtuple();
 
-	analysisManager->CreateNtuple("MilliQPMTAll","PMT0Times");
+	analysisManager->CreateNtuple("MilliQPMT0All","PMT0Times");
 	analysisManager->CreateNtupleDColumn("pmtAllTimes0"); // column Id = 0
 	analysisManager->FinishNtuple();
 
-	analysisManager->CreateNtuple("MilliQPMTAll","PMT1Times");
+	analysisManager->CreateNtuple("MilliQPMT1All","PMT1Times");
 	analysisManager->CreateNtupleDColumn("pmtAllTimes1"); // column Id = 0
 	analysisManager->FinishNtuple();
 
-	analysisManager->CreateNtuple("MilliQPMTAll","PMT2Times");
+	analysisManager->CreateNtuple("MilliQPMT2All","PMT2Times");
 	analysisManager->CreateNtupleDColumn("pmtAllTimes2"); // column Id = 0
 	analysisManager->FinishNtuple();
 

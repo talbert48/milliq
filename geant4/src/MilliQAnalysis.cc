@@ -18,7 +18,7 @@ MilliQAnalysis::MilliQAnalysis(std::vector< std::vector<G4double> > ppmtTime, st
 void MilliQAnalysis::NearestN(){
 
 	//Figures out for which sequence all 3 pmt and Scint light up
-
+	G4cout<<"//////// "<<G4endl;
 	std::vector<G4int> activePMT;
 	std::vector< std::vector<G4double> > activePMTTimes (fNstack);
 	//The following identifies events in which 3 consecutive layers light up
@@ -38,8 +38,10 @@ void MilliQAnalysis::NearestN(){
 		}
 		if(layerHit==false){
 			recordEvent=false;
-			break;
+			//break;
 		}
+		else
+			G4cout<<" Passed Layer "<<j<<G4endl;
 	}	
   G4cout<<"record Event "<<recordEvent<<G4endl;  
 	if(recordEvent == true){

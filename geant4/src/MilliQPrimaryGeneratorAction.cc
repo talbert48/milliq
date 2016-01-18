@@ -39,7 +39,7 @@
 #include "G4Box.hh"
 #include "G4LorentzVector.hh"
 #include "G4Event.hh"
-#include "vector"
+#include <vector>
 #include <math.h>
 #include "G4LorentzVector.hh"
 #include "fstream"
@@ -132,7 +132,7 @@ void MilliQPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 		xMo = momentumList[neventLHE][0];
 		yMo = momentumList[neventLHE][1];
 		zMo = momentumList[neventLHE][2];
-		x0 = 0*m;//vertexList[neventLHE][0]*m;
+		x0 = 0.16*m;//vertexList[neventLHE][0]*m;
 		y0 = vertexList[neventLHE][1]*m;
 		z0 = vertexList[neventLHE][2]*m;
 		En = qmeList[neventLHE][2]*GeV;
@@ -202,8 +202,8 @@ void MilliQPrimaryGeneratorAction::SetCalibEnergy(G4double e) {
 void MilliQPrimaryGeneratorAction::GetLHEFourVectors() {
     std::ifstream infile;
 // std::string pathname="/xfs1/gmagill/Repository_MilliCharged/Geant4/SourceFiles/";
-    std::string pathname="/home/magillg/Dropbox/MilliQ/PropagatingData/mCP_UFO/";
-    std::string filename="100.0/0.001/hit_4_vecs.dat";
+    std::string pathname="/home/qftsm/Dropbox/MilliQ/PropagatingData/mCP_UFO/";
+    std::string filename="0.1/0.001/hit_4_vecs.dat";
 	infile.open(pathname.append(filename).c_str());
 	G4String line;
 	G4double fe, fq, fm, fx, fy, fz, fpx, fpy, fpz;

@@ -102,16 +102,16 @@ void MilliQDetectorConstruction::SetDefaults() {
 		NStacks = 3;
 		fBetweenBlockSpacing = G4ThreeVector(0.127 * m, 0. * m, 0. * m);//Length of PMT
 		fScint_x = 0.9 * m;
-		fScint_y = 10 * cm;//5.*cm;
+		fScint_y = 10. * cm;//5.*cm;
 		fScint_z = 10 * cm;
 //		fOffset = G4ThreeVector(0. * m, 0.5 * cm, 0.5 * cm);
-		fOffset = G4ThreeVector(0. * m, 0. * cm, 0. * cm);
+		fOffset = G4ThreeVector(0. * m, 0.5 * cm, 0.5 * cm);
 		fLightGuideLength = 0.1 * m; //Length, needs to be smaller than fScint_x
-		fPmtPhotoRad = 5.*cm;//2.3 * cm; //pmt radius
+		fPmtPhotoRad = 5.0*cm;//2.3 * cm; //pmt radius
 		fOuterRadius_pmt = fPmtRad;
 		fScintHouseThick = 0.1 * cm; //scintillator housing thickness
 		fPmtPhotoHeight = 0.05 * cm; //pmt photocathode height
-        fScintillatorHouseRefl = 1.00; //scintillator housing reflectivity
+		fScintillatorHouseRefl = 0.98; //scintillator housing reflectivity
 		fLGHouseRefl = 1.00; //pmt housing reflective
 		//Reflectance of Aluminum: Bass, M., Van Stryland, E.W. (eds.) Handbook of Optics vol. 2 (2nd ed.), McGraw-Hill (1994)
 	}
@@ -513,7 +513,7 @@ G4VPhysicalVolume* MilliQDetectorConstruction::ConstructDetector() {
 		new G4PVPlacement(0, G4ThreeVector(-1.5 * m, 0., 0.), wallLV, "Wall PV",
 				worldLV, 0, 0, 0);
 	} else if (fAlternate == 0) {
-	//	ConstructShield(worldLV, TotalStackStart, TotalStackEnd);
+		ConstructShield(worldLV, TotalStackStart, TotalStackEnd);
 	}
 	worldLV->SetUserLimits(new G4UserLimits(0.2 * mm));
 

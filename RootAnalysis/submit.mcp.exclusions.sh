@@ -54,7 +54,7 @@ do
 #	mv pmt1time.dat $RESULTS/pmt1time."$outputname".dat
 #	mv pmt2time.dat $RESULTS/pmt2time."$outputname".dat
 	nPass=$(cat mcpall.dat | wc -l)
-	echo $mass $charge $nEv $nPass >> $RESULTS/Acceptances."$proc".Fit.dat
+	echo $mass $charge $nEv $nPass >> $RESULTS/Acceptances."$proc".SingleLayer.15ns.OffSet.Shield.RegGun.Refl0.98.NoLG.10b10.PMTRad5.LayerSpacing.ScintThick.dat
 	cd ../
 	rm -r $JOB
 	rm $ROOT/slurm-"$rseed".out

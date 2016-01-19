@@ -130,8 +130,8 @@ MilliQDetectorBlockLV::MilliQDetectorBlockLV(G4VSolid* pSolid,
 	// Light Guide - Volume
 
 	G4Trd* lightGuideV = new G4Trd("Light Guide Volume",
-			pScintillatorDimensions.y() / 2, pPmtPhotocathodeRadius,
-			pScintillatorDimensions.z() / 2, pPmtPhotocathodeRadius,
+			pScintillatorDimensions.y() / 2, pScintillatorDimensions.y() / 2,
+			pScintillatorDimensions.z() / 2, 3*pScintillatorDimensions.z()/6,
 			pLightGuideLength/2);
 
 	// Light Guide - Logical Volume

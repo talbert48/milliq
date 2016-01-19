@@ -98,16 +98,16 @@ void MilliQDetectorConstruction::SetDefaults() {
 	else {
 		//References: http://www.hamamatsu.com/jp/en/R329-02.html
 
-		NBlocks = G4ThreeVector(1., 20., 10.); //1. 20.,10.
+		NBlocks = G4ThreeVector(1., 20., 20.); //1. 20.,10.
 		NStacks = 3;
 		fBetweenBlockSpacing = G4ThreeVector(0.127 * m, 0. * m, 0. * m);//Length of PMT
 		fScint_x = 0.9 * m;
-		fScint_y = 10. * cm;//5.*cm;
-		fScint_z = 10 * cm;
+		fScint_y = 5. * cm;//5.*cm;
+		fScint_z = 5 * cm;//10.*cm
 //		fOffset = G4ThreeVector(0. * m, 0.5 * cm, 0.5 * cm);
 		fOffset = G4ThreeVector(0. * m, 0.5 * cm, 0.5 * cm);
 		fLightGuideLength = 0.1 * m; //Length, needs to be smaller than fScint_x
-		fPmtPhotoRad = 5.0*cm;//2.3 * cm; //pmt radius
+		fPmtPhotoRad = 2.5*cm;//2.3 * cm; //pmt radius
 		fOuterRadius_pmt = fPmtRad;
 		fScintHouseThick = 0.1 * cm; //scintillator housing thickness
 		fPmtPhotoHeight = 0.05 * cm; //pmt photocathode height

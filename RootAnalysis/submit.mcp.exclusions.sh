@@ -12,7 +12,7 @@ charge=$1
 mass=$2
 nEv=$3
 process=$4
-RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo/FullRun
+RESULTS=/xfs1/gmagill/Repository_MilliCharged/Geant4/MCPRepo/EffStudy
 
 cnew="$(echo $charge | sed 's/0.//')"
 if [ "$cnew" -lt "0100" ]; then
@@ -54,7 +54,8 @@ do
 #	mv pmt1time.dat $RESULTS/pmt1time."$outputname".dat
 #	mv pmt2time.dat $RESULTS/pmt2time."$outputname".dat
 	nPass=$(cat mcpall.dat | wc -l)
-	echo $mass $charge $nEv $nPass >> $RESULTS/Acceptances."$proc".dat
+	echo $mass $charge $nEv $nPass >> $RESULTS/EffStudy.LargeMass."$proc".FullSettings.5b10.LG.refl98.dat
+#Acceptances.Sample."$proc".FullSettings.10b10.refl925.dat
 #Acceptances."$proc".SingleLayer.15ns.NoOffSet.NoShield.NoRegGun.Refl0.98.NoLG.10b10.PMTRad5.NoLayerSpacing.NoScintThick.dat
 	cd ../
 	rm -r $JOB
